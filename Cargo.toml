@@ -1,0 +1,9 @@
+[package]
+name = "bicep-docs"
+version = "0.1.0"
+edition = "2021"
+description = "Documentation generator for Azure Bicep files"
+authors = ["Jerome Brown <Jerome@SoliDeoGloria.tech>"]
+license = "MPL-2.0"
+
+[dependencies]
