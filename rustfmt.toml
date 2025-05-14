@@ -1,0 +1,11 @@
+format_code_in_doc_comments = true
+format_generated_files = false
+group_imports = "StdExternalCrate"
+imports_granularity = "Crate"
+imports_layout = "Vertical"
+match_block_trailing_comma = true
+newline_style = "Unix"
+reorder_imports = true
+reorder_modules = true
+trailing_comma = "Vertical"
+unstable_features = true

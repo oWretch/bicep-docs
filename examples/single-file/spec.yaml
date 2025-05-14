@@ -1,0 +1,272 @@
+name: Example Bicep File
+description: Description of the example Bicep file
+metadata:
+  author: File Author
+targetScope: resourceGroup
+
+# extensions: array of objects
+
+# imports: array of objects
+
+exports: # found by looking in functions, types, and variables for those marked exported: true
+  generateName: function # is the type
+  grade: type
+
+types:
+  customObject:
+    description: Type description
+    definition:
+      name:
+        type: string
+        optional: true
+        secure: true
+      score:
+        type: int
+        optional: false
+        secure: false
+        minValue: 0
+        maxValue: 100
+      grade:
+        type: grade
+        optional: false
+        secure: false
+    exported: false
+    secure: false
+  grade:
+    definition: A | B | C | D | E
+    exported: true
+    secure: false
+  resourceType:
+    definition:
+      id:
+        type: string
+        optional: false
+        secure: false
+      name:
+        type: string
+        optional: false
+        secure: false
+      resourceGroup:
+        type: string
+        optional: false
+        secure: false
+
+functions:
+  generateName:
+    description: Generate Name Function
+    arguments:
+      - name: argument1
+        type: string
+        optional: false
+      - name: argument2
+        type: int
+        optional: true
+    returnType: string
+    exported: true
+  somethingElse:
+    arguments: []
+    returnType: bool
+    exported: false
+
+parameters:
+  requiredParam:
+    description: This is a required parameter
+    type: string
+    optional: false
+    sealed: false
+    secure: true
+    minLength: 3
+    maxLength: 10
+  optionalParam:
+    description: This is an optional parameter
+    type: string
+    optional: true
+    sealed: false
+    secure: false
+  simpleParamWithDefault:
+    type: int
+    defaultValue: 100
+    optional: false
+    sealed: false
+    secure: false
+    minValue: 0
+    maxValue: 100
+  genericObject:
+    description: I have a description in metadata
+    metadata:
+      name: A name in metadata
+      somethingElse: Another metadata property
+    type: object
+    defaultValue:
+      name: value
+      number: 1000
+    optional: false
+    sealed: false
+    secure: false
+  inlineSpecificObject:
+    type:
+      property:
+        description: Description of the property
+        type: string
+        optional: false
+        secure: true
+        maxLength: 10
+      otionalProperty:
+        type: int
+        optional: true
+        secure: false
+        minValue: 23
+      objectProperty:
+        type:
+          key1:
+            type: string
+            optional: false
+            secure: false
+          key2:
+            type: int
+            optional: false
+            secure: false
+        optional: false
+        secure: false
+    optional: false
+    sealed: true
+    secure: false
+  typedObjects:
+    type: customObject[]
+    optional: false
+    sealed: false
+    secure: false
+  individualOptions:
+    type: one | two | three
+    optional: false
+    sealed: false
+    secure: false
+  greekLetter:
+    type: string
+    defaultValue: alpha
+    allowed:
+      - alpha
+      - beta
+      - gamma
+      - delta
+    optional: false
+  multiLine:
+    type: string
+    defaultValue: |-
+
+      This is a multi line string.
+        It covers multiple lines, and has indentation.
+        It also has a tab character.	And a new line.
+        It also has a double backslash \\ and a single \
+        And a single quote: '
+    optional: false
+    sealed: false
+    secure: false
+variables:
+  nameVar:
+    description: Variable description
+    value: someValue
+    exported: false
+  exportedVar:
+    description: Exported variable description
+    value: exportedValue
+    exported: true
+  boolVar:
+    description: Boolean variable
+    value: true
+    exported: true
+  numVar:
+    description: The answer to life, the universe, and everything
+    value: 42
+    exported: false
+
+resources:
+  storageAccount:
+    type: Microsoft.Storage/storageAccounts
+    apiVersion: 2023-04-01
+    existing: true
+    name: mystorageaccount
+  storageAccount::blobServices:
+    type: Microsoft.Storage/storageAccounts/blobServices
+    apiVersion: 2023-04-01 # Retrieved from parent
+    existing: true
+    name: default
+  storageAccount::blobServices::container:
+    type: Microsoft.Storage/storageAccounts/blobServices/containers
+    apiVersion: 2023-04-01 # Retrieved from parent
+    existing: false
+    name: myContainer
+  vnet:
+    type: Microsoft.Network/virtualNetworks
+    apiVersion: 2021-05-01
+    existing: false
+    name: nameVar # This is a variable not a string literal
+    location: australiaeast
+    dependsOn:
+      - roleAssignStorage
+  vnet::defaultSubnet:
+    type: Microsoft.Network/virtualNetworks/subnets
+    apiVersion: 2021-05-01 # This one is retrieved from the parent
+    existing: false
+    name: default
+    parent: vnet
+  vnet::diffApi:
+    type: Microsoft.Network/virtualNetworks/subnets
+    apiVersion: 2024-05-01
+    existing: false
+    name: api
+    parent: vnet
+  externalChild:
+    description: Resource Description
+    type: Microsoft.Network/virtualNetworks/subnets
+    apiVersion: 2023-11-01
+    existing: false
+    name: another
+    parent: vnet
+    condition: 1 == 1
+  containerLoop:
+    type: Microsoft.Storage/storageAccounts/blobServices/containers
+    apiVersion: 2024-01-01
+    existing: false
+    name: container${name}
+    parent: storageAccount::blobServices
+    loop: name in ['alice', 'bob', 'charlie']
+    batchSize: 2
+  roleAssignStorage:
+    type: Microsoft.Authorization/roleAssignments
+    apiVersion: 2022-04-01
+    existing: false
+    scope: storageAccount
+    name: guid(storageAccount.name)
+
+# modules: array of objects
+
+outputs:
+  one:
+    description: Output Description
+    type: string
+    value: one # String literal not a reference
+    sealed: false
+    secure: true
+  storageAccountOutput:
+    type: type
+    value:
+      id: storageAccount.id
+      name: storageAccount.name
+      resourceGroup: resourceGroup().name
+    sealed: false
+    secure: false
+  percentage:
+    type: int
+    value: "true ? 50 : 100" # expression not text
+    minValue: 0
+    maxValue: 100
+    sealed: false
+    secure: false
+  fib:
+    type: array
+    value: [1, 1, 2, 3, 5, 8]
+    minLength: 1
+    maxLength: 34
+    sealed: false
+    secure: false
