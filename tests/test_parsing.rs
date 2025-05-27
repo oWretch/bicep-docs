@@ -228,29 +228,38 @@ mod parsing {
         // Check secure output
         if let Some(output) = doc.outputs.get("secureStringOutput") {
             // Check if the secure field is set to true
-            assert!(
-                output.secure,
-                "Output should be marked as secure"
-            );
+            assert!(output.secure, "Output should be marked as secure");
         }
 
         // Check constrained output
         if let Some(output) = doc.outputs.get("constrainedIntOutput") {
             // Check if constraint fields are properly set
-            assert!(output.min_value.is_some() || output.max_value.is_some(), "Output should have constraints");
+            assert!(
+                output.min_value.is_some() || output.max_value.is_some(),
+                "Output should have constraints"
+            );
         }
 
         // Check that explicit types are preserved correctly
         if let Some(output) = doc.outputs.get("intOutput") {
-            assert!(matches!(output.output_type, BicepType::Int), "intOutput should have Number type");
+            assert!(
+                matches!(output.output_type, BicepType::Int),
+                "intOutput should have Number type"
+            );
         }
 
         if let Some(output) = doc.outputs.get("customTypeOutput") {
-            assert!(matches!(output.output_type, BicepType::CustomType(_)), "customTypeOutput should have CustomType");
+            assert!(
+                matches!(output.output_type, BicepType::CustomType(_)),
+                "customTypeOutput should have CustomType"
+            );
         }
 
         if let Some(output) = doc.outputs.get("boolOutput") {
-            assert!(matches!(output.output_type, BicepType::Bool), "boolOutput should have Bool type");
+            assert!(
+                matches!(output.output_type, BicepType::Bool),
+                "boolOutput should have Bool type"
+            );
         }
     }
 
@@ -523,7 +532,9 @@ mod parsing {
             .imports
             .iter()
             .filter(|i| match i {
-                bicep_docs::parsing::BicepImport::Module { wildcard_alias, .. } => wildcard_alias.is_some(),
+                bicep_docs::parsing::BicepImport::Module { wildcard_alias, .. } => {
+                    wildcard_alias.is_some()
+                },
                 _ => false,
             })
             .count();
@@ -604,10 +615,7 @@ mod parsing {
 
         if doc.variables.contains_key("myConstant") {
             let v = doc.variables.get("myConstant").unwrap();
-            assert!(
-                v.is_exported,
-                "myConstant should be exported"
-            );
+            assert!(v.is_exported, "myConstant should be exported");
         }
 
         if doc.functions.contains_key("sayHello") {

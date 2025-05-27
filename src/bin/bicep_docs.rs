@@ -1,112 +1,116 @@
 use bicep_docs::{export_bicep_document_to_json, export_bicep_document_to_yaml};
-use std::env;
+use clap::{Args, Parser, Subcommand};
 use std::error::Error;
 use std::fs;
-use std::path::Path;
-use std::process;
+use std::path::{Path, PathBuf};
 
-fn print_usage() {
-    println!("Bicep Documentation Generator");
-    println!("Usage: bicep-docs <command> [options]");
-    println!();
-    println!("Commands:");
-    println!("  export     Export Bicep file to YAML or JSON format");
-    println!();
-    println!("For export command:");
-    println!(
-        "  bicep-docs export <bicep_file> --format=<yaml|json> [--output=<output_path>] [--pretty]"
-    );
-    println!();
-    println!("Options:");
-    println!("  --format    Output format (yaml or json)");
-    println!("  --output    Output file path (default is input filename with new extension)");
-    println!("  --pretty    Format JSON with indentation (only for JSON output)");
+/// Bicep Documentation Generator
+///
+/// Parse Azure Bicep files and export documentation in YAML or JSON format
+#[derive(Parser)]
+#[command(name = "bicep-docs")]
+#[command(version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
 }
 
-fn handle_export_command(args: &[String]) -> Result<(), Box<dyn Error>> {
-    if args.is_empty() {
-        println!("Error: Missing Bicep file path");
-        print_usage();
-        process::exit(1);
-    }
+/// Available commands
+#[derive(Subcommand)]
+enum Commands {
+    /// Export Bicep file to YAML format
+    Yaml {
+        #[command(flatten)]
+        common: CommonExportOptions,
+    },
+    /// Export Bicep file to JSON format
+    Json {
+        #[command(flatten)]
+        common: CommonExportOptions,
 
-    let bicep_file = &args[0];
-    let mut format = "yaml";
-    let mut output_path = None;
-    let mut pretty = false;
+        /// Format JSON with indentation for readability
+        #[arg(short, long, default_value_t = false)]
+        pretty: bool,
+    },
+}
 
-    for arg in &args[1..] {
-        if arg.starts_with("--format=") {
-            format = &arg["--format=".len()..];
-            if format != "yaml" && format != "json" {
-                println!("Error: Invalid format. Must be 'yaml' or 'json'");
-                process::exit(1);
-            }
-        } else if arg.starts_with("--output=") {
-            output_path = Some(&arg["--output=".len()..]);
-        } else if arg == "--pretty" {
-            pretty = true;
-        }
-    }
+/// Common options shared between export formats
+#[derive(Args)]
+struct CommonExportOptions {
+    /// Path to the Bicep file to parse
+    #[arg(value_name = "BICEP_FILE")]
+    input: PathBuf,
 
+    /// Output file path (defaults to input filename with appropriate extension)
+    #[arg(short, long)]
+    output: Option<PathBuf>,
+}
+
+/// Handle the YAML export command
+fn handle_yaml_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>> {
     // Read the Bicep file
-    let source_code = fs::read_to_string(bicep_file)?;
+    let source_code = fs::read_to_string(&common.input)?;
 
     // Parse the Bicep file
     let document = bicep_docs::parse_bicep_document(&source_code)?;
 
     // Determine output path if not provided
-    let output = if let Some(path) = output_path {
-        Path::new(path).to_path_buf()
+    let output_path = if let Some(path) = common.output {
+        path
     } else {
-        let input_path = Path::new(bicep_file);
-        let file_stem = input_path
+        let file_stem = common
+            .input
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("output");
 
-        match format {
-            "yaml" => Path::new(file_stem).with_extension("yaml"),
-            "json" => Path::new(file_stem).with_extension("json"),
-            _ => Path::new(file_stem).with_extension("yaml"),
-        }
+        Path::new(file_stem).with_extension("yaml")
     };
 
     // Export the document
-    match format {
-        "yaml" => {
-            export_bicep_document_to_yaml(&document, &output)?;
-            println!("YAML exported to: {}", output.display());
-        },
-        "json" => {
-            export_bicep_document_to_json(&document, &output, pretty)?;
-            println!("JSON exported to: {}", output.display());
-            if pretty {
-                println!("Output is formatted with indentation.");
-            }
-        },
-        _ => unreachable!(),
+    export_bicep_document_to_yaml(&document, &output_path)?;
+    println!("YAML exported to: {}", output_path.display());
+
+    Ok(())
+}
+
+/// Handle the JSON export command
+fn handle_json_export(common: CommonExportOptions, pretty: bool) -> Result<(), Box<dyn Error>> {
+    // Read the Bicep file
+    let source_code = fs::read_to_string(&common.input)?;
+
+    // Parse the Bicep file
+    let document = bicep_docs::parse_bicep_document(&source_code)?;
+
+    // Determine output path if not provided
+    let output_path = if let Some(path) = common.output {
+        path
+    } else {
+        let file_stem = common
+            .input
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("output");
+
+        Path::new(file_stem).with_extension("json")
+    };
+
+    // Export the document
+    export_bicep_document_to_json(&document, &output_path, pretty)?;
+    println!("JSON exported to: {}", output_path.display());
+    if pretty {
+        println!("Output is formatted with indentation.");
     }
 
     Ok(())
 }
 
 pub fn main() -> Result<(), Box<dyn Error>> {
-    let args: Vec<String> = env::args().collect();
+    let cli = Cli::parse();
 
-    if args.len() < 2 {
-        print_usage();
-        return Ok(());
-    }
-
-    match args[1].as_str() {
-        "export" => handle_export_command(&args[2..])?,
-        "--help" | "-h" => print_usage(),
-        _ => {
-            println!("Error: Unknown command '{}'", args[1]);
-            print_usage();
-            process::exit(1);
-        },
+    match cli.command {
+        Commands::Yaml { common } => handle_yaml_export(common)?,
+        Commands::Json { common, pretty } => handle_json_export(common, pretty)?,
     }
 
     Ok(())
