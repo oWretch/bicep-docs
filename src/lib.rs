@@ -5,6 +5,7 @@ use tree_sitter::{Parser, Tree};
 pub mod exports;
 pub mod parsing;
 
+pub use exports::markdown::MarkdownFormat;
 pub use parsing::{BicepDocument, BicepParserError, BicepType, BicepValue};
 
 /// Parse a bicep file content and return the tree-sitter Tree
@@ -114,6 +115,74 @@ pub fn export_bicep_document_to_json_string(
     exports::json::export_to_string(document, pretty)
 }
 
+/// Export a parsed Bicep document as Markdown to a file
+///
+/// # Arguments
+///
+/// * `document` - The BicepDocument to export
+/// * `output_path` - The path where the Markdown file should be written
+///
+/// # Returns
+///
+/// A Result indicating success or an error
+pub fn export_bicep_document_to_markdown<P: AsRef<Path>>(
+    document: &BicepDocument,
+    output_path: P,
+) -> Result<(), Box<dyn Error>> {
+    exports::markdown::export_to_file(document, output_path)
+}
+
+/// Export a parsed Bicep document as Markdown to a file with specified format
+///
+/// # Arguments
+///
+/// * `document` - The BicepDocument to export
+/// * `output_path` - The path where the Markdown file should be written
+/// * `format` - The format to use for displaying properties (Table or List)
+///
+/// # Returns
+///
+/// A Result indicating success or an error
+pub fn export_bicep_document_to_markdown_with_format<P: AsRef<Path>>(
+    document: &BicepDocument,
+    output_path: P,
+    format: exports::markdown::MarkdownFormat,
+) -> Result<(), Box<dyn Error>> {
+    exports::markdown::export_to_file_with_format(document, output_path, format)
+}
+
+/// Export a parsed Bicep document as Markdown string
+///
+/// # Arguments
+///
+/// * `document` - The BicepDocument to export
+///
+/// # Returns
+///
+/// A Result containing the Markdown string or an error
+pub fn export_bicep_document_to_markdown_string(
+    document: &BicepDocument,
+) -> Result<String, Box<dyn Error>> {
+    exports::markdown::export_to_string(document)
+}
+
+/// Export a parsed Bicep document as Markdown string with specified format
+///
+/// # Arguments
+///
+/// * `document` - The BicepDocument to export
+/// * `format` - The format to use for displaying properties (Table or List)
+///
+/// # Returns
+///
+/// A Result containing the Markdown string or an error
+pub fn export_bicep_document_to_markdown_string_with_format(
+    document: &BicepDocument,
+    format: exports::markdown::MarkdownFormat,
+) -> Result<String, Box<dyn Error>> {
+    exports::markdown::export_to_string_with_format(document, format)
+}
+
 /// Parse a Bicep file and export it as YAML in one step
 ///
 /// # Arguments
@@ -148,4 +217,21 @@ pub fn parse_and_export_to_json<P: AsRef<Path>>(
     pretty: bool,
 ) -> Result<(), Box<dyn Error>> {
     exports::json::parse_and_export(source_code, output_path, pretty)
+}
+
+/// Parse a Bicep file and export it as Markdown in one step
+///
+/// # Arguments
+///
+/// * `file_path` - The path to the Bicep file to parse
+/// * `output_path` - The path where the Markdown file should be written
+///
+/// # Returns
+///
+/// A Result indicating success or an error
+pub fn parse_and_export_to_markdown<P: AsRef<Path>, Q: AsRef<Path>>(
+    file_path: P,
+    output_path: Q,
+) -> Result<(), Box<dyn Error>> {
+    exports::markdown::parse_and_export(file_path, output_path)
 }

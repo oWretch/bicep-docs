@@ -30,7 +30,7 @@ mod parameters;
 mod resources;
 mod types;
 mod variables;
-pub use functions::BicepFunction;
+pub use functions::{BicepFunction, BicepFunctionArgument};
 pub use imports::{parse_module_import, parse_namespace_import, BicepImport, BicepImportSymbol};
 pub use modules::{parse_module_declaration, BicepModule, ModuleSource};
 pub use outputs::{parse_output_declaration, BicepOutput};

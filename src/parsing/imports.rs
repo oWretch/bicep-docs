@@ -28,9 +28,6 @@ pub enum BicepImport {
     ///
     /// Example: `import 'az@1.0.0'` imports the Azure namespace with version 1.0.0
     Namespace {
-        /// Path or source of the import
-        source: ModuleSource,
-
         /// The namespace being imported (e.g., 'az')
         namespace: String,
 
@@ -108,7 +105,6 @@ pub fn parse_namespace_import(
     node: Node,
     source_code: &str,
 ) -> Result<BicepImport, Box<dyn Error>> {
-    let mut source_path = String::new();
     let mut namespace = String::new();
     let mut version: Option<String> = None;
 
@@ -146,7 +142,6 @@ pub fn parse_namespace_import(
                 debug!("Parsed namespace import: {} (no version)", namespace);
             }
 
-            source_path = namespace.clone();
             break;
         }
     }
@@ -157,14 +152,7 @@ pub fn parse_namespace_import(
         )));
     }
 
-    // Parse the source path to get the ModuleSource
-    let source = ModuleSource::parse(&source_path).unwrap_or(ModuleSource::LocalPath(source_path));
-
-    Ok(BicepImport::Namespace {
-        source,
-        namespace,
-        version,
-    })
+    Ok(BicepImport::Namespace { namespace, version })
 }
 
 /// Parses a module import statement.

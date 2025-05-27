@@ -1,0 +1,241 @@
+# Example Bicep File
+
+Description of the example Bicep file
+
+Target Scope: resourceGroup
+
+### Additional Metadata
+
+- **author**: File Author
+
+## Imports
+
+*No imports defined*
+
+## Types
+
+### customObject
+
+Type description
+
+- **Type**: { name: string, score: int, grade: grade }
+- **Exported**: No
+- **Secure**: No
+
+### grade
+
+- **Type**: A | B | C | D | E
+- **Exported**: Yes
+- **Secure**: No
+
+### resourceType
+
+- **Type**: { id: string, name: string, resourceGroup: string }
+- **Exported**: No
+- **Secure**: No
+
+## Functions
+
+### generateName
+
+Generate Name Function
+
+- **Return Type**: string
+- **Exported**: Yes
+
+#### Parameters
+
+- **argument1** (string)
+- **argument2** (int) - Optional
+
+### somethingElse
+
+- **Return Type**: bool
+- **Exported**: No
+
+## Parameters
+
+### requiredParam
+
+This is a required parameter
+
+- **Type**: string
+- **Minimum Length**: 3
+- **Maximum Length**: 10
+
+### optionalParam
+
+This is an optional parameter
+
+- **Type**: string
+- **Nullable**: Yes
+
+### simpleParamWithDefault
+
+- **Type**: int
+- **Default Value**: 100
+- **Minimum Value**: 0
+- **Maximum Value**: 100
+
+### genericObject
+
+I have a description in metadata
+
+- **Type**: object
+- **Default Value**: { name: value, number: 1000 }
+
+#### Metadata
+
+- **name**: A name in metadata
+- **somethingElse**: Another metadata property
+
+### inlineSpecificObject
+
+- **Type**: { property: string, otionalProperty: int, objectProperty: { key1: string, key2: int } }
+
+### typedObjects
+
+- **Type**: customObject[]
+
+### individualOptions
+
+- **Type**: one | two | three
+
+### greekLetter
+
+- **Type**: string
+- **Default Value**: alpha
+- **Allowed Values**: alpha, beta, gamma, delta
+
+### multiLine
+
+- **Type**: string
+- **Default Value**:   
+This is a multi line string.  
+  It covers multiple lines, and has indentation.  
+  It also has a tab character.	And a new line.  
+  It also has a double backslash \\\\ and a single \\  
+  And a single quote: '  
+
+
+## Variables
+
+### nameVar
+
+Variable description
+
+- **Value**: someValue
+- **Exported**: No
+
+### exportedVar
+
+Exported variable description
+
+- **Value**: exportedValue
+- **Exported**: Yes
+
+### boolVar
+
+Boolean variable
+
+- **Value**: true
+- **Exported**: Yes
+
+### numVar
+
+The answer to life, the universe, and everything
+
+- **Value**: 42
+- **Exported**: No
+
+## Resources
+
+### storageAccount
+
+- **Type**: Microsoft.Storage/storageAccounts
+- **API Version**: 2023-04-01
+- **Existing**: Yes
+
+### storageAccount::blobServices
+
+- **Type**: Microsoft.Storage/storageAccounts/blobServices
+- **API Version**: 2023-04-01
+- **Existing**: Yes
+
+### storageAccount::blobServices::container
+
+- **Type**: Microsoft.Storage/storageAccounts/blobServices/containers
+- **API Version**: 2023-04-01
+
+### vnet
+
+- **Type**: Microsoft.Network/virtualNetworks
+- **API Version**: 2021-05-01
+- **Depends On**: roleAssignStorage
+
+### vnet::defaultSubnet
+
+- **Type**: Microsoft.Network/virtualNetworks/subnets
+- **API Version**: 2021-05-01
+
+### vnet::diffApi
+
+- **Type**: Microsoft.Network/virtualNetworks/subnets
+- **API Version**: 2024-05-01
+
+### externalChild
+
+Resource Description
+
+- **Type**: Microsoft.Network/virtualNetworks/subnets
+- **API Version**: 2023-11-01
+- **Parent**: vnet
+- **Condition**: (1 == 1)
+
+### containerLoop
+
+- **Type**: Microsoft.Storage/storageAccounts/blobServices/containers
+- **API Version**: 2024-01-01
+- **Parent**: storageAccount::blobServices
+- **Loop**: for name in ['alice', 'bob', 'charlie']
+- **Batch Size**: 2
+
+### roleAssignStorage
+
+- **Type**: Microsoft.Authorization/roleAssignments
+- **API Version**: 2022-04-01
+- **Scope**: ${storageAccount}
+
+## Modules
+
+*No modules defined*
+
+## Outputs
+
+### one
+
+Output Description
+
+- **Type**: string
+- **Value**: one
+- **Secure**: Yes
+
+### storageAccountOutput
+
+- **Type**: resourceType
+- **Value**: { id: storageAccount.id, name: storageAccount.name, resourceGroup: resourceGroup().name }
+
+### percentage
+
+- **Type**: int
+- **Value**: true ? 50 : 100
+- **Minimum Value**: 0
+- **Maximum Value**: 100
+
+### fib
+
+- **Type**: string[]
+- **Value**: [1, 1, 2, 3, 5, 8]
+- **Minimum Length**: 1
+- **Maximum Length**: 34
+

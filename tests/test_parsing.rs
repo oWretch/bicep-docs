@@ -558,12 +558,10 @@ mod parsing {
             .imports
             .iter()
             .filter(|i| match i {
-                bicep_docs::parsing::BicepImport::Namespace { source, .. } => {
-                    matches!(source, ModuleSource::Registry { .. })
-                },
                 bicep_docs::parsing::BicepImport::Module { source, .. } => {
                     matches!(source, ModuleSource::Registry { .. })
                 },
+                bicep_docs::parsing::BicepImport::Namespace { .. } => false,
             })
             .count();
         assert!(registry_imports > 0, "No registry imports found");
@@ -572,12 +570,10 @@ mod parsing {
             .imports
             .iter()
             .filter(|i| match i {
-                bicep_docs::parsing::BicepImport::Namespace { source, .. } => {
-                    matches!(source, ModuleSource::TypeSpec { .. })
-                },
                 bicep_docs::parsing::BicepImport::Module { source, .. } => {
                     matches!(source, ModuleSource::TypeSpec { .. })
                 },
+                bicep_docs::parsing::BicepImport::Namespace { .. } => false,
             })
             .count();
         assert!(typespec_imports > 0, "No TypeSpec imports found");
