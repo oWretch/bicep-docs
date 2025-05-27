@@ -1,6 +1,7 @@
 use bicep_docs::{
-    export_bicep_document_to_json, export_bicep_document_to_markdown_with_format,
-    export_bicep_document_to_yaml, MarkdownFormat,
+    export_bicep_document_to_asciidoc_with_format, export_bicep_document_to_json,
+    export_bicep_document_to_markdown_with_format, export_bicep_document_to_yaml, AsciiDocFormat,
+    MarkdownFormat,
 };
 use clap::{Args, Parser, Subcommand};
 use std::error::Error;
@@ -27,6 +28,16 @@ enum Commands {
         /// Format for displaying properties (table or list)
         #[arg(short, long, default_value = "table")]
         format: MarkdownFormat,
+
+        #[command(flatten)]
+        common: CommonExportOptions,
+    },
+    /// Export Bicep file to AsciiDoc format
+    #[clap(alias = "adoc")]
+    Asciidoc {
+        /// Format for displaying properties (table or list)
+        #[arg(short, long, default_value = "table")]
+        format: AsciiDocFormat,
 
         #[command(flatten)]
         common: CommonExportOptions,
@@ -157,6 +168,45 @@ fn handle_markdown_export(
     Ok(())
 }
 
+/// Handle the AsciiDoc export command
+fn handle_asciidoc_export(
+    common: CommonExportOptions,
+    format: AsciiDocFormat,
+) -> Result<(), Box<dyn Error>> {
+    // Read the Bicep file
+    let source_code = fs::read_to_string(&common.input)?;
+
+    // Parse the Bicep file
+    let document = bicep_docs::parse_bicep_document(&source_code)?;
+
+    // Determine output path if not provided
+    let output_path = if let Some(path) = common.output {
+        path
+    } else {
+        let file_stem = common
+            .input
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("output");
+
+        Path::new(file_stem).with_extension("adoc")
+    };
+
+    // Export the document with the specified format
+    export_bicep_document_to_asciidoc_with_format(&document, &output_path, format)?;
+    println!(
+        "AsciiDoc exported to: {} (format: {})",
+        output_path.display(),
+        if matches!(format, AsciiDocFormat::Table) {
+            "table"
+        } else {
+            "list"
+        }
+    );
+
+    Ok(())
+}
+
 pub fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
@@ -164,6 +214,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         Commands::Yaml { common } => handle_yaml_export(common)?,
         Commands::Json { common, pretty } => handle_json_export(common, pretty)?,
         Commands::Markdown { common, format } => handle_markdown_export(common, format)?,
+        Commands::Asciidoc { common, format } => handle_asciidoc_export(common, format)?,
     }
 
     Ok(())

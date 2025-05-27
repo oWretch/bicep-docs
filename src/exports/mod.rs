@@ -3,6 +3,7 @@
 /// This module provides various export formats for parsed Bicep documents.
 /// Each export format is implemented in its own submodule to maintain
 /// separation of concerns and make it easy to add new formats.
+pub mod asciidoc;
 pub mod json;
 pub mod markdown;
 pub mod yaml;
@@ -21,4 +22,9 @@ pub use markdown::{
 pub use yaml::{
     export_to_file as export_yaml_to_file, export_to_string as export_yaml_to_string,
     parse_and_export as parse_and_export_yaml,
+};
+
+pub use asciidoc::{
+    export_to_file as export_asciidoc_to_file, export_to_string as export_asciidoc_to_string,
+    parse_and_export as parse_and_export_asciidoc, AsciiDocFormat,
 };
