@@ -166,7 +166,7 @@ mod tests {
         let content = "Line 1\\nLine 2\\nLine 3";
         let key_part = "  description:";
         let result = convert_to_block_scalar(content, key_part);
-        
+
         let expected = "  description: |-\n    Line 1\n    Line 2\n    Line 3";
         assert_eq!(result, expected);
     }
@@ -176,7 +176,7 @@ mod tests {
         let content = "Single line description";
         let key_part = "  description:";
         let result = convert_to_block_scalar(content, key_part);
-        
+
         let expected = "  description: \"Single line description\"";
         assert_eq!(result, expected);
     }
@@ -185,7 +185,7 @@ mod tests {
     fn test_improve_multiline_string_representation() {
         let yaml = r#"field: "Line 1\nLine 2\nLine 3""#;
         let result = improve_multiline_string_representation(yaml);
-        
+
         let expected = "field: |-\n  Line 1\n  Line 2\n  Line 3";
         assert_eq!(result, expected);
     }

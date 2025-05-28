@@ -92,15 +92,17 @@ mod tests {
             modules: IndexMap::new(),
             outputs: IndexMap::new(),
         };
-        
-        document.metadata.insert("test".to_string(), BicepValue::String("value".to_string()));
-        
+
+        document
+            .metadata
+            .insert("test".to_string(), BicepValue::String("value".to_string()));
+
         let result = export_to_string(&document, true);
         assert!(result.is_ok());
-        
+
         let json = result.unwrap();
-        assert!(json.contains("{\n"));  // Pretty-printed should have newlines
-        assert!(json.contains("  "));   // Pretty-printed should have indentation
+        assert!(json.contains("{\n")); // Pretty-printed should have newlines
+        assert!(json.contains("  ")); // Pretty-printed should have indentation
     }
 
     #[test]
@@ -119,11 +121,11 @@ mod tests {
             modules: IndexMap::new(),
             outputs: IndexMap::new(),
         };
-        
+
         let result = export_to_string(&document, false);
         assert!(result.is_ok());
-        
+
         let json = result.unwrap();
-        assert!(!json.contains("\n"));  // Compact should not have newlines
+        assert!(!json.contains("\n")); // Compact should not have newlines
     }
 }
