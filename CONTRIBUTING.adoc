@@ -1,0 +1,76 @@
+= Contributing to Bicep-Docs
+:toc:
+:toc-title: Table of Contents
+:sectnums:
+
+Thank you for your interest in contributing to Bicep-Docs! This project welcomes contributions from the community. Please read the following guidelines to help you get started.
+
+== How to Contribute
+
+. Fork the repository and create your branch from `main`.
+. Make your changes, following the coding standards and best practices outlined in the documentation.
+. Add or update tests as appropriate.
+. Ensure all tests pass by running `cargo test --all-features`.
+. Commit your changes using the Conventional Commits format (see below).
+. Open a pull request (PR) targeting the `main` branch.
+. Participate in the code review process and address any feedback.
+
+== Code Style and Standards
+
+* Follow Rust idioms and best practices.
+* Document all public functions, structs, and modules.
+* Prefer safe code and avoid `unsafe` unless absolutely necessary.
+* Use `cargo fmt` and `cargo clippy` to ensure code quality.
+* Add or update tests for new features and bug fixes.
+
+== Commit Message Linting
+
+This project uses https://commitlint.js.org/[commitlint] to enforce the https://www.conventionalcommits.org/[Conventional Commits] specification for commit messages.
+
+=== Rules
+
+- *type-enum*: Allowed types are `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`
+- *type-case*: Must be lower-case
+- *type-empty*: Must not be empty
+- *scope-case*: Must be lower-case
+- *subject-case*: No restriction
+- *subject-empty*: Must not be empty
+- *subject-full-stop*: No full stop at end
+- *header-max-length*: 100 characters
+- *body-leading-blank*: Required
+- *body-max-line-length*: 100 characters
+- *footer-leading-blank*: Required
+- *footer-max-line-length*: 100 characters
+
+=== Example
+
+[source]
+----
+feat: add support for parsing function decorators
+fix: handle empty parameter lists correctly
+docs: update README with installation instructions
+feat!: change CLI argument structure
+
+BREAKING CHANGE: The --output flag has been renamed to --format
+----
+
+== Pull Request Checklist
+
+* [ ] All code builds and tests pass locally
+* [ ] Code is formatted with `cargo fmt`
+* [ ] No `clippy` warnings
+* [ ] Commit messages follow Conventional Commits
+* [ ] Documentation is updated as needed
+* [ ] PR includes tests for new/changed behavior
+
+== Reporting Issues
+
+If you find a bug or have a feature request, please open a GitHub Issue. Include as much detail as possible, including steps to reproduce, expected behavior, and relevant logs or code snippets.
+
+== Code of Conduct
+
+This project follows the Contributor Covenant Code of Conduct. Be respectful and inclusive in all interactions.
+
+== Questions?
+
+If you have any questions, feel free to open an issue or start a discussion in the repository.

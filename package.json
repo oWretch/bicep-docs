@@ -1,0 +1,31 @@
+{
+  "name": "bicep-docs",
+  "description": "Documentation generator for Azure Bicep files",
+  "version": "0.0.0-dev",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oWretch/bicep-docs.git"
+  },
+  "license": "MPL-2.0",
+  "author": "Jerome Brown <Jerome@SoliDeoGloria.tech>",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "semantic-release": "semantic-release",
+    "semantic-release:dry-run": "semantic-release --dry-run",
+    "commit": "git-cz",
+    "prepare": "husky install || true"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.0",
+    "@semantic-release/exec": "7.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.0",
+    "@semantic-release/release-notes-generator": "^14.0.1",
+    "semantic-release": "^24.0.0",
+    "semantic-release-major-tag": "0.3.2"
+  }
+}

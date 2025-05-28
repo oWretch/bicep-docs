@@ -6,6 +6,16 @@ description = "Documentation generator for Azure Bicep files"
 authors = ["Jerome Brown <Jerome@SoliDeoGloria.tech>"]
 license = "MPL-2.0"
 default-run = "bicep-docs"
+exclude = [
+  ".github",
+  ".gitignore",
+  ".releaserc.json",
+  "commitlint.config.js",
+  "node_modules",
+  "package.json",
+  "package-lock.json",
+  "rustfmt.toml",
+]
 
 [dependencies]
 anyhow = "1.0"

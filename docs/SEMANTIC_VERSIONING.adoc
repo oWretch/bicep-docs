@@ -1,0 +1,166 @@
+= Semantic Versioning and Release Process
+:toc:
+:toc-title: Table of Contents
+:sectnums:
+
+This project uses https://github.com/semantic-release/semantic-release[semantic-release] with the https://github.com/semantic-release-cargo/semantic-release-cargo[semantic-release-cargo] plugin to automate version management and releases.
+
+== Commit Message Format
+
+This project follows the https://www.conventionalcommits.org/[Conventional Commits] specification. All commit messages must be formatted as:
+
+[source]
+----
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+----
+
+=== Types
+
+* feat: A new feature (triggers a minor release)
+* fix: A bug fix (triggers a patch release)
+* docs: Documentation only changes (triggers a patch release)
+* style: Changes that do not affect the meaning of the code (triggers a patch release)
+* refactor: A code change that neither fixes a bug nor adds a feature (triggers a patch release)
+* perf: A code change that improves performance (triggers a patch release)
+* test: Adding missing tests or correcting existing tests (triggers a patch release)
+* build: Changes that affect the build system or external dependencies (triggers a patch release)
+* ci: Changes to CI configuration files and scripts (triggers a patch release)
+* chore: Other changes that don't modify src or test files (no release)
+* revert: Reverts a previous commit (triggers a patch release)
+
+=== Breaking Changes
+
+To trigger a major release, include `BREAKING CHANGE:` in the footer or add `!` after the type:
+
+[source]
+----
+feat!: remove deprecated API
+----
+
+or
+
+[source]
+----
+feat: add new API
+
+BREAKING CHANGE: The old API has been removed
+----
+
+=== Examples
+
+[source]
+----
+feat: add support for parsing function decorators
+fix: handle empty parameter lists correctly
+docs: update README with installation instructions
+feat!: change CLI argument structure
+
+BREAKING CHANGE: The --output flag has been renamed to --format
+----
+
+== Release Process
+
+=== Automatic Releases
+
+Releases are triggered automatically when code is pushed to the following branches:
+
+* main: Production releases (1.0.0, 1.1.0, 1.2.0)
+* next: Pre-releases (1.1.0-next.1, 1.1.0-next.2)
+
+Note: This project uses semantic-release's default branch configuration.
+
+=== Manual Releases
+
+You can also trigger a manual release by:
+
+. Going to the Actions tab in GitHub
+. Selecting the "Release" workflow
+. Clicking "Run workflow"
+
+=== What Happens During Release
+
+. Version Calculation: Based on commit messages since the last release
+. Changelog Generation: Automatic changelog generation from commit messages
+. Version Bump: Updates version in `Cargo.toml`
+. Git Tag: Creates a new git tag with the version
+. GitHub Release: Creates a GitHub release with release notes
+. Crate Publishing: Publishes the crate to crates.io (if configured)
+. Binary Artifacts: Uploads compiled binaries for multiple platforms
+
+== Configuration Files
+
+* `.releaserc.js`: Main semantic-release configuration
+* `package.json`: Node.js dependencies and release configuration
+* `commitlint.config.js`: Commit message linting rules
+* `.github/workflows/release.yml`: Release automation workflow
+* `.github/workflows/ci.yml`: Continuous integration workflow
+
+== Setup Requirements
+
+=== For Contributors
+
+No special setup required. Just follow the commit message format.
+
+=== For Maintainers
+
+To enable automatic publishing to crates.io, add the following secrets to your GitHub repository:
+
+. `CARGO_REGISTRY_TOKEN`: Your crates.io API token
+.. Go to https://crates.io/me
+.. Generate a new token with "Publish new crates" permission
+.. Add it as a repository secret in GitHub
+. `GITHUB_TOKEN`: Automatically provided by GitHub Actions
+
+== Development Workflow
+
+. Feature Development: Create feature branches from `main`
+. Pull Requests: Target `main` branch (CI will run automatically)
+. Testing: All PRs to main are automatically tested
+. Commit Validation: Commit messages are validated in PRs
+. Merge to main: Triggers production release
+. Merge to next: Triggers pre-release (if using next branch)
+
+== Version Schema
+
+This project follows https://semver.org/[Semantic Versioning]:
+
+* MAJOR (X.0.0): Breaking changes
+* MINOR (0.X.0): New features (backward compatible)
+* PATCH (0.0.X): Bug fixes (backward compatible)
+* PRE-RELEASE (0.0.0-alpha.1): Development versions
+
+== Troubleshooting
+
+=== Release Failed
+
+Check the GitHub Actions logs for:
+
+* Build failures
+* Test failures
+* Authentication issues
+* Network problems
+
+=== Commit Message Rejected
+
+Ensure your commit message follows the conventional format:
+
+[source,bash]
+----
+# Good
+git commit -m "feat: add new parsing feature"
+
+# Bad
+git commit -m "Added new feature"
+----
+
+=== Version Not Bumped
+
+Check that your commits include types that trigger releases:
+
+* Use `feat:` for new features
+* Use `fix:` for bug fixes
+* Avoid `chore:` for user-facing changes

@@ -1,0 +1,27 @@
+= Changelog
+:toc:
+:toc-title: Table of Contents
+:sectnums:
+
+All notable changes to this project will be documented in this file.
+
+The format is based on https://keepachangelog.com/en/1.0.0/[Keep a Changelog],
+and this project adheres to https://semver.org/spec/v2.0.0.html[Semantic Versioning].
+
+== Unreleased
+
+=== Added
+
+* Initial project setup
+* Bicep file parsing and documentation generation
+* Support for multiple output formats (Markdown, YAML, AsciiDoc, JSON)
+* Tree-sitter based parsing
+* Comprehensive type system support
+
+=== Changed
+
+* Project now uses semantic versioning with automated releases
+
+=== Fixed
+
+* Various parsing improvements and bug fixes
