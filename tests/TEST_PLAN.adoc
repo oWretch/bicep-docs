@@ -1,0 +1,59 @@
+= Test Plan
+:toc:
+:toc-title: Table of Contents
+:sectnums:
+
+This document outlines the test plan for the Bicep-Docs project.
+
+== Overview
+
+The test plan covers unit, integration, and property-based testing for the Rust-based Bicep parser and documentation generator.
+
+== Test Types
+
+=== Unit Tests
+
+* Test each parsing function independently
+* Include edge cases and error conditions
+* Use descriptive test names
+
+=== Integration Tests
+
+* Test complete file parsing
+* Validate output format
+* Test with real Bicep files
+
+=== Property Testing
+
+* Use property-based testing for complex parsing logic
+* Verify round-trip serialization/deserialization
+
+== Test Coverage
+
+* Parameters parsing
+* Resources parsing
+* Types parsing
+* Variables parsing
+* Functions parsing
+* Modules parsing
+* Outputs parsing
+* Imports parsing
+* Decorator handling
+* Error handling and reporting
+
+== Test Execution
+
+[source,bash]
+----
+cargo test --all-features
+----
+
+== Continuous Integration
+
+* All tests are run automatically on pull requests to `main`
+* Linting and formatting checks are enforced
+
+== Reporting Issues
+
+* Report test failures or missing coverage via GitHub Issues
+* Include test case details and reproduction steps

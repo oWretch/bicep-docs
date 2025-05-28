@@ -1,0 +1,56 @@
+= Bicep Docs
+:toc:
+:toc-title: Table of Contents
+:sectnums:
+
+A documentation generator for Azure Bicep files, similar to terraform-docs.
+
+== Overview
+
+This library uses the tree-sitter grammar for Azure Bicep files to parse and generate a YAML representation of the Abstract Syntax Tree (AST). This can be used to analyze Bicep files programmatically, extract documentation, or perform other operations based on the structure of Bicep files.
+
+== Installation
+
+The package is available on crates.io:
+
+[source,bash]
+----
+cargo add bicep-docs
+----
+
+== Usage
+
+=== Command Line
+
+==== AST Export Tool
+
+The enhanced AST export tool (`ast_export_clap`) allows you to export the Abstract Syntax Tree of a Bicep file in various formats with many options for filtering and analyzing the structure:
+
+[source,bash]
+----
+# Export AST to YAML (default)
+cargo run --bin ast_export_clap -- path/to/your/bicep_file.bicep
+
+# Show only statistics about the AST
+cargo run --bin ast_export_clap -- --stats path/to/your/bicep_file.bicep
+
+# Export AST to JSON
+cargo run --bin ast_export_clap -- --format json path/to/your/bicep_file.bicep
+
+# Export a simplified tree format (more concise)
+cargo run --bin ast_export_clap -- --format simpletree path/to/your/bicep_file.bicep
+
+# Filter by node type (e.g., only resource declarations)
+cargo run --bin ast_export_clap -- --type-filter resource_declaration path/to/your/bicep_file.bicep
+
+# Show tree structure visualization
+cargo run --bin ast_export_clap -- --structure path/to/your/bicep_file.bicep
+
+# Filter by line number
+cargo run --bin ast_export_clap -- --line 10 path/to/your/bicep_file.bicep
+
+# Get help and examples
+cargo run --bin ast_export_clap -- --help-examples
+cargo run --bin ast_export_clap -- --help-node-types
+cargo run --bin ast_export_clap -- --help-field-names
+----
