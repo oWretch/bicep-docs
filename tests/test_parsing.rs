@@ -22,9 +22,10 @@ mod parsing {
     fn parse_test_bicep_file(filename: &str) -> BicepDocument {
         let test_path = Path::new("tests").join("parsing").join(filename);
         let content = fs::read_to_string(test_path)
-            .expect(&format!("Failed to read test file: {}", filename));
+            .unwrap_or_else(|_| panic!("Failed to read test file: {}", filename));
 
-        parse_bicep_document(&content).expect(&format!("Failed to parse bicep file: {}", filename))
+        parse_bicep_document(&content)
+            .unwrap_or_else(|_| panic!("Failed to parse bicep file: {}", filename))
     }
 
     #[test]
@@ -290,22 +291,28 @@ mod parsing {
         // Check metadata types if they exist
         if let Some(value) = doc.metadata.get("name") {
             match value {
-                BicepValue::String(_) => assert!(true, "Name metadata is a string value"),
-                _ => assert!(false, "Expected name metadata to be a string value"),
+                BicepValue::String(_) => {
+                    // Name metadata is a string value - test passes
+                },
+                _ => panic!("Expected name metadata to be a string value"),
             }
         }
 
         if let Some(value) = doc.metadata.get("count") {
             match value {
-                BicepValue::Int(_) => assert!(true, "Count metadata is a number value"),
-                _ => assert!(false, "Expected count metadata to be a number value"),
+                BicepValue::Int(_) => {
+                    // Count metadata is a number value - test passes
+                },
+                _ => panic!("Expected count metadata to be a number value"),
             }
         }
 
         if let Some(value) = doc.metadata.get("enabled") {
             match value {
-                BicepValue::Bool(_) => assert!(true, "Enabled metadata is a boolean value"),
-                _ => assert!(false, "Expected enabled metadata to be a boolean value"),
+                BicepValue::Bool(_) => {
+                    // Enabled metadata is a boolean value - test passes
+                },
+                _ => panic!("Expected enabled metadata to be a boolean value"),
             }
         }
     }

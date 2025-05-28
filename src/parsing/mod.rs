@@ -1520,8 +1520,36 @@ fn parse_metadata(node: Node, source_code: &str) -> (String, Option<BicepValue>)
                     Err(e) => warn!("Could not parse value of metadata {}: {}", name, e),
                 }
             },
+            "object" => {
+                // Handle object values in metadata
+                match parse_object_properties_for_value(child, source_code) {
+                    Ok(properties) => value = Some(BicepValue::Object(properties)),
+                    Err(e) => warn!("Could not parse object value for metadata {}: {}", name, e),
+                }
+            },
+            "array" => {
+                // Handle array values in metadata
+                match parse_array_items(child, source_code) {
+                    Ok(items) => value = Some(BicepValue::Array(items)),
+                    Err(e) => warn!("Could not parse array value for metadata {}: {}", name, e),
+                }
+            },
+            "=" | "metadata" => {
+                // Skip the equals sign and metadata keyword
+                continue;
+            },
             _ => {
-                warn!("Unknown metadata value type {}", child.kind())
+                // Try to parse as a general value node
+                match parse_value_node(child, source_code) {
+                    Ok(Some(parsed_value)) => value = Some(parsed_value),
+                    Ok(None) => {
+                        // No value parsed, but no error - continue
+                        continue;
+                    },
+                    Err(_) => {
+                        warn!("Unknown metadata value type {}", child.kind());
+                    },
+                }
             },
         }
     }
@@ -1861,6 +1889,11 @@ pub(crate) fn parse_type_node(
             // Handle node directly if it's a type specification
             "type" => {
                 return parse_type_node(child, source_code);
+            },
+            "member_expression" => {
+                // Handle qualified type references like types.environmentCodes
+                let type_name = get_node_text(child, source_code);
+                return Ok((BicepType::CustomType(type_name), false));
             },
             _ => {
                 // Don't immediately error - check if any other children match

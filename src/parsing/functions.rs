@@ -173,6 +173,13 @@ fn process_function_decorators(
                     debug!("Function {} has metadata", function_name);
                 }
             },
+            "description" | "sys.description" => {
+                // Handle description decorator by adding it to metadata
+                if let BicepValue::String(desc) = &decorator.argument {
+                    metadata.insert("description".to_string(), BicepValue::String(desc.clone()));
+                    debug!("Function {} has description: {}", function_name, desc);
+                }
+            },
             _ => {
                 warn!(
                     "Unknown decorator {} on function {}",

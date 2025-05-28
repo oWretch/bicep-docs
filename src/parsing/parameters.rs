@@ -299,6 +299,10 @@ fn process_parameter_decorators(
 ) -> Result<(), Box<dyn Error>> {
     for decorator in decorators {
         match decorator.name.as_str() {
+            "description" | "sys.description" => {
+                // Description is already handled by extract_description_from_decorators
+                // This case prevents the "unknown decorator" warning
+            },
             "allowed" | "sys.allowed" => {
                 parameter.allowed_values = parse_allowed_values(&decorator.argument)?;
             },

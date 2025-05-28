@@ -40,7 +40,7 @@ struct Cli {
 /// Available commands
 #[derive(Subcommand)]
 enum Commands {
-    /// Export Bicep file to Markdown format
+    /// Document Bicep file in Markdown format
     #[clap(alias = "md")]
     Markdown {
         /// Format for displaying properties (table or list)
@@ -50,7 +50,7 @@ enum Commands {
         #[command(flatten)]
         common: CommonExportOptions,
     },
-    /// Export Bicep file to AsciiDoc format
+    /// Document Bicep file in AsciiDoc format
     #[clap(alias = "adoc")]
     Asciidoc {
         /// Format for displaying properties (table or list)
@@ -60,12 +60,12 @@ enum Commands {
         #[command(flatten)]
         common: CommonExportOptions,
     },
-    /// Export Bicep file to YAML format
+    /// Document Bicep file in YAML format
     Yaml {
         #[command(flatten)]
         common: CommonExportOptions,
     },
-    /// Export Bicep file to JSON format
+    /// Document Bicep file in JSON format
     Json {
         #[command(flatten)]
         common: CommonExportOptions,

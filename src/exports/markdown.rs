@@ -11,18 +11,13 @@ use crate::parsing::{
 };
 
 /// Format options for markdown output
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum MarkdownFormat {
     /// Use tables for displaying properties (default)
+    #[default]
     Table,
     /// Use lists for displaying properties
     List,
-}
-
-impl Default for MarkdownFormat {
-    fn default() -> Self {
-        MarkdownFormat::Table
-    }
 }
 
 impl std::str::FromStr for MarkdownFormat {
@@ -156,18 +151,12 @@ pub fn export_to_string_with_format(
         let namespace_imports: Vec<_> = document
             .imports
             .iter()
-            .filter_map(|imp| match imp {
-                BicepImport::Namespace { .. } => Some(imp),
-                _ => None,
-            })
+            .filter(|imp| matches!(imp, BicepImport::Namespace { .. }))
             .collect();
         let module_imports: Vec<_> = document
             .imports
             .iter()
-            .filter_map(|imp| match imp {
-                BicepImport::Module { .. } => Some(imp),
-                _ => None,
-            })
+            .filter(|imp| matches!(imp, BicepImport::Module { .. }))
             .collect();
 
         if !namespace_imports.is_empty() {
@@ -710,6 +699,7 @@ fn generate_outputs_section(
 }
 
 /// Format a BicepValue for display in markdown with format awareness
+#[allow(clippy::only_used_in_recursion)]
 fn format_bicep_value_with_format(value: &BicepValue, format: MarkdownFormat) -> String {
     match value {
         BicepValue::String(s) => s.clone(),
@@ -903,10 +893,12 @@ mod tests {
 
     #[test]
     fn test_export_to_string_basic() {
-        let mut document = BicepDocument::default();
-        document.name = Some("Test Template".to_string());
-        document.description = Some("A test template for unit testing".to_string());
-        document.target_scope = Some("resourceGroup".to_string());
+        let document = BicepDocument {
+            name: Some("Test Template".to_string()),
+            description: Some("A test template for unit testing".to_string()),
+            target_scope: Some("resourceGroup".to_string()),
+            ..Default::default()
+        };
 
         let result = export_to_string(&document);
         assert!(result.is_ok());
@@ -919,14 +911,17 @@ mod tests {
 
     #[test]
     fn test_export_to_string_with_parameters() {
-        let mut document = BicepDocument::default();
-        document.name = Some("Test Template".to_string());
+        let parameter = BicepParameter {
+            parameter_type: BicepType::String,
+            description: Some("Test parameter".to_string()),
+            default_value: Some(BicepValue::String("default".to_string())),
+            ..Default::default()
+        };
 
-        let mut parameter = BicepParameter::default();
-        parameter.parameter_type = BicepType::String;
-        parameter.description = Some("Test parameter".to_string());
-        parameter.default_value = Some(BicepValue::String("default".to_string()));
-
+        let mut document = BicepDocument {
+            name: Some("Test Template".to_string()),
+            ..Default::default()
+        };
         document
             .parameters
             .insert("testParam".to_string(), parameter);

@@ -1,6 +1,6 @@
 [package]
 name = "bicep-docs"
-version = "0.1.0"
+version = "0.0.0-dev" # Controlled by semantic versioning in CI
 edition = "2021"
 description = "Documentation generator for Azure Bicep files"
 authors = ["Jerome Brown <Jerome@SoliDeoGloria.tech>"]
@@ -12,17 +12,26 @@ anyhow = "1.0"
 clap = { version = "4.4", features = ["derive"] }
 indexmap = { version = "2.1", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
 serde_json = "1.0"
 serde_with = "3.0"
+serde_yaml = "0.9"
 tracing = { version = "0.1", features = ["attributes"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "time", "registry"] }
 tree-sitter = "0.25"
-tree-sitter-bicep = { git = "https://github.com/tree-sitter-grammars/tree-sitter-bicep.git", tag = "v1.1.0" }
+# tree-sitter-bicep = { git = "https://github.com/tree-sitter-grammars/tree-sitter-bicep.git", tag = "v1.1.0" }
+tree-sitter-bicep = { git = "https://github.com/oWretch/tree-sitter-bicep.git", branch = "f/extension" }
 
 [[bin]]
 name = "bicep-docs"
 path = "src/bin/bicep_docs.rs"
+
+[[bin]]
+name = "export-ast"
+path = "src/bin/export_ast.rs"
+test = false
+doctest = false
+bench = false
+doc = false
 
 [profile.release]
 codegen-units = 1

@@ -355,12 +355,10 @@ fn generate_node_paths(node: &mut NodeSerialized, current_path: &str) {
     // Generate path for this node
     let my_path = if current_path.is_empty() {
         node.kind.clone()
+    } else if let Some(field_name) = &node.field_name {
+        format!("{}:{}.{}", current_path, field_name, node.kind)
     } else {
-        if let Some(field_name) = &node.field_name {
-            format!("{}:{}.{}", current_path, field_name, node.kind)
-        } else {
-            format!("{}.{}", current_path, node.kind)
-        }
+        format!("{}.{}", current_path, node.kind)
     };
 
     // Set this node's path
@@ -1039,8 +1037,7 @@ fn serialize_node(
     cursor.reset(*node);
 
     // Second pass - create child nodes with field names
-    let mut i = 0;
-    for child in node.children(&mut cursor) {
+    for (i, child) in node.children(&mut cursor).enumerate() {
         let field = if i < child_field_names.len() {
             child_field_names[i].clone()
         } else {
@@ -1051,8 +1048,6 @@ fn serialize_node(
         let mut child_node = serialize_node(&child, source_code, compact_mode);
         child_node.field_name = field;
         children.push(child_node);
-
-        i += 1;
     }
 
     // Extract node text from source code (if not in compact mode)
