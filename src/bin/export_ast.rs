@@ -9,6 +9,12 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use tracing::{debug, error, info, trace, warn, Level};
+use tracing_subscriber::{
+    filter::EnvFilter,
+    fmt::{self, format::FmtSpan},
+    prelude::*,
+};
 
 /// Output format options for the AST
 #[derive(ValueEnum, Debug, Clone, Copy)]
@@ -31,6 +37,18 @@ enum OutputFormat {
     --help-field-names to see common field names in the Bicep AST."
 )]
 struct CliArgs {
+    /// Set the verbosity level of output (v: debug, vv: trace)
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    verbose: u8,
+
+    /// Don't show any logging output
+    #[arg(short, long)]
+    quiet: bool,
+
+    /// Output logs as JSON
+    #[arg(long)]
+    json: bool,
+
     /// Path to the Bicep file to parse
     #[arg(required_unless_present_any = ["help_examples", "help_node_types", "help_field_names"], help = "Path to the Bicep file to parse")]
     input_file: Option<String>,
@@ -69,7 +87,7 @@ struct CliArgs {
 
     /// Show tree structure visualization of node hierarchy
     #[arg(
-        short = 'v',
+        short = 'r',
         long,
         help = "Show tree structure visualization of node hierarchy"
     )]
@@ -387,7 +405,7 @@ fn visualize_tree_structure(
     };
 
     // Print this node
-    println!("{}{}", this_prefix, display_name);
+    info!("{}{}", this_prefix, display_name);
 
     // Determine the next level's prefix
     let next_prefix = if is_last {
@@ -518,95 +536,95 @@ fn count_nodes_by_line(node: &NodeSerialized, counts: &mut HashMap<usize, usize>
 
 /// Display usage examples for the command line tool
 fn display_examples() {
-    println!("\nExamples:");
-    println!("  # Export AST to default YAML file");
-    println!("  ast_export_clap example.bicep");
-    println!();
-    println!("  # Export to JSON format");
-    println!("  ast_export_clap -f json example.bicep");
-    println!();
-    println!("  # Export to simplified tree format (more compact)");
-    println!("  ast_export_clap -f simpletree example.bicep");
-    println!();
-    println!("  # Show only statistics");
-    println!("  ast_export_clap --stats example.bicep");
-    println!();
-    println!("  # Filter by node type");
-    println!("  ast_export_clap -t resource_declaration example.bicep");
-    println!();
-    println!("  # Show tree structure visualization");
-    println!("  ast_export_clap --structure example.bicep");
-    println!();
-    println!("  # Filter nodes at a specific line");
-    println!("  ast_export_clap -l 10 example.bicep");
-    println!();
-    println!("  # Show compact output (exclude full node text)");
-    println!("  ast_export_clap -c example.bicep");
-    println!();
-    println!("  # Filter nodes with a specific field name");
-    println!("  ast_export_clap --field-filter name example.bicep");
-    println!();
-    println!("  # Include AST paths in output");
-    println!("  ast_export_clap --include-path example.bicep");
-    println!();
-    println!("  # Limit output to specific number of nodes");
-    println!("  ast_export_clap --max-nodes 100 example.bicep");
+    info!("\nExamples:");
+    info!("  # Export AST to default YAML file");
+    info!("  ast_export_clap example.bicep");
+    info!("");
+    info!("  # Export to JSON format");
+    info!("  ast_export_clap -f json example.bicep");
+    info!("");
+    info!("  # Export to simplified tree format (more compact)");
+    info!("  ast_export_clap -f simpletree example.bicep");
+    info!("");
+    info!("  # Show only statistics");
+    info!("  ast_export_clap --stats example.bicep");
+    info!("");
+    info!("  # Filter by node type");
+    info!("  ast_export_clap -t resource_declaration example.bicep");
+    info!("");
+    info!("  # Show tree structure visualization");
+    info!("  ast_export_clap --structure example.bicep");
+    info!("");
+    info!("  # Filter nodes at a specific line");
+    info!("  ast_export_clap -l 10 example.bicep");
+    info!("");
+    info!("  # Show compact output (exclude full node text)");
+    info!("  ast_export_clap -c example.bicep");
+    info!("");
+    info!("  # Filter nodes with a specific field name");
+    info!("  ast_export_clap --field-filter name example.bicep");
+    info!("");
+    info!("  # Include AST paths in output");
+    info!("  ast_export_clap --include-path example.bicep");
+    info!("");
+    info!("  # Limit output to specific number of nodes");
+    info!("  ast_export_clap --max-nodes 100 example.bicep");
 }
 
 /// Display information about common node types in the Bicep AST
 fn display_node_types_help() {
-    println!("\nCommon Bicep AST Node Types:");
-    println!("---------------------------");
-    println!("  infrastructure         - Root node of the entire AST");
-    println!("  metadata_declaration   - Metadata statements");
-    println!("  parameter_declaration  - Parameter declarations");
-    println!("  variable_declaration   - Variable declarations");
-    println!("  resource_declaration   - Resource declarations");
-    println!("  output_declaration     - Output declarations");
-    println!("  type_declaration       - Type declarations");
-    println!("  function_declaration   - Function declarations");
-    println!("  object                 - Object literal expressions");
-    println!("  array                  - Array literal expressions");
-    println!("  property               - Object property");
-    println!("  string_literal         - String literal value");
-    println!("  numeric_literal        - Numeric literal value");
-    println!("  boolean_literal        - Boolean literal value");
-    println!("  decorator              - Decorator (e.g., @secure())");
-    println!("  decorator_expression   - Expression used in a decorator");
-    println!();
-    println!("  Use --type-filter to filter nodes by these types");
-    println!("  For example: ast_export_clap --type-filter resource_declaration example.bicep");
+    info!("\nCommon Bicep AST Node Types:");
+    info!("---------------------------");
+    info!("  infrastructure         - Root node of the entire AST");
+    info!("  metadata_declaration   - Metadata statements");
+    info!("  parameter_declaration  - Parameter declarations");
+    info!("  variable_declaration   - Variable declarations");
+    info!("  resource_declaration   - Resource declarations");
+    info!("  output_declaration     - Output declarations");
+    info!("  type_declaration       - Type declarations");
+    info!("  function_declaration   - Function declarations");
+    info!("  object                 - Object literal expressions");
+    info!("  array                  - Array literal expressions");
+    info!("  property               - Object property");
+    info!("  string_literal         - String literal value");
+    info!("  numeric_literal        - Numeric literal value");
+    info!("  boolean_literal        - Boolean literal value");
+    info!("  decorator              - Decorator (e.g., @secure())");
+    info!("  decorator_expression   - Expression used in a decorator");
+    info!("");
+    info!("  Use --type-filter to filter nodes by these types");
+    info!("  For example: ast_export_clap --type-filter resource_declaration example.bicep");
 }
 
 /// Display information about common field names in the Bicep AST
 fn display_field_names_help() {
-    println!("\nCommon Bicep AST Field Names:");
-    println!("----------------------------");
-    println!("  name           - Name of declarations or properties");
-    println!("  value          - Value of properties or variables");
-    println!("  type           - Type specifier in parameters/variables");
-    println!("  resource_type  - Type string in resource declarations");
-    println!("  api_version    - API version in resource declarations");
-    println!("  properties     - Properties section in resources");
-    println!("  parent         - Parent reference in resources");
-    println!("  scope          - Scope reference in resources");
-    println!("  condition      - Condition expression in conditional resources");
-    println!("  decorator      - For decorator nodes");
-    println!();
-    println!("  Use --field-filter to filter nodes with specific field names");
-    println!("  For example: ast_export_clap --field-filter name example.bicep");
+    info!("\nCommon Bicep AST Field Names:");
+    info!("----------------------------");
+    info!("  name           - Name of declarations or properties");
+    info!("  value          - Value of properties or variables");
+    info!("  type           - Type specifier in parameters/variables");
+    info!("  resource_type  - Type string in resource declarations");
+    info!("  api_version    - API version in resource declarations");
+    info!("  properties     - Properties section in resources");
+    info!("  parent         - Parent reference in resources");
+    info!("  scope          - Scope reference in resources");
+    info!("  condition      - Condition expression in conditional resources");
+    info!("  decorator      - For decorator nodes");
+    info!("");
+    info!("  Use --field-filter to filter nodes with specific field names");
+    info!("  For example: ast_export_clap --field-filter name example.bicep");
 }
 
 /// Generate a very brief tree structure visualization (just top-level nodes)
 fn generate_brief_structure(node: &NodeSerialized) {
-    println!("\nBrief AST Structure:");
-    println!("-----------------");
-    println!("Root: {} ({} nodes)", node.kind, count_nodes(node));
+    info!("\nBrief AST Structure:");
+    info!("-----------------");
+    info!("Root: {} ({} nodes)", node.kind, count_nodes(node));
 
     // Show all top-level declarations
     for (i, child) in node.children.iter().enumerate() {
         if i >= 15 {
-            println!(
+            info!(
                 "└── ... and {} more top-level nodes",
                 node.children.len() - 15
             );
@@ -629,15 +647,58 @@ fn generate_brief_structure(node: &NodeSerialized) {
             format!("{} (Line {})", child.kind, child.start_position.row + 1)
         };
 
-        println!("{}{}", prefix, display_name);
+        info!("{}{}", prefix, display_name);
     }
-    println!();
+    info!("");
+}
+
+/// Configure the tracing subscriber based on command line options
+fn setup_tracing(verbose: u8, quiet: bool, json: bool) {
+    // Set default filter level based on verbosity
+    let filter_level = match (verbose, quiet) {
+        (_, true) => Level::ERROR, // When quiet is enabled, only show errors
+        (0, _) => Level::INFO,     // Default: show info and above
+        (1, _) => Level::DEBUG,    // With -v: show debug and above
+        (_, _) => Level::TRACE,    // With -vv or more: show everything
+    };
+
+    let filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new(""))
+        .add_directive(filter_level.into());
+
+    // Configure formatting based on user preferences
+    if json {
+        // Use JSON formatter
+        tracing_subscriber::registry()
+            .with(filter)
+            .with(
+                fmt::Layer::default()
+                    .json()
+                    .with_target(true)
+                    .with_span_events(FmtSpan::CLOSE),
+            )
+            .init();
+    } else {
+        // Use human-readable formatter with color support
+        tracing_subscriber::registry()
+            .with(filter)
+            .with(
+                fmt::Layer::default()
+                    .with_target(true)
+                    .with_span_events(FmtSpan::CLOSE)
+                    .with_timer(fmt::time::time()),
+            )
+            .init();
+    }
 }
 
 /// Main entry point for the Bicep AST export tool
 fn main() -> Result<(), Box<dyn Error>> {
     // Parse command line arguments using clap
     let args = CliArgs::parse();
+
+    // Setup tracing with the appropriate verbosity
+    setup_tracing(args.verbose, args.quiet, args.json);
 
     // Check if we need to show help information
     if args.help_examples {
@@ -664,6 +725,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let compact_mode = args.compact;
     let output_format = args.format;
 
+    debug!("Processing file: {}", input_file);
+    trace!("Stats only: {}", stats_only);
+    trace!("Filter type: {:?}", filter_type);
+    trace!("Filter path: {:?}", filter_path);
+    trace!("Filter line: {:?}", filter_line);
+    trace!("Compact mode: {}", compact_mode);
+    trace!("Output format: {:?}", output_format);
+
     // Determine output file name
     let output_file = match args.output_file {
         Some(path) => path.to_string_lossy().to_string(),
@@ -679,72 +748,102 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         },
     };
+    debug!("Output will be written to: {}", output_file);
 
     // Read and parse the input file
-    println!("Reading Bicep file: {}", input_file);
-    let source_code = fs::read_to_string(input_file)
-        .map_err(|e| format!("Failed to read file {}: {}", input_file, e))?;
+    info!("Reading Bicep file: {}", input_file);
+    let source_code = fs::read_to_string(input_file).map_err(|e| {
+        error!("Failed to read file {}: {}", input_file, e);
+        format!("Failed to read file {}: {}", input_file, e)
+    })?;
+    debug!("Read {} bytes from file", source_code.len());
 
-    println!("Parsing Bicep file...");
-    let tree = parse_bicep_file(&source_code)
-        .ok_or_else(|| format!("Failed to parse file {} as valid Bicep", input_file))?;
+    info!("Parsing Bicep file...");
+    let tree = parse_bicep_file(&source_code).ok_or_else(|| {
+        error!("Failed to parse file {} as valid Bicep", input_file);
+        format!("Failed to parse file {} as valid Bicep", input_file)
+    })?;
+    debug!("Successfully parsed file");
 
     // Convert the tree to a serializable format
-    println!("Converting to serializable format...");
+    info!("Converting to serializable format...");
     let root_node = tree.root_node();
     let mut serialized = serialize_node(&root_node, &source_code, compact_mode);
+    debug!("Tree converted with {} nodes", count_nodes(&serialized));
 
     // Apply line filter if requested
     if let Some(line) = filter_line {
+        debug!("Applying line filter: {}", line);
         if let Some(filtered) = filter_nodes_by_line(&serialized, line) {
             serialized = filtered;
+            debug!(
+                "Line filter applied, {} nodes remain",
+                count_nodes(&serialized)
+            );
         } else {
-            println!("Warning: No nodes found at line {}", line);
+            warn!("No nodes found at line {}", line);
         }
     }
 
     // Apply type and path filters if requested
     if filter_type.is_some() || filter_path.is_some() {
+        debug!(
+            "Applying type filter: {:?}, path filter: {:?}",
+            filter_type, filter_path
+        );
         serialized = filter_nodes(&serialized, filter_type.as_deref(), filter_path.as_deref());
+        debug!("Filters applied, {} nodes remain", count_nodes(&serialized));
     }
 
     // Apply field name filter if requested
     if let Some(field_filter) = &args.field_filter {
+        debug!("Applying field name filter: {}", field_filter);
         if let Some(filtered) = filter_by_field_name(&serialized, field_filter) {
             serialized = filtered;
+            debug!(
+                "Field filter applied, {} nodes remain",
+                count_nodes(&serialized)
+            );
         } else {
-            println!("Warning: No nodes found with field name '{}'", field_filter);
+            warn!("No nodes found with field name '{}'", field_filter);
         }
     }
 
     // Apply node limit if requested
     if args.max_nodes > 0 {
+        debug!("Limiting output to {} nodes", args.max_nodes);
         let mut current_count = 0;
         if let Some(limited) = limit_nodes(&serialized, args.max_nodes, &mut current_count) {
             serialized = limited;
+            debug!(
+                "Node limit applied, {} nodes remain",
+                count_nodes(&serialized)
+            );
         }
     }
 
     // Generate paths for nodes if requested
     if args.include_path {
+        debug!("Generating AST paths for nodes");
         generate_node_paths(&mut serialized, "");
+        trace!("Path generation complete");
     }
 
     // Apply path pattern search if requested
     if let Some(path_pattern) = &args.path_pattern {
-        println!(
+        info!(
             "Searching for nodes matching path pattern: '{}'...",
             path_pattern
         );
         let matching_nodes = find_nodes_by_path_pattern(&serialized, path_pattern);
 
         if matching_nodes.is_empty() {
-            println!(
-                "Warning: No nodes found matching the path pattern '{}'",
+            warn!(
+                "No nodes found matching the path pattern '{}'",
                 path_pattern
             );
         } else {
-            println!(
+            info!(
                 "Found {} nodes matching the path pattern",
                 matching_nodes.len()
             );
@@ -773,23 +872,23 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if stats_only {
         // Show detailed statistics about the AST
-        println!("\nAST Statistics:");
-        println!("--------------");
-        println!("Source file: {}", input_file);
-        println!("File size: {} bytes", source_code.len());
-        println!("Total nodes: {}", node_count);
-        println!(
+        info!("\nAST Statistics:");
+        info!("--------------");
+        info!("Source file: {}", input_file);
+        info!("File size: {} bytes", source_code.len());
+        info!("Total nodes: {}", node_count);
+        info!(
             "Nodes per KB: {:.1}",
             node_count as f64 * 1000.0 / source_code.len() as f64
         );
-        println!("Maximum depth: {}", max_depth);
+        info!("Maximum depth: {}", max_depth);
 
-        println!("\nTop 10 node types:");
+        info!("\nTop 10 node types:");
         let mut types: Vec<(&String, &usize)> = node_types.iter().collect();
         types.sort_by(|a, b| b.1.cmp(a.1));
 
         for (i, (node_type, count)) in types.iter().take(10).enumerate() {
-            println!(
+            info!(
                 "  {}. {} - {} nodes ({}%)",
                 i + 1,
                 node_type,
@@ -799,72 +898,84 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
 
         if types.len() > 10 {
-            println!("  ... and {} more node types", types.len() - 10);
+            info!("  ... and {} more node types", types.len() - 10);
         }
 
-        println!("\nTop 10 field names:");
+        info!("\nTop 10 field names:");
         let mut fields: Vec<(&String, &usize)> = field_name_count.iter().collect();
         fields.sort_by(|a, b| b.1.cmp(a.1));
 
         for (i, (field_name, count)) in fields.iter().take(10).enumerate() {
-            println!("  {}. {} - {} occurrences", i + 1, field_name, count);
+            info!("  {}. {} - {} occurrences", i + 1, field_name, count);
         }
 
         if fields.len() > 10 {
-            println!("  ... and {} more field names", fields.len() - 10);
+            info!("  ... and {} more field names", fields.len() - 10);
         }
 
         // Count nodes by line number
         let mut line_counts = HashMap::new();
         count_nodes_by_line(&serialized, &mut line_counts);
 
-        println!("\nLine distribution:");
+        info!("\nLine distribution:");
         let mut lines: Vec<(&usize, &usize)> = line_counts.iter().collect();
         lines.sort_by(|a, b| b.1.cmp(a.1)); // Sort by count (highest first)
 
-        println!("  Top 5 lines by node count:");
+        info!("  Top 5 lines by node count:");
         for (i, (line, count)) in lines.iter().take(5).enumerate() {
-            println!("    {}. Line {} - {} nodes", i + 1, **line + 1, count);
+            info!("    {}. Line {} - {} nodes", i + 1, **line + 1, count);
         }
     } else {
         // Show a brief structure visualization of the top-level nodes
         generate_brief_structure(&serialized);
 
         // Write the AST to the output file in the selected format
-        println!("Writing to file: {}", output_file);
+        info!("Writing to file: {}", output_file);
 
         let file_content = match output_format {
             OutputFormat::Yaml => {
-                println!("Format: YAML");
+                info!("Format: YAML");
+                debug!("Serializing to YAML format");
                 serde_yaml::to_string(&serialized)?
             },
             OutputFormat::Json => {
-                println!("Format: JSON");
+                info!("Format: JSON");
+                debug!("Serializing to pretty JSON format");
                 serde_json::to_string_pretty(&serialized)?
             },
             OutputFormat::SimpleTree => {
-                println!("Format: Simplified Tree (JSON)");
+                info!("Format: Simplified Tree (JSON)");
+                debug!("Converting to simplified tree format");
                 // Convert to simplified tree format
                 let simple_tree = to_simple_tree(&serialized, !compact_mode);
+                debug!("Serializing simplified tree to pretty JSON");
                 serde_json::to_string_pretty(&simple_tree)?
             },
         };
 
         // Write to file
-        let mut file = File::create(&output_file)?;
-        file.write_all(file_content.as_bytes())?;
+        debug!("Writing {} bytes to file", file_content.len());
+        let mut file = File::create(&output_file).map_err(|e| {
+            error!("Failed to create output file: {}", e);
+            e
+        })?;
+        file.write_all(file_content.as_bytes()).map_err(|e| {
+            error!("Failed to write to output file: {}", e);
+            e
+        })?;
+        debug!("File write completed successfully");
 
         // Show summary after successful export
-        println!("\nAST export summary:");
-        println!("------------------");
-        println!("Source file: {}", input_file);
-        println!("File size: {} bytes", source_code.len());
-        println!("Total nodes: {}", node_count);
-        println!("Maximum depth: {}", max_depth);
-        println!("Node types: {} unique types", node_types.len());
-        println!("Field names: {} unique fields", field_name_count.len());
-        println!("Output file: {}", output_file);
-        println!(
+        info!("\nAST export summary:");
+        info!("------------------");
+        info!("Source file: {}", input_file);
+        info!("File size: {} bytes", source_code.len());
+        info!("Total nodes: {}", node_count);
+        info!("Maximum depth: {}", max_depth);
+        info!("Node types: {} unique types", node_types.len());
+        info!("Field names: {} unique fields", field_name_count.len());
+        info!("Output file: {}", output_file);
+        info!(
             "Output format: {}",
             match output_format {
                 OutputFormat::Yaml => "YAML",
@@ -872,7 +983,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 OutputFormat::SimpleTree => "Simplified Tree (JSON)",
             }
         );
-        println!(
+        info!(
             "Filters applied: {}",
             if filter_type.is_some()
                 || filter_path.is_some()
@@ -885,13 +996,17 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "No"
             }
         );
-        println!("AST exported successfully!");
+        info!("AST exported successfully!");
     }
 
     // Visualize tree structure if requested
     if args.structure {
-        println!("\nTree Structure Visualization:");
-        println!("----------------------------");
+        info!("\nTree Structure Visualization:");
+        info!("----------------------------");
+        debug!(
+            "Starting tree structure visualization with depth limit: {}",
+            args.depth_limit
+        );
         visualize_tree_structure(&serialized, 0, args.depth_limit, "", true);
     }
 
