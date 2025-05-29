@@ -3,7 +3,7 @@
 :toc-title: Table of Contents
 :sectnums:
 
-A documentation generator for Azure Bicep files, similar to terraform-docs.
+A documentation generator for Azure Bicep files, similar to `terraform-docs`.
 
 == Overview
 
@@ -24,33 +24,41 @@ cargo add bicep-docs
 
 ==== AST Export Tool
 
-The enhanced AST export tool (`ast_export_clap`) allows you to export the Abstract Syntax Tree of a Bicep file in various formats with many options for filtering and analyzing the structure:
+The enhanced AST export tool (`export_ast`) allows you to export the Abstract Syntax Tree of a Bicep file in various formats with many options for filtering and analyzing the structure:
 
 [source,bash]
 ----
 # Export AST to YAML (default)
-cargo run --bin ast_export_clap -- path/to/your/bicep_file.bicep
+cargo run --bin export_ast -- path/to/your/bicep_file.bicep
 
 # Show only statistics about the AST
-cargo run --bin ast_export_clap -- --stats path/to/your/bicep_file.bicep
+cargo run --bin export_ast -- --stats path/to/your/bicep_file.bicep
 
 # Export AST to JSON
-cargo run --bin ast_export_clap -- --format json path/to/your/bicep_file.bicep
+cargo run --bin export_ast -- --format json path/to/your/bicep_file.bicep
 
 # Export a simplified tree format (more concise)
-cargo run --bin ast_export_clap -- --format simpletree path/to/your/bicep_file.bicep
+cargo run --bin export_ast -- --format simpletree path/to/your/bicep_file.bicep
 
 # Filter by node type (e.g., only resource declarations)
-cargo run --bin ast_export_clap -- --type-filter resource_declaration path/to/your/bicep_file.bicep
+cargo run --bin export_ast -- --type-filter resource_declaration path/to/your/bicep_file.bicep
 
 # Show tree structure visualization
-cargo run --bin ast_export_clap -- --structure path/to/your/bicep_file.bicep
+cargo run --bin export_ast -- --structure path/to/your/bicep_file.bicep
 
 # Filter by line number
-cargo run --bin ast_export_clap -- --line 10 path/to/your/bicep_file.bicep
+cargo run --bin export_ast -- --line 10 path/to/your/bicep_file.bicep
 
 # Get help and examples
-cargo run --bin ast_export_clap -- --help-examples
-cargo run --bin ast_export_clap -- --help-node-types
-cargo run --bin ast_export_clap -- --help-field-names
+cargo run --bin export_ast -- --help-examples
+cargo run --bin export_ast -- --help-node-types
+cargo run --bin export_ast -- --help-field-names
 ----
+
+== Why `bicep-docs`?
+
+That is an excellent question. When I first started looking at automating my Bicep documentation, the main tool I found was link:https://github.com/Azure/PSDocs.Azure[PSDocs for Azure]. I had three main complaints with PSDocs, which (admittedly) are related. The first was the lack of link:https://github.com/Azure/PSDocs.Azure/issues/106[Native support for Bicep files]. This means documenting a Bicep file required compilation to ARM, which led to the other two problems.
+
+Problem two is, honestly, minor. Because of the requirement to compile to ARM, documentation required the full Bicep stack. Which is fine when you are deploying the Bicep, but is overkill when you just want to generate/validate the documentation in a pipeline.
+
+Problem three, however, is the one that motivated me to action. Because of the compilation to ARM, many of the nuances of a Bicep template get lost in the documentation. For example, I like to use a central Bicep module with common types and functions that I'll need frequently. When the Bicep file is compiled to ARM, these functions are fetched and compiled into the document. This is needed for deployment, but bloats the documentation of my file and also hides the fact of the shared module ecosystem. The same problem occurs when referencing local modules.
