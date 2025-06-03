@@ -1,6 +1,5 @@
 = Contributing to Bicep-Docs
 :toc:
-:toc-title: Table of Contents
 :sectnums:
 
 Thank you for your interest in contributing to Bicep-Docs! This project welcomes contributions from the community. Please read the following guidelines to help you get started.

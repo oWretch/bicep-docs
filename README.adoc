@@ -22,38 +22,7 @@ cargo add bicep-docs
 
 === Command Line
 
-==== AST Export Tool
 
-The enhanced AST export tool (`export_ast`) allows you to export the Abstract Syntax Tree of a Bicep file in various formats with many options for filtering and analyzing the structure:
-
-[source,bash]
-----
-# Export AST to YAML (default)
-cargo run --bin export_ast -- path/to/your/bicep_file.bicep
-
-# Show only statistics about the AST
-cargo run --bin export_ast -- --stats path/to/your/bicep_file.bicep
-
-# Export AST to JSON
-cargo run --bin export_ast -- --format json path/to/your/bicep_file.bicep
-
-# Export a simplified tree format (more concise)
-cargo run --bin export_ast -- --format simpletree path/to/your/bicep_file.bicep
-
-# Filter by node type (e.g., only resource declarations)
-cargo run --bin export_ast -- --type-filter resource_declaration path/to/your/bicep_file.bicep
-
-# Show tree structure visualization
-cargo run --bin export_ast -- --structure path/to/your/bicep_file.bicep
-
-# Filter by line number
-cargo run --bin export_ast -- --line 10 path/to/your/bicep_file.bicep
-
-# Get help and examples
-cargo run --bin export_ast -- --help-examples
-cargo run --bin export_ast -- --help-node-types
-cargo run --bin export_ast -- --help-field-names
-----
 
 == Why `bicep-docs`?
 
