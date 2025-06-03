@@ -149,6 +149,16 @@ jobs:
 
       - name: Build release
         run: cargo build --release --target ${{ matrix.target }}
+      
+      - name: Create release zip
+        if : matrix.os != 'windows-latest'
+        run: zip -j bicep-docs-${{ matrix.target }}.zip bicep-docs
+        working-directory: target/${{ matrix.target }}/release
+
+      - name: Create release zip
+        if : matrix.os == 'windows-latest'
+        run: 7z a bicep-docs-${{ matrix.target }}.zip bicep-docs.exe
+        working-directory: target/${{ matrix.target }}/release
 
       - name: Create binary checksum
         run: shasum --algorithm 256 --binary bicep-docs${{ matrix.os == 'windows-latest' && '.exe' || '' }} | tee SHA256SUM.txt
@@ -161,7 +171,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           path: |
-            target/${{ matrix.target }}/release/bicep-docs${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+            target/${{ matrix.target }}/release/bicep-docs-${{ matrix.target }}.zip
             target/${{ matrix.target }}/release/SHA256SUM.txt
 
   release:

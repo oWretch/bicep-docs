@@ -15,19 +15,16 @@
       {
         "assets": [
           {
-            "path": "dist/bicep-docs-x86_64-unknown-linux-gnu/bicep-docs",
-            "name": "bicep-docs-linux-amd64",
-            "label": "bicep-docs-${nextRelease}-linux-amd64"
+            "path": "dist/bicep-docs-x86_64-unknown-linux-gnu/bicep-docs-x86_64-unknown-linux-gnu.zip",
+            "label": "bicep-docs-linux-amd64"
           },
           {
-            "path": "dist/bicep-docs-x86_64-pc-windows-msvc/bicep-docs.exe",
-            "name": "bicep-docs-windows-amd64",
-            "label": "bicep-docs-${nextRelease}-windows-amd64"
+            "path": "dist/bicep-docs-x86_64-pc-windows-msvc/bicep-docs-x86_64-pc-windows-msvc.zip",
+            "label": "bicep-docs-windows-amd64"
           },
           {
-            "path": "dist/bicep-docs-aarch64-apple-darwin/bicep-docs",
-            "name": "bicep-docs-macos-arm64",
-            "label": "bicep-docs-${nextRelease}-macos-arm64"
+            "path": "dist/bicep-docs-aarch64-apple-darwin/bicep-docs-aarch64-apple-darwin.zip",
+            "label": "bicep-docs-macos-arm64"
           },
           {
             "path": "dist/SHA256SUMS.txt",
