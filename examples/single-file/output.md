@@ -18,9 +18,28 @@ Target Scope: resourceGroup
 
 Type description
 
-- **Type**: { name: string, score: int, grade: grade }
+- **Type**: object
 - **Exported**: No
 - **Secure**: No
+
+#### Object properties
+
+##### name
+
+- **Type**: string
+- **Nullable**: Yes
+- **Secure**: Yes
+
+##### score
+
+- **Type**: int
+- **Minimum Value**: 0
+- **Maximum Value**: 100
+
+##### grade
+
+- **Type**: grade
+
 
 ### grade
 
@@ -30,9 +49,24 @@ Type description
 
 ### resourceType
 
-- **Type**: { id: string, name: string, resourceGroup: string }
+- **Type**: object
 - **Exported**: No
 - **Secure**: No
+
+#### Object properties
+
+##### id
+
+- **Type**: string
+
+##### name
+
+- **Type**: string
+
+##### resourceGroup
+
+- **Type**: string
+
 
 ## Functions
 
@@ -47,6 +81,10 @@ Generate Name Function
 
 - **argument1** (string)
 - **argument2** (int) - Optional
+
+#### Metadata
+
+- **description**: Generate Name Function
 
 ### somethingElse
 
@@ -91,7 +129,7 @@ I have a description in metadata
 
 ### inlineSpecificObject
 
-- **Type**: { property: string, otionalProperty: int, objectProperty: { key1: string, key2: int } }
+- **Type**: object
 
 ### typedObjects
 
@@ -113,7 +151,7 @@ I have a description in metadata
 - **Default Value**:   
 This is a multi line string.  
   It covers multiple lines, and has indentation.  
-  It also has a tab character.	And a new line.  
+  It also has a tab character ( ).	And a new line.  
   It also has a double backslash \\\\ and a single \\  
   And a single quote: '  
 

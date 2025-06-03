@@ -10,35 +10,12 @@ use crate::parsing::{
     BicepDocument, BicepFunctionArgument, BicepImport, BicepType, BicepValue, ModuleSource,
 };
 
-/// Format options for markdown output
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum MarkdownFormat {
-    /// Use tables for displaying properties (default)
-    #[default]
-    Table,
-    /// Use lists for displaying properties
-    List,
-}
-
-impl std::str::FromStr for MarkdownFormat {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "table" => Ok(MarkdownFormat::Table),
-            "list" => Ok(MarkdownFormat::List),
-            _ => Err(format!("Invalid format '{}'. Use 'table' or 'list'", s)),
-        }
-    }
-}
-
 /// Export a Bicep document to a Markdown file
 ///
 /// # Arguments
 ///
 /// * `document` - The BicepDocument to export
 /// * `file_path` - Path where the Markdown file should be written
-/// * `format` - The markdown format to use (table or list)
 ///
 /// # Returns
 ///
@@ -51,30 +28,7 @@ pub fn export_to_file<P: AsRef<Path>>(
     document: &BicepDocument,
     file_path: P,
 ) -> Result<(), Box<dyn StdError>> {
-    export_to_file_with_format(document, file_path, MarkdownFormat::default())
-}
-
-/// Export a Bicep document to a Markdown file with specific format
-///
-/// # Arguments
-///
-/// * `document` - The BicepDocument to export
-/// * `file_path` - Path where the Markdown file should be written
-/// * `format` - The markdown format to use (table or list)
-///
-/// # Returns
-///
-/// Result indicating success or failure of the export operation
-///
-/// # Errors
-///
-/// Returns an error if file writing fails
-pub fn export_to_file_with_format<P: AsRef<Path>>(
-    document: &BicepDocument,
-    file_path: P,
-    format: MarkdownFormat,
-) -> Result<(), Box<dyn StdError>> {
-    let markdown_content = export_to_string_with_format(document, format)?;
+    let markdown_content = export_to_string(document)?;
     fs::write(file_path, markdown_content)?;
     Ok(())
 }
@@ -93,27 +47,6 @@ pub fn export_to_file_with_format<P: AsRef<Path>>(
 ///
 /// Returns an error if serialization fails
 pub fn export_to_string(document: &BicepDocument) -> Result<String, Box<dyn StdError>> {
-    export_to_string_with_format(document, MarkdownFormat::default())
-}
-
-/// Export a Bicep document to a Markdown string with specific format
-///
-/// # Arguments
-///
-/// * `document` - The BicepDocument to export
-/// * `format` - The markdown format to use (table or list)
-///
-/// # Returns
-///
-/// Result containing the Markdown string representation of the document
-///
-/// # Errors
-///
-/// Returns an error if serialization fails
-pub fn export_to_string_with_format(
-    document: &BicepDocument,
-    format: MarkdownFormat,
-) -> Result<String, Box<dyn StdError>> {
     let mut markdown = String::new();
 
     // Title and overview section
@@ -139,7 +72,7 @@ pub fn export_to_string_with_format(
     if !document.metadata.is_empty() {
         markdown.push_str("\n### Additional Metadata\n\n");
 
-        generate_metadata_display(&mut markdown, format, &document.metadata);
+        generate_metadata_display(&mut markdown, &document.metadata);
     }
 
     markdown.push('\n');
@@ -226,25 +159,25 @@ pub fn export_to_string_with_format(
     }
 
     // Types section
-    generate_types_section(&mut markdown, document, format);
+    generate_types_section(&mut markdown, document);
 
     // Functions section
-    generate_functions_section(&mut markdown, document, format);
+    generate_functions_section(&mut markdown, document);
 
     // Parameters section
-    generate_parameters_section(&mut markdown, document, format);
+    generate_parameters_section(&mut markdown, document);
 
     // Variables section
-    generate_variables_section(&mut markdown, document, format);
+    generate_variables_section(&mut markdown, document);
 
     // Resources section
-    generate_resources_section(&mut markdown, document, format);
+    generate_resources_section(&mut markdown, document);
 
     // Modules section
-    generate_modules_section(&mut markdown, document, format);
+    generate_modules_section(&mut markdown, document);
 
     // Outputs section
-    generate_outputs_section(&mut markdown, document, format);
+    generate_outputs_section(&mut markdown, document);
 
     Ok(markdown)
 }
@@ -274,7 +207,7 @@ pub fn parse_and_export<P: AsRef<Path>, Q: AsRef<Path>>(
 }
 
 /// Generate the Types section of the markdown
-fn generate_types_section(markdown: &mut String, document: &BicepDocument, format: MarkdownFormat) {
+fn generate_types_section(markdown: &mut String, document: &BicepDocument) {
     markdown.push_str("## Types\n\n");
 
     if document.types.is_empty() {
@@ -291,7 +224,7 @@ fn generate_types_section(markdown: &mut String, document: &BicepDocument, forma
 
         // Basic information table
         let items = vec![
-            ("Type", format_bicep_type(&custom_type.definition, format)),
+            ("Type", format_bicep_type(&custom_type.definition)),
             (
                 "Exported",
                 if custom_type.is_exported {
@@ -309,18 +242,81 @@ fn generate_types_section(markdown: &mut String, document: &BicepDocument, forma
                 },
             ),
         ];
-        generate_key_value_display(markdown, format, &items);
+        generate_key_value_display(markdown, &items);
+
+        // Check if this is an object type with properties and add object properties section
+        if let BicepType::Object(Some(properties)) = &custom_type.definition {
+            if !properties.is_empty() {
+                markdown.push_str("\n#### Object properties\n\n");
+
+                for (prop_name, prop_param) in properties {
+                    markdown.push_str(&format!("##### {}\n\n", escape_markdown_table(prop_name)));
+
+                    if let Some(description) = &prop_param.description {
+                        markdown.push_str(&format!("{}\n\n", escape_markdown_table(description)));
+                    }
+
+                    let mut prop_items =
+                        vec![("Type", format_bicep_type(&prop_param.parameter_type))];
+
+                    if prop_param.is_nullable {
+                        prop_items.push(("Nullable", "Yes".to_string()));
+                    }
+
+                    if prop_param.is_secure {
+                        prop_items.push(("Secure", "Yes".to_string()));
+                    }
+
+                    if let Some(default_value) = &prop_param.default_value {
+                        let value_str = format_bicep_value(default_value);
+                        prop_items.push(("Default Value", value_str));
+                    }
+
+                    if let Some(min_value) = prop_param.min_value {
+                        prop_items.push(("Minimum Value", min_value.to_string()));
+                    }
+
+                    if let Some(max_value) = prop_param.max_value {
+                        prop_items.push(("Maximum Value", max_value.to_string()));
+                    }
+
+                    if let Some(min_length) = prop_param.min_length {
+                        prop_items.push(("Minimum Length", min_length.to_string()));
+                    }
+
+                    if let Some(max_length) = prop_param.max_length {
+                        prop_items.push(("Maximum Length", max_length.to_string()));
+                    }
+
+                    if let Some(allowed_values) = &prop_param.allowed_values {
+                        if !allowed_values.is_empty() {
+                            let values = allowed_values
+                                .iter()
+                                .map(|v| format_bicep_value(v))
+                                .collect::<Vec<_>>()
+                                .join(", ");
+                            prop_items.push(("Allowed Values", values));
+                        }
+                    }
+
+                    generate_key_value_display(markdown, &prop_items);
+
+                    if !prop_param.metadata.is_empty() {
+                        markdown.push_str("\n###### Metadata\n\n");
+                        generate_metadata_display(markdown, &prop_param.metadata);
+                    }
+
+                    markdown.push('\n');
+                }
+            }
+        }
 
         markdown.push('\n');
     }
 }
 
 /// Generate the Functions section of the markdown
-fn generate_functions_section(
-    markdown: &mut String,
-    document: &BicepDocument,
-    format: MarkdownFormat,
-) {
+fn generate_functions_section(markdown: &mut String, document: &BicepDocument) {
     markdown.push_str("## Functions\n\n");
 
     if document.functions.is_empty() {
@@ -337,10 +333,7 @@ fn generate_functions_section(
 
         // Basic information table
         let items = vec![
-            (
-                "Return Type",
-                format_bicep_type(&function.return_type, format),
-            ),
+            ("Return Type", format_bicep_type(&function.return_type)),
             (
                 "Exported",
                 if function.is_exported {
@@ -350,17 +343,17 @@ fn generate_functions_section(
                 },
             ),
         ];
-        generate_key_value_display(markdown, format, &items);
+        generate_key_value_display(markdown, &items);
 
         // Parameters
         if !function.arguments.is_empty() {
             markdown.push_str("\n#### Parameters\n\n");
-            generate_function_arguments_display(markdown, format, &function.arguments);
+            generate_function_arguments_display(markdown, &function.arguments);
         }
 
         if !function.metadata.is_empty() {
             markdown.push_str("\n#### Metadata\n\n");
-            generate_metadata_display(markdown, format, &function.metadata);
+            generate_metadata_display(markdown, &function.metadata);
         }
 
         markdown.push('\n');
@@ -368,11 +361,7 @@ fn generate_functions_section(
 }
 
 /// Generate the Parameters section of the markdown
-fn generate_parameters_section(
-    markdown: &mut String,
-    document: &BicepDocument,
-    format: MarkdownFormat,
-) {
+fn generate_parameters_section(markdown: &mut String, document: &BicepDocument) {
     markdown.push_str("## Parameters\n\n");
 
     if document.parameters.is_empty() {
@@ -388,14 +377,14 @@ fn generate_parameters_section(
         }
 
         // Basic information table
-        let mut items = vec![("Type", format_bicep_type(&parameter.parameter_type, format))];
+        let mut items = vec![("Type", format_bicep_type(&parameter.parameter_type))];
 
         if parameter.is_nullable {
             items.push(("Nullable", "Yes".to_string()));
         }
 
         if let Some(default_value) = &parameter.default_value {
-            let value_str = format_bicep_value_with_format(default_value, format);
+            let value_str = format_bicep_value(default_value);
             items.push(("Default Value", value_str));
         }
 
@@ -419,18 +408,18 @@ fn generate_parameters_section(
             if !allowed_values.is_empty() {
                 let values = allowed_values
                     .iter()
-                    .map(|v| format_bicep_value_with_format(v, format))
+                    .map(|v| format_bicep_value(v))
                     .collect::<Vec<_>>()
                     .join(", ");
                 items.push(("Allowed Values", values));
             }
         }
 
-        generate_key_value_display(markdown, format, &items);
+        generate_key_value_display(markdown, &items);
 
         if !parameter.metadata.is_empty() {
             markdown.push_str("\n#### Metadata\n\n");
-            generate_metadata_display(markdown, format, &parameter.metadata);
+            generate_metadata_display(markdown, &parameter.metadata);
         }
 
         markdown.push('\n');
@@ -438,11 +427,7 @@ fn generate_parameters_section(
 }
 
 /// Generate the Variables section of the markdown
-fn generate_variables_section(
-    markdown: &mut String,
-    document: &BicepDocument,
-    format: MarkdownFormat,
-) {
+fn generate_variables_section(markdown: &mut String, document: &BicepDocument) {
     markdown.push_str("## Variables\n\n");
 
     if document.variables.is_empty() {
@@ -458,7 +443,7 @@ fn generate_variables_section(
         }
 
         // Basic information table
-        let value_str = format_bicep_value_with_format(&variable.value, format);
+        let value_str = format_bicep_value(&variable.value);
         let items = vec![
             ("Value", value_str),
             (
@@ -470,18 +455,14 @@ fn generate_variables_section(
                 },
             ),
         ];
-        generate_key_value_display(markdown, format, &items);
+        generate_key_value_display(markdown, &items);
 
         markdown.push('\n');
     }
 }
 
 /// Generate the Resources section of the markdown
-fn generate_resources_section(
-    markdown: &mut String,
-    document: &BicepDocument,
-    format: MarkdownFormat,
-) {
+fn generate_resources_section(markdown: &mut String, document: &BicepDocument) {
     markdown.push_str("## Resources\n\n");
 
     if document.resources.is_empty() {
@@ -503,7 +484,7 @@ fn generate_resources_section(
         ];
 
         if let Some(scope) = &resource.scope {
-            let scope_str = format_bicep_value_with_format(scope, format);
+            let scope_str = format_bicep_value(scope);
             items.push(("Scope", scope_str));
         }
 
@@ -534,18 +515,14 @@ fn generate_resources_section(
             items.push(("Batch Size", batch_size.to_string()));
         }
 
-        generate_key_value_display(markdown, format, &items);
+        generate_key_value_display(markdown, &items);
 
         markdown.push('\n');
     }
 }
 
 /// Generate the Modules section of the markdown
-fn generate_modules_section(
-    markdown: &mut String,
-    document: &BicepDocument,
-    format: MarkdownFormat,
-) {
+fn generate_modules_section(markdown: &mut String, document: &BicepDocument) {
     markdown.push_str("## Modules\n\n");
 
     if document.modules.is_empty() {
@@ -622,18 +599,14 @@ fn generate_modules_section(
             items.push(("Batch Size", batch_size.to_string()));
         }
 
-        generate_key_value_display(markdown, format, &items);
+        generate_key_value_display(markdown, &items);
 
         markdown.push('\n');
     }
 }
 
 /// Generate the Outputs section of the markdown
-fn generate_outputs_section(
-    markdown: &mut String,
-    document: &BicepDocument,
-    format: MarkdownFormat,
-) {
+fn generate_outputs_section(markdown: &mut String, document: &BicepDocument) {
     markdown.push_str("## Outputs\n\n");
 
     if document.outputs.is_empty() {
@@ -650,11 +623,8 @@ fn generate_outputs_section(
 
         // Basic information table
         let mut items = vec![
-            ("Type", format_bicep_type(&output.output_type, format)),
-            (
-                "Value",
-                format_bicep_value_with_format(&output.value, format),
-            ),
+            ("Type", format_bicep_type(&output.output_type)),
+            ("Value", format_bicep_value(&output.value)),
         ];
 
         if let Some(discriminator) = &output.discriminator {
@@ -685,12 +655,12 @@ fn generate_outputs_section(
             items.push(("Secure", "Yes".to_string()));
         }
 
-        generate_key_value_display(markdown, format, &items);
+        generate_key_value_display(markdown, &items);
 
         if let Some(metadata) = &output.metadata {
             if !metadata.is_empty() {
                 markdown.push_str("\n#### Metadata\n\n");
-                generate_metadata_display(markdown, format, metadata);
+                generate_metadata_display(markdown, metadata);
             }
         }
 
@@ -698,18 +668,15 @@ fn generate_outputs_section(
     }
 }
 
-/// Format a BicepValue for display in markdown with format awareness
+/// Format a BicepValue for display in markdown
 #[allow(clippy::only_used_in_recursion)]
-fn format_bicep_value_with_format(value: &BicepValue, format: MarkdownFormat) -> String {
+fn format_bicep_value(value: &BicepValue) -> String {
     match value {
         BicepValue::String(s) => s.clone(),
         BicepValue::Int(n) => n.to_string(),
         BicepValue::Bool(b) => b.to_string(),
         BicepValue::Array(arr) => {
-            let items: Vec<String> = arr
-                .iter()
-                .map(|v| format_bicep_value_with_format(v, format))
-                .collect();
+            let items: Vec<String> = arr.iter().map(|v| format_bicep_value(v)).collect();
             format!("[{}]", items.join(", "))
         },
         BicepValue::Object(obj) => {
@@ -718,7 +685,7 @@ fn format_bicep_value_with_format(value: &BicepValue, format: MarkdownFormat) ->
             } else {
                 let items: Vec<String> = obj
                     .iter()
-                    .map(|(k, v)| format!("{}: {}", k, format_bicep_value_with_format(v, format)))
+                    .map(|(k, v)| format!("{}: {}", k, format_bicep_value(v)))
                     .collect();
                 format!("{{ {} }}", items.join(", "))
             }
@@ -727,44 +694,23 @@ fn format_bicep_value_with_format(value: &BicepValue, format: MarkdownFormat) ->
     }
 }
 
-/// Format a BicepType for display in markdown with format-aware escaping
-fn format_bicep_type(bicep_type: &BicepType, format: MarkdownFormat) -> String {
+/// Format a BicepType for display in markdown
+fn format_bicep_type(bicep_type: &BicepType) -> String {
     match bicep_type {
-        BicepType::Array(inner) => format!("{}[]", format_bicep_type(inner, format)),
+        BicepType::Array(inner) => format!("{}[]", format_bicep_type(inner)),
         BicepType::String => "string".to_string(),
         BicepType::Int => "int".to_string(),
         BicepType::Bool => "bool".to_string(),
-        BicepType::Object(Some(properties)) => {
-            // Format object with properties
-            if properties.is_empty() {
-                "object".to_string()
-            } else {
-                let props: Vec<String> = properties
-                    .iter()
-                    .map(|(key, param)| {
-                        format!(
-                            "{}: {}",
-                            key,
-                            format_bicep_type(&param.parameter_type, format)
-                        )
-                    })
-                    .collect();
-                format!("{{ {} }}", props.join(", "))
-            }
+        BicepType::Object(Some(_properties)) => {
+            // Always return "object" for objects with properties
+            // Individual properties will be documented separately
+            "object".to_string()
         },
         BicepType::Object(None) => "object".to_string(),
         BicepType::CustomType(name) => name.clone(),
         BicepType::Union(values) => {
-            match format {
-                MarkdownFormat::Table => {
-                    // Escape | characters for markdown tables
-                    values.join(" \\| ")
-                },
-                MarkdownFormat::List => {
-                    // No escaping needed for list format
-                    values.join(" | ")
-                },
-            }
+            // No escaping needed for list format
+            values.join(" | ")
         },
     }
 }
@@ -786,103 +732,46 @@ fn escape_markdown(text: &str) -> String {
         .replace('\n', "  \n") // Preserve newlines
 }
 
-/// Generate property display for BicepValue properties using either table or list format
+/// Generate property display for BicepValue properties using list format
 fn generate_metadata_display(
     markdown: &mut String,
-    format: MarkdownFormat,
     metadata: &indexmap::IndexMap<String, BicepValue>,
 ) {
-    match format {
-        MarkdownFormat::Table => {
-            markdown.push_str("| Key | Value |\n");
-            markdown.push_str("|-----|-------|\n");
-            for (key, value) in metadata {
-                let value_str = format_bicep_value_with_format(value, format);
-                markdown.push_str(&format!(
-                    "| {} | {} |\n",
-                    escape_markdown_table(key),
-                    escape_markdown_table(&value_str)
-                ));
-            }
-        },
-        MarkdownFormat::List => {
-            for (key, value) in metadata {
-                let value_str = format_bicep_value_with_format(value, format);
-                markdown.push_str(&format!(
-                    "- **{}**: {}\n",
-                    escape_markdown(key),
-                    escape_markdown(&value_str)
-                ));
-            }
-        },
+    for (key, value) in metadata {
+        let value_str = format_bicep_value(value);
+        markdown.push_str(&format!(
+            "- **{}**: {}\n",
+            escape_markdown(key),
+            escape_markdown(&value_str)
+        ));
     }
 }
 
-/// Generate key-value property display with optional values
-fn generate_key_value_display(
-    markdown: &mut String,
-    format: MarkdownFormat,
-    items: &[(&str, String)],
-) {
-    match format {
-        MarkdownFormat::Table => {
-            markdown.push_str("| Property | Value |\n");
-            markdown.push_str("|----------|-------|\n");
-            for (key, value) in items {
-                markdown.push_str(&format!(
-                    "| {} | {} |\n",
-                    escape_markdown_table(key),
-                    escape_markdown_table(value)
-                ));
-            }
-        },
-        MarkdownFormat::List => {
-            for (key, value) in items {
-                markdown.push_str(&format!(
-                    "- **{}**: {}\n",
-                    escape_markdown(key),
-                    escape_markdown(value)
-                ));
-            }
-        },
+/// Generate key-value property display using list format
+fn generate_key_value_display(markdown: &mut String, items: &[(&str, String)]) {
+    for (key, value) in items {
+        markdown.push_str(&format!(
+            "- **{}**: {}\n",
+            escape_markdown(key),
+            escape_markdown(value)
+        ));
     }
 }
 
-/// Generate display for function arguments in table or list format
+/// Generate display for function arguments in list format
 ///
 /// # Arguments
 ///
 /// * `markdown` - The string buffer to append markdown content to
-/// * `format` - The format to use (table or list)
 /// * `arguments` - The function arguments to display
-fn generate_function_arguments_display(
-    markdown: &mut String,
-    format: MarkdownFormat,
-    arguments: &[BicepFunctionArgument],
-) {
-    match format {
-        MarkdownFormat::Table => {
-            markdown.push_str("| Parameter | Type | Optional |\n");
-            markdown.push_str("|-----------|------|----------|\n");
-            for arg in arguments {
-                markdown.push_str(&format!(
-                    "| {} | {} | {} |\n",
-                    escape_markdown_table(&arg.name),
-                    escape_markdown_table(&format_bicep_type(&arg.argument_type, format)),
-                    if arg.is_nullable { "Yes" } else { "No" }
-                ));
-            }
-        },
-        MarkdownFormat::List => {
-            for arg in arguments {
-                markdown.push_str(&format!(
-                    "- **{}** ({}){}\n",
-                    escape_markdown(&arg.name),
-                    escape_markdown(&format_bicep_type(&arg.argument_type, format)),
-                    if arg.is_nullable { " - Optional" } else { "" }
-                ));
-            }
-        },
+fn generate_function_arguments_display(markdown: &mut String, arguments: &[BicepFunctionArgument]) {
+    for arg in arguments {
+        markdown.push_str(&format!(
+            "- **{}** ({}){}\n",
+            escape_markdown(&arg.name),
+            escape_markdown(&format_bicep_type(&arg.argument_type)),
+            if arg.is_nullable { " - Optional" } else { "" }
+        ));
     }
 }
 
@@ -948,112 +837,67 @@ mod tests {
 
     #[test]
     fn test_format_bicep_value() {
-        // Test basic values with default table format
+        // Test basic values with default list format
         assert_eq!(
-            format_bicep_value_with_format(
-                &BicepValue::String("test".to_string()),
-                MarkdownFormat::Table
-            ),
+            format_bicep_value(&BicepValue::String("test".to_string())),
             "test"
         );
+        assert_eq!(format_bicep_value(&BicepValue::Int(42)), "42");
+        assert_eq!(format_bicep_value(&BicepValue::Bool(true)), "true");
         assert_eq!(
-            format_bicep_value_with_format(&BicepValue::Int(42), MarkdownFormat::Table),
-            "42"
-        );
-        assert_eq!(
-            format_bicep_value_with_format(&BicepValue::Bool(true), MarkdownFormat::Table),
-            "true"
-        );
-        assert_eq!(
-            format_bicep_value_with_format(
-                &BicepValue::Identifier("myVar".to_string()),
-                MarkdownFormat::Table
-            ),
+            format_bicep_value(&BicepValue::Identifier("myVar".to_string())),
             "${myVar}"
         );
 
-        // Test multiline strings in table format
+        // Test multiline strings in list format
         assert_eq!(
-            format_bicep_value_with_format(
-                &BicepValue::String("line1\nline2".to_string()),
-                MarkdownFormat::Table
-            ),
+            format_bicep_value(&BicepValue::String("line1\nline2".to_string())),
             "line1\nline2"
         );
 
         // Test multiline strings in list format
         assert_eq!(
-            format_bicep_value_with_format(
-                &BicepValue::String("line1\nline2".to_string()),
-                MarkdownFormat::List
-            ),
+            format_bicep_value(&BicepValue::String("line1\nline2".to_string())),
             "line1\nline2"
         );
 
-        // Test backslash handling in both formats
+        // Test backslash handling in list format
         assert_eq!(
-            format_bicep_value_with_format(
-                &BicepValue::String("Has\\backslash".to_string()),
-                MarkdownFormat::Table
-            ),
+            format_bicep_value(&BicepValue::String("Has\\backslash".to_string())),
             "Has\\backslash"
         );
         assert_eq!(
-            format_bicep_value_with_format(
-                &BicepValue::String("Has\\backslash".to_string()),
-                MarkdownFormat::List
-            ),
+            format_bicep_value(&BicepValue::String("Has\\backslash".to_string())),
             "Has\\backslash"
         );
     }
 
     #[test]
     fn test_format_bicep_type() {
+        assert_eq!(format_bicep_type(&BicepType::String), "string");
+        assert_eq!(format_bicep_type(&BicepType::Int), "int");
+        assert_eq!(format_bicep_type(&BicepType::Bool), "bool");
         assert_eq!(
-            format_bicep_type(&BicepType::String, MarkdownFormat::Table),
-            "string"
-        );
-        assert_eq!(
-            format_bicep_type(&BicepType::Int, MarkdownFormat::Table),
-            "int"
-        );
-        assert_eq!(
-            format_bicep_type(&BicepType::Bool, MarkdownFormat::Table),
-            "bool"
-        );
-        assert_eq!(
-            format_bicep_type(
-                &BicepType::Array(Box::new(BicepType::String)),
-                MarkdownFormat::Table
-            ),
+            format_bicep_type(&BicepType::Array(Box::new(BicepType::String))),
             "string[]"
         );
         assert_eq!(
-            format_bicep_type(
-                &BicepType::CustomType("MyType".to_string()),
-                MarkdownFormat::Table
-            ),
+            format_bicep_type(&BicepType::CustomType("MyType".to_string())),
             "MyType"
         );
         assert_eq!(
-            format_bicep_type(
-                &BicepType::Union(vec!["A".to_string(), "B".to_string()]),
-                MarkdownFormat::Table
-            ),
-            "A \\| B"
+            format_bicep_type(&BicepType::Union(vec!["A".to_string(), "B".to_string()])),
+            "A | B"
         );
 
         // Test Object types
-        assert_eq!(
-            format_bicep_type(&BicepType::Object(None), MarkdownFormat::Table),
-            "object"
-        );
+        assert_eq!(format_bicep_type(&BicepType::Object(None)), "object");
 
         // Test empty object with properties
         use indexmap::IndexMap;
         let empty_props = IndexMap::new();
         assert_eq!(
-            format_bicep_type(&BicepType::Object(Some(empty_props)), MarkdownFormat::Table),
+            format_bicep_type(&BicepType::Object(Some(empty_props))),
             "object"
         );
 
@@ -1075,10 +919,7 @@ mod tests {
             min_value: None,
         };
         props.insert("name".to_string(), param);
-        assert_eq!(
-            format_bicep_type(&BicepType::Object(Some(props)), MarkdownFormat::Table),
-            "{ name: string }"
-        );
+        assert_eq!(format_bicep_type(&BicepType::Object(Some(props))), "object");
     }
     #[test]
     fn test_format_bicep_value_object() {
@@ -1086,58 +927,43 @@ mod tests {
 
         // Test empty object
         let empty_obj = IndexMap::new();
-        assert_eq!(
-            format_bicep_value_with_format(&BicepValue::Object(empty_obj), MarkdownFormat::Table),
-            "{}"
-        );
+        assert_eq!(format_bicep_value(&BicepValue::Object(empty_obj)), "{}");
 
         // Test object with properties
         let mut obj = IndexMap::new();
         obj.insert("key1".to_string(), BicepValue::String("value1".to_string()));
         obj.insert("key2".to_string(), BicepValue::Int(42));
         assert_eq!(
-            format_bicep_value_with_format(&BicepValue::Object(obj), MarkdownFormat::Table),
+            format_bicep_value(&BicepValue::Object(obj)),
             "{ key1: value1, key2: 42 }"
         );
 
-        // Test object with multiline string in different formats
+        // Test object with multiline string in list format
         let mut obj_ml = IndexMap::new();
         obj_ml.insert(
             "text".to_string(),
             BicepValue::String("line1\nline2".to_string()),
         );
 
-        // Table format should escape newlines
+        // List format should preserve newlines
         assert_eq!(
-            format_bicep_value_with_format(
-                &BicepValue::Object(obj_ml.clone()),
-                MarkdownFormat::Table
-            ),
+            format_bicep_value(&BicepValue::Object(obj_ml.clone())),
             "{ text: line1\nline2 }"
         );
 
         // List format should preserve newlines
         assert_eq!(
-            format_bicep_value_with_format(&BicepValue::Object(obj_ml), MarkdownFormat::List),
+            format_bicep_value(&BicepValue::Object(obj_ml)),
             "{ text: line1\nline2 }"
         );
     }
 
     #[test]
     fn test_format_bicep_type_union_formats() {
-        // Test that union types are formatted differently for table vs list format
+        // Test that union types are formatted for list format
         let union_type = BicepType::Union(vec!["string".to_string(), "int".to_string()]);
 
-        // Table format should escape | characters
-        assert_eq!(
-            format_bicep_type(&union_type, MarkdownFormat::Table),
-            "string \\| int"
-        );
-
         // List format should not escape | characters
-        assert_eq!(
-            format_bicep_type(&union_type, MarkdownFormat::List),
-            "string | int"
-        );
+        assert_eq!(format_bicep_type(&union_type), "string | int");
     }
 }
