@@ -301,6 +301,13 @@ fn generate_types_section(markdown: &mut String, document: &BicepDocument) {
 
                     generate_key_value_display(markdown, &prop_items);
 
+                    // Handle nested object properties recursively
+                    if let BicepType::Object(Some(nested_props)) = &prop_param.parameter_type {
+                        if !nested_props.is_empty() {
+                            generate_nested_object_properties(markdown, nested_props, 6);
+                        }
+                    }
+
                     if !prop_param.metadata.is_empty() {
                         markdown.push_str("\n###### Metadata\n\n");
                         generate_metadata_display(markdown, &prop_param.metadata);
@@ -417,9 +424,100 @@ fn generate_parameters_section(markdown: &mut String, document: &BicepDocument) 
 
         generate_key_value_display(markdown, &items);
 
+        // Object properties for object types
+        if let BicepType::Object(Some(properties)) = &parameter.parameter_type {
+            if !properties.is_empty() {
+                markdown.push_str("\n#### Object Properties\n\n");
+                generate_nested_object_properties(markdown, properties, 5);
+            }
+        }
+
         if !parameter.metadata.is_empty() {
             markdown.push_str("\n#### Metadata\n\n");
             generate_metadata_display(markdown, &parameter.metadata);
+        }
+
+        markdown.push('\n');
+    }
+}
+
+/// Generate nested object properties recursively for Markdown
+///
+/// # Arguments
+///
+/// * `markdown` - The string buffer to append Markdown content to
+/// * `properties` - The object properties to document
+/// * `header_level` - The header level to use (4 for #### level, 5 for ##### level, etc.)
+fn generate_nested_object_properties(
+    markdown: &mut String,
+    properties: &indexmap::IndexMap<String, crate::parsing::BicepParameter>,
+    header_level: usize,
+) {
+    let header_prefix = "#".repeat(header_level);
+
+    for (prop_name, prop_param) in properties {
+        markdown.push_str(&format!(
+            "{} {}\n\n",
+            header_prefix,
+            escape_markdown_table(prop_name)
+        ));
+
+        if let Some(description) = &prop_param.description {
+            markdown.push_str(&format!("{}\n\n", escape_markdown_table(description)));
+        }
+
+        let mut prop_items = vec![("Type", format_bicep_type(&prop_param.parameter_type))];
+
+        if prop_param.is_nullable {
+            prop_items.push(("Nullable", "Yes".to_string()));
+        }
+
+        if prop_param.is_secure {
+            prop_items.push(("Secure", "Yes".to_string()));
+        }
+
+        if let Some(default_value) = &prop_param.default_value {
+            let value_str = format_bicep_value(default_value);
+            prop_items.push(("Default Value", value_str));
+        }
+
+        // Add constraints for properties
+        if let Some(min_value) = prop_param.min_value {
+            prop_items.push(("Minimum Value", min_value.to_string()));
+        }
+        if let Some(max_value) = prop_param.max_value {
+            prop_items.push(("Maximum Value", max_value.to_string()));
+        }
+        if let Some(min_length) = prop_param.min_length {
+            prop_items.push(("Minimum Length", min_length.to_string()));
+        }
+        if let Some(max_length) = prop_param.max_length {
+            prop_items.push(("Maximum Length", max_length.to_string()));
+        }
+        if let Some(allowed_values) = &prop_param.allowed_values {
+            if !allowed_values.is_empty() {
+                let values = allowed_values
+                    .iter()
+                    .map(|v| format_bicep_value(v))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                prop_items.push(("Allowed Values", values));
+            }
+        }
+
+        generate_key_value_display(markdown, &prop_items);
+
+        // Recursively handle nested object properties (limit depth to avoid infinite recursion)
+        if header_level < 7 {
+            if let BicepType::Object(Some(nested_properties)) = &prop_param.parameter_type {
+                if !nested_properties.is_empty() {
+                    generate_nested_object_properties(
+                        markdown,
+                        nested_properties,
+                        header_level + 1,
+                    );
+                }
+            }
         }
 
         markdown.push('\n');

@@ -49,28 +49,38 @@ pub fn export_to_file<P: AsRef<Path>>(
 pub fn export_to_string(document: &BicepDocument) -> Result<String, Box<dyn StdError>> {
     let mut asciidoc = String::new();
 
-    // Title and overview section
+    // Title and document attributes
     if let Some(name) = &document.name {
-        asciidoc.push_str(&format!("= {}\n\n", name));
+        asciidoc.push_str(&format!("= {}\n", name));
     } else {
-        asciidoc.push_str("= Bicep Template\n\n");
+        asciidoc.push_str("= Bicep Template\n");
     }
+
+    // Document attributes
+    asciidoc.push_str(":noheader:\n");
+    asciidoc.push_str(":source-language: bicep\n");
+    asciidoc.push_str(":table-caption!:\n");
+    asciidoc.push_str(":toc: preamble\n");
+    asciidoc.push_str(":toclevels: 2\n\n");
 
     // Description
     if let Some(description) = &document.description {
         asciidoc.push_str(&format!("{}\n\n", description));
     }
 
+    // Target scope in table format
     if let Some(target_scope) = &document.target_scope {
-        asciidoc.push_str(&format!(
-            "Target Scope: {}\n",
-            escape_asciidoc(target_scope)
-        ));
+        asciidoc.push_str("[%autowidth,cols=\"h,1\",frame=none]\n");
+        asciidoc.push_str("|===\n");
+        asciidoc.push_str("| Target Scope\n");
+        asciidoc.push_str(&format!("| {}\n", escape_asciidoc(target_scope)));
+        asciidoc.push_str("|===\n\n");
     }
 
     // Additional metadata
     if !document.metadata.is_empty() {
-        asciidoc.push_str("\n=== Additional Metadata\n\n");
+        asciidoc.push_str(".Additional Metadata\n");
+        asciidoc.push_str("[%autowidth,cols=\"h,1\",frame=none]\n");
         generate_metadata_display(&mut asciidoc, &document.metadata);
     }
 
@@ -215,93 +225,129 @@ fn generate_types_section(asciidoc: &mut String, document: &BicepDocument) {
     }
 
     for (name, custom_type) in &document.types {
-        asciidoc.push_str(&format!("=== {}\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
 
         if let Some(description) = &custom_type.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
-        // Basic information table
+        // Basic information table with properties label
+        asciidoc.push_str(".Properties\n");
         let items = vec![
-            ("Type", format_bicep_type(&custom_type.definition)),
+            (
+                "Type",
+                format!("m| {}", format_bicep_type(&custom_type.definition)),
+            ),
             (
                 "Exported",
                 if custom_type.is_exported {
-                    "Yes".to_string()
+                    "✅ Yes".to_string()
                 } else {
-                    "No".to_string()
+                    "❌ No".to_string()
                 },
+            ),
+            (
+                "Nullable",
+                "❌ No".to_string(), // Types themselves are not nullable
             ),
             (
                 "Secure",
                 if custom_type.is_secure {
-                    "Yes".to_string()
+                    "✅ Yes".to_string()
                 } else {
-                    "No".to_string()
+                    "❌ No".to_string()
                 },
             ),
         ];
-        generate_key_value_display(asciidoc, &items);
+
+        generate_key_value_display(asciidoc, &items, "h,1");
 
         // Check if this is an object type with properties and add object properties section
         if let BicepType::Object(Some(properties)) = &custom_type.definition {
             if !properties.is_empty() {
-                asciidoc.push_str("\n==== Object properties\n\n");
+                asciidoc.push_str("\n*Object Definition*\n\n");
 
                 for (prop_name, prop_param) in properties {
-                    asciidoc.push_str(&format!("===== {}\n\n", escape_asciidoc(prop_name)));
+                    asciidoc.push_str(&format!("==== `{}`\n\n", escape_asciidoc(prop_name)));
 
                     if let Some(description) = &prop_param.description {
                         asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
                     }
 
-                    let mut prop_items =
-                        vec![("Type", format_bicep_type(&prop_param.parameter_type))];
+                    asciidoc.push_str(".Properties\n");
+                    let prop_items = vec![
+                        (
+                            "Type",
+                            format!("m| {}", format_bicep_type(&prop_param.parameter_type)),
+                        ),
+                        (
+                            "Nullable",
+                            if prop_param.is_nullable {
+                                "✅ Yes".to_string()
+                            } else {
+                                "❌ No".to_string()
+                            },
+                        ),
+                        (
+                            "Secure",
+                            if prop_param.is_secure {
+                                "✅ Yes".to_string()
+                            } else {
+                                "❌ No".to_string()
+                            },
+                        ),
+                    ];
 
-                    if prop_param.is_nullable {
-                        prop_items.push(("Nullable", "Yes".to_string()));
-                    }
+                    generate_key_value_display(asciidoc, &prop_items, "h,1");
 
-                    if prop_param.is_secure {
-                        prop_items.push(("Secure", "Yes".to_string()));
-                    }
-
-                    if let Some(default_value) = &prop_param.default_value {
-                        let value_str = format_bicep_value(default_value);
-                        prop_items.push(("Default Value", value_str));
-                    }
-
+                    // Add constraints section if there are any constraints
+                    let mut constraints = Vec::new();
                     if let Some(min_value) = prop_param.min_value {
-                        prop_items.push(("Minimum Value", min_value.to_string()));
+                        constraints.push(("Minimum Value", min_value.to_string()));
                     }
-
                     if let Some(max_value) = prop_param.max_value {
-                        prop_items.push(("Maximum Value", max_value.to_string()));
+                        constraints.push(("Maximum Value", max_value.to_string()));
                     }
-
                     if let Some(min_length) = prop_param.min_length {
-                        prop_items.push(("Minimum Length", min_length.to_string()));
+                        constraints.push(("Minimum Length", min_length.to_string()));
                     }
-
                     if let Some(max_length) = prop_param.max_length {
-                        prop_items.push(("Maximum Length", max_length.to_string()));
+                        constraints.push(("Maximum Length", max_length.to_string()));
                     }
-
                     if let Some(allowed_values) = &prop_param.allowed_values {
                         if !allowed_values.is_empty() {
                             let values = allowed_values
                                 .iter()
-                                .map(|v| format_bicep_value(v))
+                                .map(format_bicep_value)
                                 .collect::<Vec<_>>()
                                 .join(", ");
-                            prop_items.push(("Allowed Values", values));
+                            constraints.push(("Allowed Values", values));
                         }
                     }
 
-                    generate_key_value_display(asciidoc, &prop_items);
+                    if !constraints.is_empty() {
+                        asciidoc.push_str("\n.Constraints\n");
+                        generate_key_value_display(asciidoc, &constraints, "h,>m");
+                    }
+
+                    // Handle nested object properties recursively
+                    if let BicepType::Object(Some(nested_props)) = &prop_param.parameter_type {
+                        if !nested_props.is_empty() {
+                            generate_nested_object_properties(asciidoc, nested_props, 5);
+                        }
+                    }
+
+                    if let Some(default_value) = &prop_param.default_value {
+                        asciidoc.push_str("\n.Default Value\n");
+                        asciidoc.push_str("[source]\n");
+                        asciidoc.push_str("----\n");
+                        asciidoc.push_str(&format_bicep_value(default_value));
+                        asciidoc.push_str("\n----\n");
+                    }
 
                     if !prop_param.metadata.is_empty() {
-                        asciidoc.push_str("\n====== Metadata\n\n");
+                        asciidoc.push_str("\n.Metadata\n");
+                        asciidoc.push_str("[%autowidth,cols=\"h,1\",frame=none]\n");
                         generate_metadata_display(asciidoc, &prop_param.metadata);
                     }
 
@@ -324,36 +370,42 @@ fn generate_functions_section(asciidoc: &mut String, document: &BicepDocument) {
     }
 
     for (name, function) in &document.functions {
-        asciidoc.push_str(&format!("=== {}\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
 
         if let Some(description) = &function.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         // Basic information table
+        asciidoc.push_str(".Properties\n");
         let items = vec![
-            ("Return Type", format_bicep_type(&function.return_type)),
+            (
+                "Return Type",
+                format!("m| {}", format_bicep_type(&function.return_type)),
+            ),
             (
                 "Exported",
                 if function.is_exported {
-                    "Yes".to_string()
+                    "✅ Yes".to_string()
                 } else {
-                    "No".to_string()
+                    "❌ No".to_string()
                 },
             ),
         ];
-        generate_key_value_display(asciidoc, &items);
+        generate_key_value_display(asciidoc, &items, "h,1");
 
         // Parameters
         if !function.arguments.is_empty() {
-            asciidoc.push_str("\n==== Parameters\n\n");
+            asciidoc.push_str("\n.Parameters\n");
             generate_function_arguments_display(asciidoc, &function.arguments);
         }
 
-        if !function.metadata.is_empty() {
-            asciidoc.push_str("\n==== Metadata\n\n");
-            generate_metadata_display(asciidoc, &function.metadata);
-        }
+        // Function definition
+        asciidoc.push_str("\n.Definition\n");
+        asciidoc.push_str("[source]\n");
+        asciidoc.push_str("----\n");
+        asciidoc.push_str(&escape_asciidoc(&function.expression));
+        asciidoc.push_str("\n----\n");
 
         asciidoc.push('\n');
     }
@@ -369,56 +421,267 @@ fn generate_parameters_section(asciidoc: &mut String, document: &BicepDocument) 
     }
 
     for (name, parameter) in &document.parameters {
-        asciidoc.push_str(&format!("=== {}\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
 
         if let Some(description) = &parameter.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
+        // Handle metadata at the top if it contains description
+        if !parameter.metadata.is_empty() {
+            // Check if metadata has description that should be shown as the main description
+            if let Some(metadata_desc) = parameter.metadata.get("description") {
+                if parameter.description.is_none() {
+                    asciidoc.push_str(&format!(
+                        "{}\n\n",
+                        escape_asciidoc(&format_bicep_value(metadata_desc))
+                    ));
+                }
+            }
+
+            // Show other metadata
+            let mut other_metadata = parameter.metadata.clone();
+            other_metadata.shift_remove("description");
+            if !other_metadata.is_empty() {
+                asciidoc.push_str(".Metadata\n");
+                asciidoc.push_str("[%autowidth,cols=\"h,1\",frame=none]\n");
+                generate_metadata_display(asciidoc, &other_metadata);
+                asciidoc.push('\n');
+            }
+        }
+
         // Basic information table
-        let mut items = vec![("Type", format_bicep_type(&parameter.parameter_type))];
+        asciidoc.push_str(".Properties\n");
+        let items = vec![
+            (
+                "Type",
+                format!("m| {}", format_bicep_type(&parameter.parameter_type)),
+            ),
+            (
+                "Nullable",
+                if parameter.is_nullable {
+                    "✅ Yes".to_string()
+                } else {
+                    "❌ No".to_string()
+                },
+            ),
+            (
+                "Secure",
+                if parameter.is_secure {
+                    "✅ Yes".to_string()
+                } else {
+                    "❌ No".to_string()
+                },
+            ),
+            (
+                "Sealed",
+                if parameter.is_sealed {
+                    "✅ Yes".to_string()
+                } else {
+                    "❌ No".to_string()
+                },
+            ),
+        ];
 
-        if parameter.is_nullable {
-            items.push(("Nullable", "Yes".to_string()));
-        }
+        generate_key_value_display(asciidoc, &items, "h,1");
 
-        if let Some(default_value) = &parameter.default_value {
-            let value_str = format_bicep_value(default_value);
-            items.push(("Default Value", value_str));
-        }
-
+        // Add constraints section if there are any constraints
+        let mut constraints = Vec::new();
         if let Some(min_value) = parameter.min_value {
-            items.push(("Minimum Value", min_value.to_string()));
+            constraints.push(("Minimum Value", min_value.to_string()));
         }
-
         if let Some(max_value) = parameter.max_value {
-            items.push(("Maximum Value", max_value.to_string()));
+            constraints.push(("Maximum Value", max_value.to_string()));
         }
-
         if let Some(min_length) = parameter.min_length {
-            items.push(("Minimum Length", min_length.to_string()));
+            constraints.push(("Minimum Length", min_length.to_string()));
         }
-
         if let Some(max_length) = parameter.max_length {
-            items.push(("Maximum Length", max_length.to_string()));
+            constraints.push(("Maximum Length", max_length.to_string()));
         }
-
         if let Some(allowed_values) = &parameter.allowed_values {
             if !allowed_values.is_empty() {
                 let values = allowed_values
                     .iter()
-                    .map(|v| format_bicep_value(v))
+                    .map(|v| format!("`{}`", format_bicep_value(v)))
                     .collect::<Vec<_>>()
-                    .join(", ");
-                items.push(("Allowed Values", values));
+                    .join(" +\n   ");
+                constraints.push(("Allowed Values", format!("<| {}", values)));
             }
         }
 
-        generate_key_value_display(asciidoc, &items);
+        if !constraints.is_empty() {
+            asciidoc.push_str("\n.Constraints\n");
+            generate_key_value_display(asciidoc, &constraints, "h,>m");
+        }
 
-        if !parameter.metadata.is_empty() {
-            asciidoc.push_str("\n==== Metadata\n\n");
-            generate_metadata_display(asciidoc, &parameter.metadata);
+        // Default value
+        if let Some(default_value) = &parameter.default_value {
+            asciidoc.push_str("\n.Default Value\n");
+            asciidoc.push_str("[source]\n");
+            asciidoc.push_str("----\n");
+            asciidoc.push_str(&format_bicep_value(default_value));
+            asciidoc.push_str("\n----\n");
+        }
+
+        // Object definition for object types
+        if let BicepType::Object(Some(properties)) = &parameter.parameter_type {
+            if !properties.is_empty() {
+                asciidoc.push_str("\n*Object Definition*\n\n");
+
+                for (prop_name, prop_param) in properties {
+                    asciidoc.push_str(&format!("==== `{}`\n\n", escape_asciidoc(prop_name)));
+
+                    if let Some(description) = &prop_param.description {
+                        asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+                    }
+
+                    asciidoc.push_str(".Properties\n");
+                    let prop_items = vec![
+                        (
+                            "Type",
+                            format!("m| {}", format_bicep_type(&prop_param.parameter_type)),
+                        ),
+                        (
+                            "Nullable",
+                            if prop_param.is_nullable {
+                                "✅ Yes".to_string()
+                            } else {
+                                "❌ No".to_string()
+                            },
+                        ),
+                        (
+                            "Secure",
+                            if prop_param.is_secure {
+                                "✅ Yes".to_string()
+                            } else {
+                                "❌ No".to_string()
+                            },
+                        ),
+                    ];
+
+                    generate_key_value_display(asciidoc, &prop_items, "h,1");
+
+                    // Add constraints for properties
+                    let mut prop_constraints = Vec::new();
+                    if let Some(min_value) = prop_param.min_value {
+                        prop_constraints.push(("Minimum Value", min_value.to_string()));
+                    }
+                    if let Some(max_value) = prop_param.max_value {
+                        prop_constraints.push(("Maximum Value", max_value.to_string()));
+                    }
+                    if let Some(min_length) = prop_param.min_length {
+                        prop_constraints.push(("Minimum Length", min_length.to_string()));
+                    }
+                    if let Some(max_length) = prop_param.max_length {
+                        prop_constraints.push(("Maximum Length", max_length.to_string()));
+                    }
+
+                    if !prop_constraints.is_empty() {
+                        asciidoc.push_str("\n.Constraints\n");
+                        generate_key_value_display(asciidoc, &prop_constraints, "h,>m");
+                    }
+
+                    // Recursively handle nested object properties
+                    if let BicepType::Object(Some(nested_properties)) = &prop_param.parameter_type {
+                        if !nested_properties.is_empty() {
+                            asciidoc.push_str("\n*Object Definition*\n\n");
+                            generate_nested_object_properties(asciidoc, nested_properties, 5);
+                        }
+                    }
+
+                    asciidoc.push('\n');
+                }
+            }
+        }
+
+        asciidoc.push('\n');
+    }
+}
+
+/// Generate nested object properties recursively for AsciiDoc
+///
+/// # Arguments
+///
+/// * `asciidoc` - The string buffer to append AsciiDoc content to
+/// * `properties` - The object properties to document
+/// * `header_level` - The header level to use (4 for ==== level, 5 for ===== level, etc.)
+fn generate_nested_object_properties(
+    asciidoc: &mut String,
+    properties: &indexmap::IndexMap<String, crate::parsing::BicepParameter>,
+    header_level: usize,
+) {
+    let header_prefix = "=".repeat(header_level);
+
+    for (prop_name, prop_param) in properties {
+        asciidoc.push_str(&format!(
+            "{} `{}`\n\n",
+            header_prefix,
+            escape_asciidoc(prop_name)
+        ));
+
+        if let Some(description) = &prop_param.description {
+            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+        }
+
+        asciidoc.push_str(".Properties\n");
+        let prop_items = vec![
+            (
+                "Type",
+                format!("m| {}", format_bicep_type(&prop_param.parameter_type)),
+            ),
+            (
+                "Nullable",
+                if prop_param.is_nullable {
+                    "✅ Yes".to_string()
+                } else {
+                    "❌ No".to_string()
+                },
+            ),
+            (
+                "Secure",
+                if prop_param.is_secure {
+                    "✅ Yes".to_string()
+                } else {
+                    "❌ No".to_string()
+                },
+            ),
+        ];
+
+        generate_key_value_display(asciidoc, &prop_items, "h,1");
+
+        // Add constraints for properties
+        let mut prop_constraints = Vec::new();
+        if let Some(min_value) = prop_param.min_value {
+            prop_constraints.push(("Minimum Value", min_value.to_string()));
+        }
+        if let Some(max_value) = prop_param.max_value {
+            prop_constraints.push(("Maximum Value", max_value.to_string()));
+        }
+        if let Some(min_length) = prop_param.min_length {
+            prop_constraints.push(("Minimum Length", min_length.to_string()));
+        }
+        if let Some(max_length) = prop_param.max_length {
+            prop_constraints.push(("Maximum Length", max_length.to_string()));
+        }
+
+        if !prop_constraints.is_empty() {
+            asciidoc.push_str("\n.Constraints\n");
+            generate_key_value_display(asciidoc, &prop_constraints, "h,>m");
+        }
+
+        // Recursively handle nested object properties (limit depth to avoid infinite recursion)
+        if header_level < 7 {
+            if let BicepType::Object(Some(nested_properties)) = &prop_param.parameter_type {
+                if !nested_properties.is_empty() {
+                    asciidoc.push_str("\n*Object Definition*\n\n");
+                    generate_nested_object_properties(
+                        asciidoc,
+                        nested_properties,
+                        header_level + 1,
+                    );
+                }
+            }
         }
 
         asciidoc.push('\n');
@@ -435,26 +698,30 @@ fn generate_variables_section(asciidoc: &mut String, document: &BicepDocument) {
     }
 
     for (name, variable) in &document.variables {
-        asciidoc.push_str(&format!("=== {}\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
 
         if let Some(description) = &variable.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         // Basic information table
-        let value_str = format_bicep_value(&variable.value);
-        let items = vec![
-            ("Value", value_str),
-            (
-                "Exported",
-                if variable.is_exported {
-                    "Yes".to_string()
-                } else {
-                    "No".to_string()
-                },
-            ),
-        ];
-        generate_key_value_display(asciidoc, &items);
+        asciidoc.push_str(".Properties\n");
+        let items = vec![(
+            "Exported",
+            if variable.is_exported {
+                "✅ Yes".to_string()
+            } else {
+                "❌ No".to_string()
+            },
+        )];
+        generate_key_value_display(asciidoc, &items, "h,1");
+
+        // Value section
+        asciidoc.push_str("\n.Value\n");
+        asciidoc.push_str("[source]\n");
+        asciidoc.push_str("----\n");
+        asciidoc.push_str(&format_bicep_value(&variable.value));
+        asciidoc.push_str("\n----\n");
 
         asciidoc.push('\n');
     }
@@ -470,14 +737,16 @@ fn generate_resources_section(asciidoc: &mut String, document: &BicepDocument) {
     }
 
     for (name, resource) in &document.resources {
-        asciidoc.push_str(&format!("=== {}\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
 
         if let Some(description) = &resource.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         // Basic information table
+        asciidoc.push_str(".Properties\n");
         let mut items = vec![
+            ("Name", escape_asciidoc(&resource.name)),
             ("Type", resource.resource_type.clone()),
             ("API Version", resource.api_version.clone()),
         ];
@@ -488,33 +757,43 @@ fn generate_resources_section(asciidoc: &mut String, document: &BicepDocument) {
         }
 
         if resource.existing {
-            items.push(("Existing", "Yes".to_string()));
+            items.push(("Existing", "d| ✅ Yes".to_string()));
         }
 
         if let Some(parent) = &resource.parent {
-            items.push(("Parent", parent.clone()));
+            items.push(("Parent", parent.to_string()));
         }
 
         if let Some(depends_on) = &resource.depends_on {
             if !depends_on.is_empty() {
-                let deps = depends_on.join(", ");
+                let deps = depends_on.join(" +\n");
                 items.push(("Depends On", deps));
             }
-        }
-
-        if let Some(condition) = &resource.condition {
-            items.push(("Condition", condition.clone()));
-        }
-
-        if let Some(loop_statement) = &resource.loop_statement {
-            items.push(("Loop", loop_statement.clone()));
         }
 
         if let Some(batch_size) = resource.batch_size {
             items.push(("Batch Size", batch_size.to_string()));
         }
 
-        generate_key_value_display(asciidoc, &items);
+        generate_key_value_display(asciidoc, &items, "h,m");
+
+        // Condition section
+        if let Some(condition) = &resource.condition {
+            asciidoc.push_str("\n.Condition\n");
+            asciidoc.push_str("[source]\n");
+            asciidoc.push_str("----\n");
+            asciidoc.push_str(condition);
+            asciidoc.push_str("\n----\n");
+        }
+
+        // Loop section
+        if let Some(loop_statement) = &resource.loop_statement {
+            asciidoc.push_str("\n.Loop\n");
+            asciidoc.push_str("[source]\n");
+            asciidoc.push_str("----\n");
+            asciidoc.push_str(loop_statement);
+            asciidoc.push_str("\n----\n");
+        }
 
         asciidoc.push('\n');
     }
@@ -579,7 +858,7 @@ fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument) {
         };
 
         let items = vec![("Source", source_str)];
-        generate_key_value_display(asciidoc, &items);
+        generate_key_value_display(asciidoc, &items, "h,1");
 
         asciidoc.push('\n');
     }
@@ -595,51 +874,74 @@ fn generate_outputs_section(asciidoc: &mut String, document: &BicepDocument) {
     }
 
     for (name, output) in &document.outputs {
-        asciidoc.push_str(&format!("=== {}\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
 
         if let Some(description) = &output.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         // Basic information table
+        asciidoc.push_str(".Properties\n");
         let mut items = vec![
-            ("Type", format_bicep_type(&output.output_type)),
-            ("Value", format_bicep_value(&output.value)),
+            (
+                "Type",
+                format!("m| {}", format_bicep_type(&output.output_type)),
+            ),
+            (
+                "Exported",
+                "❌ No".to_string(), // Outputs are not typically exported
+            ),
+            (
+                "Secure",
+                if output.secure {
+                    "✅ Yes".to_string()
+                } else {
+                    "❌ No".to_string()
+                },
+            ),
         ];
+
+        if output.sealed {
+            items.push(("Sealed", "✅ Yes".to_string()));
+        }
 
         if let Some(discriminator) = &output.discriminator {
             items.push(("Discriminator", discriminator.clone()));
         }
 
-        if let Some(min_length) = output.min_length {
-            items.push(("Minimum Length", min_length.to_string()));
-        }
+        generate_key_value_display(asciidoc, &items, "h,1");
 
-        if let Some(max_length) = output.max_length {
-            items.push(("Maximum Length", max_length.to_string()));
-        }
-
+        let mut prop_constraints = Vec::new();
         if let Some(min_value) = output.min_value {
-            items.push(("Minimum Value", min_value.to_string()));
+            prop_constraints.push(("Minimum Value", min_value.to_string()));
         }
-
         if let Some(max_value) = output.max_value {
-            items.push(("Maximum Value", max_value.to_string()));
+            prop_constraints.push(("Maximum Value", max_value.to_string()));
+        }
+        if let Some(min_length) = output.min_length {
+            prop_constraints.push(("Minimum Length", min_length.to_string()));
+        }
+        if let Some(max_length) = output.max_length {
+            prop_constraints.push(("Maximum Length", max_length.to_string()));
         }
 
-        if output.sealed {
-            items.push(("Sealed", "Yes".to_string()));
+        if !prop_constraints.is_empty() {
+            asciidoc.push_str("\n.Constraints\n");
+            generate_key_value_display(asciidoc, &prop_constraints, "h,>m");
         }
 
-        if output.secure {
-            items.push(("Secure", "Yes".to_string()));
-        }
+        // Value section
+        asciidoc.push_str("\n.Value\n");
+        asciidoc.push_str("[source]\n");
+        asciidoc.push_str("----\n");
+        asciidoc.push_str(&format_bicep_value(&output.value));
+        asciidoc.push_str("\n----\n");
 
-        generate_key_value_display(asciidoc, &items);
-
+        // Additional metadata if present
         if let Some(metadata) = &output.metadata {
             if !metadata.is_empty() {
-                asciidoc.push_str("\n==== Metadata\n\n");
+                asciidoc.push_str("\n.Metadata\n");
+                asciidoc.push_str("[%autowidth,cols=\"h,1\",frame=none]\n");
                 generate_metadata_display(asciidoc, metadata);
             }
         }
@@ -655,7 +957,7 @@ fn format_bicep_value(value: &BicepValue) -> String {
         BicepValue::Int(n) => n.to_string(),
         BicepValue::Bool(b) => b.to_string(),
         BicepValue::Array(arr) => {
-            let items: Vec<String> = arr.iter().map(|v| format_bicep_value(v)).collect();
+            let items: Vec<String> = arr.iter().map(format_bicep_value).collect();
             format!("[{}]", items.join(", "))
         },
         BicepValue::Object(obj) => {
@@ -696,11 +998,16 @@ fn format_bicep_type(bicep_type: &BicepType) -> String {
 
 /// Escape special AsciiDoc characters in text
 fn escape_asciidoc(text: &str) -> String {
-    text.replace('*', "\\*")
+    let escaped = text
+        .replace('*', "\\*")
         .replace('_', "\\_")
-        .replace('`', "\\`")
-        .replace('#', "\\#")
-        .replace('\n', " +\n") // Preserve newlines
+        .replace('#', "\\#");
+
+    if escaped.contains('\n') && !escaped.contains("+\n") {
+        escaped.replace('\n', " +\n")
+    } else {
+        escaped
+    }
 }
 
 /// Generate property display for BicepValue properties using table format
@@ -709,11 +1016,10 @@ fn generate_metadata_display(
     metadata: &indexmap::IndexMap<String, BicepValue>,
 ) {
     asciidoc.push_str("|===\n");
-    asciidoc.push_str("| Key | Value\n\n");
     for (key, value) in metadata {
         let value_str = format_bicep_value(value);
         asciidoc.push_str(&format!(
-            "| {} | {}\n",
+            "| {}\n| {}\n",
             escape_asciidoc(key),
             escape_asciidoc(&value_str)
         ));
@@ -722,15 +1028,30 @@ fn generate_metadata_display(
 }
 
 /// Generate key-value property display
-fn generate_key_value_display(asciidoc: &mut String, items: &[(&str, String)]) {
+fn generate_key_value_display(asciidoc: &mut String, items: &[(&str, String)], cols: &str) {
+    asciidoc.push_str(&format!("[%autowidth,cols=\"{}\",frame=none]\n", cols));
     asciidoc.push_str("|===\n");
-    asciidoc.push_str("| Property | Value\n\n");
     for (key, value) in items {
-        asciidoc.push_str(&format!(
-            "| {} | {}\n",
-            escape_asciidoc(key),
-            escape_asciidoc(value)
-        ));
+        match value.split_once("|") {
+            Some((attr, split_value)) if !attr.ends_with('\\') => {
+                // We have an attribute.
+                // If statement catches escaped pipes in the value
+                asciidoc.push_str(&format!(
+                    "| {}\n{}| {}\n\n",
+                    escape_asciidoc(key),
+                    attr,
+                    escape_asciidoc(split_value.trim())
+                ));
+            },
+            _ => {
+                // Otherwise, just display the key and value
+                asciidoc.push_str(&format!(
+                    "| {}\n| {}\n\n",
+                    escape_asciidoc(key),
+                    escape_asciidoc(value)
+                ));
+            },
+        }
     }
     asciidoc.push_str("|===\n");
 }
@@ -742,14 +1063,15 @@ fn generate_key_value_display(asciidoc: &mut String, items: &[(&str, String)]) {
 /// * `asciidoc` - The string buffer to append AsciiDoc content to
 /// * `arguments` - The function arguments to display
 fn generate_function_arguments_display(asciidoc: &mut String, arguments: &[BicepFunctionArgument]) {
+    asciidoc.push_str("[%autowidth,cols=\"h,m,1\",frame=none]\n");
     asciidoc.push_str("|===\n");
-    asciidoc.push_str("| Parameter | Type | Optional\n\n");
+    asciidoc.push_str("| Name\n| Type\n| Required\n\n");
     for arg in arguments {
         asciidoc.push_str(&format!(
-            "| {} | {} | {}\n",
+            "| {}\n| {}\n| {}\n\n",
             escape_asciidoc(&arg.name),
             escape_asciidoc(&format_bicep_type(&arg.argument_type)),
-            if arg.is_nullable { "Yes" } else { "No" }
+            if arg.is_nullable { "❌ No" } else { "✅ Yes" }
         ));
     }
     asciidoc.push_str("|===\n");
@@ -800,7 +1122,7 @@ mod tests {
 
         let asciidoc = result.unwrap();
         assert!(asciidoc.contains("== Parameters"));
-        assert!(asciidoc.contains("=== testParam"));
+        assert!(asciidoc.contains("=== `testParam`"));
         assert!(asciidoc.contains("Test parameter"));
         assert!(asciidoc.contains("default"));
     }
@@ -811,7 +1133,7 @@ mod tests {
         let escaped = escape_asciidoc(text);
         assert_eq!(
             escaped,
-            "test | with \\* special \\_ characters [and] \\`code\\` \\#heading"
+            "test | with \\* special \\_ characters [and] `code` \\#heading"
         );
     }
 

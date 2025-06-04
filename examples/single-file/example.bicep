@@ -53,7 +53,7 @@ param greekLetter string = 'alpha'
 param multiLine string = '''
 This is a multi line string.
   It covers multiple lines, and has indentation.
-  It also has a tab character ( ).	And a new line.
+  It also has a tab character (	).	And a new line.
   It also has a double backslash \\ and a single \
   And a single quote: '
 '''

@@ -190,9 +190,7 @@ fn handle_markdown_export(common: CommonExportOptions) -> Result<(), Box<dyn Err
 }
 
 /// Handle the AsciiDoc export command
-fn handle_asciidoc_export(
-    common: CommonExportOptions,
-) -> Result<(), Box<dyn Error>> {
+fn handle_asciidoc_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>> {
     debug!(
         "Beginning AsciiDoc export for file: {}",
         common.input.display()
