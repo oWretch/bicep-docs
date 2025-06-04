@@ -217,9 +217,6 @@ jobs:
           pattern: bicep-docs-*
           path: dist
 
-      - name: Combine checksums
-        run: cat dist/**/SHA256SUM.txt | tee dist/SHA256SUMS.txt
-
       - name: List artifacts
         run: ls -alR .
         working-directory: dist
