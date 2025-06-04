@@ -22,6 +22,12 @@ Thank you for your interest in contributing to Bicep-Docs! This project welcomes
 * Use `cargo fmt` and `cargo clippy` to ensure code quality.
 * Add or update tests for new features and bug fixes.
 
+== Pre-Commit Hooks
+
+This project uses https://pre-commit.com/[pre-commit] to automatically enforce code quality and conventional commits. 
+
+For detailed information about the pre-commit configuration, including installation instructions, available hooks, and troubleshooting, see the link:docs/PRE_COMMIT.adoc[Pre-Commit Configuration Guide].
+
 == Commit Message Linting
 
 This project uses https://commitlint.js.org/[commitlint] to enforce the https://www.conventionalcommits.org/[Conventional Commits] specification for commit messages.
