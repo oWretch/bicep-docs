@@ -1,0 +1,975 @@
+= Example Bicep File
+:noheader:
+:source-language: bicep
+:table-caption!:
+:toc: preamble
+:toclevels: 2
+
+Description of the example Bicep file
+
+[%autowidth,cols="h,1",frame=none]
+|===
+| Target Scope
+| resourceGroup
+|===
+
+.Additional Metadata
+[%autowidth,cols="h,1",frame=none]
+|===
+| author
+| File Author
+|===
+
+== Imports
+
+_No imports defined_
+
+== Types
+
+=== `customObject`
+
+Type description
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| object
+
+| Exported
+| ❌ No
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+|===
+
+*Object Definition*
+
+==== `name`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string
+
+| Nullable
+| ✅ Yes
+
+| Secure
+| ✅ Yes
+
+|===
+
+==== `score`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| int
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+|===
+
+.Constraints
+[%autowidth,cols="h,>m",frame=none]
+|===
+| Minimum Value
+| 0
+
+| Maximum Value
+| 100
+
+|===
+
+==== `grade`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| grade
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+|===
+
+
+=== `grade`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| A \| B \| C \| D \| E
+
+| Exported
+| ✅ Yes
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+|===
+
+=== `resourceType`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| object
+
+| Exported
+| ❌ No
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+|===
+
+*Object Definition*
+
+==== `id`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+|===
+
+==== `name`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+|===
+
+==== `resourceGroup`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+|===
+
+
+== Functions
+
+=== `generateName`
+
+Generate Name Function
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Return Type
+m| string
+
+| Exported
+| ✅ Yes
+
+|===
+
+.Parameters
+[%autowidth,cols="h,m,1",frame=none]
+|===
+| Name
+| Type
+| Required
+
+| argument1
+| string
+| ✅ Yes
+
+| argument2
+| int
+| ❌ No
+
+|===
+
+.Definition
+[source]
+----
+toLower('${argument1}-${argument2}')
+----
+
+=== `somethingElse`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Return Type
+m| bool
+
+| Exported
+| ❌ No
+
+|===
+
+.Definition
+[source]
+----
+true
+----
+
+== Parameters
+
+=== `requiredParam`
+
+This is a required parameter
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string
+
+| Nullable
+| ❌ No
+
+| Secure
+| ✅ Yes
+
+| Sealed
+| ❌ No
+
+|===
+
+.Constraints
+[%autowidth,cols="h,>m",frame=none]
+|===
+| Minimum Length
+| 3
+
+| Maximum Length
+| 10
+
+|===
+
+=== `optionalParam`
+
+This is an optional parameter
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string
+
+| Nullable
+| ✅ Yes
+
+| Secure
+| ❌ No
+
+| Sealed
+| ❌ No
+
+|===
+
+=== `simpleParamWithDefault`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| int
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+| Sealed
+| ❌ No
+
+|===
+
+.Constraints
+[%autowidth,cols="h,>m",frame=none]
+|===
+| Minimum Value
+| 0
+
+| Maximum Value
+| 100
+
+|===
+
+.Default Value
+[source]
+----
+100
+----
+
+=== `genericObject`
+
+I have a description in metadata
+
+.Metadata
+[%autowidth,cols="h,1",frame=none]
+|===
+| name
+| A name in metadata
+| somethingElse
+| Another metadata property
+|===
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| object
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+| Sealed
+| ❌ No
+
+|===
+
+.Default Value
+[source]
+----
+{ name: value, number: 1000 }
+----
+
+=== `inlineSpecificObject`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| object
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+| Sealed
+| ✅ Yes
+
+|===
+
+*Object Definition*
+
+==== `property`
+
+Description of the property
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string
+
+| Nullable
+| ❌ No
+
+| Secure
+| ✅ Yes
+
+|===
+
+.Constraints
+[%autowidth,cols="h,>m",frame=none]
+|===
+| Maximum Length
+| 10
+
+|===
+
+==== `otionalProperty`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| int
+
+| Nullable
+| ✅ Yes
+
+| Secure
+| ❌ No
+
+|===
+
+.Constraints
+[%autowidth,cols="h,>m",frame=none]
+|===
+| Minimum Value
+| 23
+
+|===
+
+==== `objectProperty`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| object
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+|===
+
+*Object Definition*
+
+===== `key1`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+|===
+
+===== `key2`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| int
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+|===
+
+
+
+=== `typedObjects`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| customObject[]
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+| Sealed
+| ❌ No
+
+|===
+
+=== `individualOptions`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| one \| two \| three
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+| Sealed
+| ❌ No
+
+|===
+
+=== `greekLetter`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+| Sealed
+| ❌ No
+
+|===
+
+.Constraints
+[%autowidth,cols="h,>m",frame=none]
+|===
+| Allowed Values
+<| `alpha` +
+   `beta` +
+   `gamma` +
+   `delta`
+
+|===
+
+.Default Value
+[source]
+----
+alpha
+----
+
+=== `multiLine`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string
+
+| Nullable
+| ❌ No
+
+| Secure
+| ❌ No
+
+| Sealed
+| ❌ No
+
+|===
+
+.Default Value
+[source]
+----
+
+This is a multi line string.
+  It covers multiple lines, and has indentation.
+  It also has a tab character (	).	And a new line.
+  It also has a double backslash \\ and a single \
+  And a single quote: '
+
+----
+
+== Variables
+
+=== `nameVar`
+
+Variable description
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Exported
+| ❌ No
+
+|===
+
+.Value
+[source]
+----
+someValue
+----
+
+=== `exportedVar`
+
+Exported variable description
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Exported
+| ✅ Yes
+
+|===
+
+.Value
+[source]
+----
+exportedValue
+----
+
+=== `boolVar`
+
+Boolean variable
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Exported
+| ✅ Yes
+
+|===
+
+.Value
+[source]
+----
+true
+----
+
+=== `numVar`
+
+The answer to life, the universe, and everything
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Exported
+| ❌ No
+
+|===
+
+.Value
+[source]
+----
+42
+----
+
+== Resources
+
+=== `storageAccount`
+
+.Properties
+[%autowidth,cols="h,m",frame=none]
+|===
+| Name
+| mystorageaccount
+
+| Type
+| Microsoft.Storage/storageAccounts
+
+| API Version
+| 2023-04-01
+
+| Existing
+d| ✅ Yes
+
+|===
+
+=== `storageAccount::blobServices`
+
+.Properties
+[%autowidth,cols="h,m",frame=none]
+|===
+| Name
+| default
+
+| Type
+| Microsoft.Storage/storageAccounts/blobServices
+
+| API Version
+| 2023-04-01
+
+| Existing
+d| ✅ Yes
+
+|===
+
+=== `storageAccount::blobServices::container`
+
+.Properties
+[%autowidth,cols="h,m",frame=none]
+|===
+| Name
+| myContainer
+
+| Type
+| Microsoft.Storage/storageAccounts/blobServices/containers
+
+| API Version
+| 2023-04-01
+
+|===
+
+=== `vnet`
+
+.Properties
+[%autowidth,cols="h,m",frame=none]
+|===
+| Name
+| ${nameVar}
+
+| Type
+| Microsoft.Network/virtualNetworks
+
+| API Version
+| 2021-05-01
+
+| Depends On
+| roleAssignStorage
+
+|===
+
+=== `vnet::defaultSubnet`
+
+.Properties
+[%autowidth,cols="h,m",frame=none]
+|===
+| Name
+| default
+
+| Type
+| Microsoft.Network/virtualNetworks/subnets
+
+| API Version
+| 2021-05-01
+
+|===
+
+=== `vnet::diffApi`
+
+.Properties
+[%autowidth,cols="h,m",frame=none]
+|===
+| Name
+| api
+
+| Type
+| Microsoft.Network/virtualNetworks/subnets
+
+| API Version
+| 2024-05-01
+
+|===
+
+=== `externalChild`
+
+Resource Description
+
+.Properties
+[%autowidth,cols="h,m",frame=none]
+|===
+| Name
+| another
+
+| Type
+| Microsoft.Network/virtualNetworks/subnets
+
+| API Version
+| 2023-11-01
+
+| Parent
+| vnet
+
+|===
+
+.Condition
+[source]
+----
+(1 == 1)
+----
+
+=== `containerLoop`
+
+.Properties
+[%autowidth,cols="h,m",frame=none]
+|===
+| Name
+| container${name}
+
+| Type
+| Microsoft.Storage/storageAccounts/blobServices/containers
+
+| API Version
+| 2024-01-01
+
+| Parent
+| storageAccount::blobServices
+
+| Batch Size
+| 2
+
+|===
+
+.Loop
+[source]
+----
+for name in ['alice', 'bob', 'charlie']
+----
+
+=== `roleAssignStorage`
+
+.Properties
+[%autowidth,cols="h,m",frame=none]
+|===
+| Name
+| guid(storageAccount.name)
+
+| Type
+| Microsoft.Authorization/roleAssignments
+
+| API Version
+| 2022-04-01
+
+| Scope
+| ${storageAccount}
+
+|===
+
+== Modules
+
+_No modules defined_
+
+== Outputs
+
+=== `one`
+
+Output Description
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string
+
+| Secure
+| ✅ Yes
+
+|===
+
+.Value
+[source]
+----
+one
+----
+
+=== `storageAccountOutput`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| resourceType
+
+| Secure
+| ❌ No
+
+|===
+
+.Value
+[source]
+----
+{ id: storageAccount.id, name: storageAccount.name, resourceGroup: resourceGroup().name }
+----
+
+=== `percentage`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| int
+
+| Secure
+| ❌ No
+
+|===
+
+.Constraints
+[%autowidth,cols="h,>m",frame=none]
+|===
+| Minimum Value
+| 0
+
+| Maximum Value
+| 100
+
+|===
+
+.Value
+[source]
+----
+true ? 50 : 100
+----
+
+=== `fib`
+
+.Properties
+[%autowidth,cols="h,1",frame=none]
+|===
+| Type
+m| string[]
+
+| Secure
+| ❌ No
+
+|===
+
+.Constraints
+[%autowidth,cols="h,>m",frame=none]
+|===
+| Minimum Length
+| 1
+
+| Maximum Length
+| 34
+
+|===
+
+.Value
+[source]
+----
+[1, 1, 2, 3, 5, 8]
+----
+

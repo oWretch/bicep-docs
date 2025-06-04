@@ -19,23 +19,23 @@ Description of the example Bicep file
 Type description
 
 **Type:** `object`  
-**Exported:** ❌ No  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
+**Exported:** No  
+**Nullable:** No  
+**Secure:** No  
 
 **Object Definition**
 
 #### `name`
 
 **Type:** `string`  
-**Nullable:** ✅ Yes  
-**Secure:** ✅ Yes  
+**Nullable:** Yes  
+**Secure:** Yes  
 
 #### `score`
 
 **Type:** `int`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
 
 **Constraints**
 
@@ -45,43 +45,43 @@ Type description
 #### `grade`
 
 **Type:** `grade`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
 
 
 ### `grade`
 
 **Type:** `'A' | 'B' | 'C' | 'D' | 'E'`  
-**Exported:** ✅ Yes  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
+**Exported:** Yes  
+**Nullable:** No  
+**Secure:** No  
 
 ### `resourceType`
 
 **Type:** `object`  
-**Exported:** ❌ No  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
+**Exported:** No  
+**Nullable:** No  
+**Secure:** No  
 
 **Object Definition**
 
 #### `id`
 
 **Type:** `string`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
 
 #### `name`
 
 **Type:** `string`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
 
 #### `resourceGroup`
 
 **Type:** `string`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
 
 
 ## Functions
@@ -91,7 +91,7 @@ Type description
 Generate Name Function
 
 **Return Type:** `string`  
-**Exported:** ✅ Yes  
+**Exported:** Yes  
 
 **Parameters**
 
@@ -112,7 +112,7 @@ toLower('${argument1}-${argument2}')
 ### `somethingElse`
 
 **Return Type:** `bool`  
-**Exported:** ❌ No  
+**Exported:** No  
 
 **Definition**
 
@@ -127,9 +127,9 @@ true
 This is a required parameter
 
 **Type:** `string`  
-**Nullable:** ❌ No  
-**Secure:** ✅ Yes  
-**Sealed:** ❌ No  
+**Nullable:** No  
+**Secure:** Yes  
+**Sealed:** No  
 
 **Constraints**
 
@@ -141,16 +141,16 @@ This is a required parameter
 This is an optional parameter
 
 **Type:** `string`  
-**Nullable:** ✅ Yes  
-**Secure:** ❌ No  
-**Sealed:** ❌ No  
+**Nullable:** Yes  
+**Secure:** No  
+**Sealed:** No  
 
 ### `simpleParamWithDefault`
 
 **Type:** `int`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
-**Sealed:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
+**Sealed:** No  
 
 **Constraints**
 
@@ -175,9 +175,9 @@ I have a description in metadata
 
 
 **Type:** `object`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
-**Sealed:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
+**Sealed:** No  
 
 **Default Value**
 
@@ -188,9 +188,9 @@ I have a description in metadata
 ### `inlineSpecificObject`
 
 **Type:** `object`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
-**Sealed:** ✅ Yes  
+**Nullable:** No  
+**Secure:** No  
+**Sealed:** Yes  
 
 **Object Definition**
 
@@ -199,8 +199,8 @@ I have a description in metadata
 Description of the property
 
 **Type:** `string`  
-**Nullable:** ❌ No  
-**Secure:** ✅ Yes  
+**Nullable:** No  
+**Secure:** Yes  
 
 **Constraints**
 
@@ -209,8 +209,8 @@ Description of the property
 #### `otionalProperty`
 
 **Type:** `int`  
-**Nullable:** ✅ Yes  
-**Secure:** ❌ No  
+**Nullable:** Yes  
+**Secure:** No  
 
 **Constraints**
 
@@ -219,45 +219,45 @@ Description of the property
 #### `objectProperty`
 
 **Type:** `object`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
 
 **Object Definition**
 
 ##### `key1`
 
 **Type:** `string`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
 
 ##### `key2`
 
 **Type:** `int`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
 
 
 
 ### `typedObjects`
 
 **Type:** `customObject[]`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
-**Sealed:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
+**Sealed:** No  
 
 ### `individualOptions`
 
 **Type:** `'one' | 'two' | 'three'`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
-**Sealed:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
+**Sealed:** No  
 
 ### `greekLetter`
 
 **Type:** `string`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
-**Sealed:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
+**Sealed:** No  
 
 **Constraints**
 
@@ -276,9 +276,9 @@ alpha
 ### `multiLine`
 
 **Type:** `string`  
-**Nullable:** ❌ No  
-**Secure:** ❌ No  
-**Sealed:** ❌ No  
+**Nullable:** No  
+**Secure:** No  
+**Sealed:** No  
 
 **Default Value**
 
@@ -298,7 +298,7 @@ This is a multi line string.
 
 Variable description
 
-**Exported:** ❌ No  
+**Exported:** No  
 
 **Value**
 
@@ -310,7 +310,7 @@ someValue
 
 Exported variable description
 
-**Exported:** ✅ Yes  
+**Exported:** Yes  
 
 **Value**
 
@@ -322,7 +322,7 @@ exportedValue
 
 Boolean variable
 
-**Exported:** ✅ Yes  
+**Exported:** Yes  
 
 **Value**
 
@@ -334,7 +334,7 @@ true
 
 The answer to life, the universe, and everything
 
-**Exported:** ❌ No  
+**Exported:** No  
 
 **Value**
 
@@ -349,14 +349,14 @@ The answer to life, the universe, and everything
 **Name:** `mystorageaccount`  
 **Type:** `Microsoft.Storage/storageAccounts`  
 **API Version:** `2023-04-01`  
-**Existing:** ✅ Yes  
+**Existing:** Yes  
 
 ### `storageAccount::blobServices`
 
 **Name:** `default`  
 **Type:** `Microsoft.Storage/storageAccounts/blobServices`  
 **API Version:** `2023-04-01`  
-**Existing:** ✅ Yes  
+**Existing:** Yes  
 
 ### `storageAccount::blobServices::container`
 
@@ -429,9 +429,8 @@ for name in ['alice', 'bob', 'charlie']
 Output Description
 
 **Type:** `string`  
-**Exported:** ❌ No  
-**Sealed:** ❌ No  
-**Secure:** ✅ Yes  
+**Sealed:** No  
+**Secure:** Yes  
 
 **Value**
 
@@ -442,9 +441,8 @@ one
 ### `storageAccountOutput`
 
 **Type:** `resourceType`  
-**Exported:** ❌ No  
-**Sealed:** ❌ No  
-**Secure:** ❌ No  
+**Sealed:** No  
+**Secure:** No  
 
 **Value**
 
@@ -455,9 +453,8 @@ one
 ### `percentage`
 
 **Type:** `int`  
-**Exported:** ❌ No  
-**Sealed:** ❌ No  
-**Secure:** ❌ No  
+**Sealed:** No  
+**Secure:** No  
 
 **Constraints**
 
@@ -473,9 +470,8 @@ true ? 50 : 100
 ### `fib`
 
 **Type:** `string[]`  
-**Exported:** ❌ No  
-**Sealed:** ❌ No  
-**Secure:** ❌ No  
+**Sealed:** No  
+**Secure:** No  
 
 **Constraints**
 

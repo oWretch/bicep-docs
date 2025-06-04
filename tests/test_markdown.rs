@@ -17,7 +17,7 @@ mod markdown {
         let document = parse_bicep_document(&content).expect("Failed to parse document");
 
         // Export to markdown string
-        let markdown = export_bicep_document_to_markdown_string(&document)
+        let markdown = export_bicep_document_to_markdown_string(&document, true)
             .expect("Failed to export to markdown");
 
         // Basic checks

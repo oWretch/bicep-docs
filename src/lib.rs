@@ -120,6 +120,7 @@ pub fn export_bicep_document_to_json_string(
 ///
 /// * `document` - The BicepDocument to export
 /// * `output_path` - The path where the Markdown file should be written
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
 ///
 /// # Returns
 ///
@@ -127,8 +128,9 @@ pub fn export_bicep_document_to_json_string(
 pub fn export_bicep_document_to_markdown<P: AsRef<Path>>(
     document: &BicepDocument,
     output_path: P,
+    use_emoji: bool,
 ) -> Result<(), Box<dyn Error>> {
-    exports::markdown::export_to_file(document, output_path)
+    exports::markdown::export_to_file(document, output_path, use_emoji)
 }
 
 /// Export a parsed Bicep document as Markdown string
@@ -136,14 +138,16 @@ pub fn export_bicep_document_to_markdown<P: AsRef<Path>>(
 /// # Arguments
 ///
 /// * `document` - The BicepDocument to export
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
 ///
 /// # Returns
 ///
 /// A Result containing the Markdown string or an error
 pub fn export_bicep_document_to_markdown_string(
     document: &BicepDocument,
+    use_emoji: bool,
 ) -> Result<String, Box<dyn Error>> {
-    exports::markdown::export_to_string(document)
+    exports::markdown::export_to_string(document, use_emoji)
 }
 
 /// Export a parsed Bicep document as AsciiDoc to a file
@@ -152,6 +156,7 @@ pub fn export_bicep_document_to_markdown_string(
 ///
 /// * `document` - The BicepDocument to export
 /// * `output_path` - The path where the AsciiDoc file should be written
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
 ///
 /// # Returns
 ///
@@ -159,8 +164,9 @@ pub fn export_bicep_document_to_markdown_string(
 pub fn export_bicep_document_to_asciidoc<P: AsRef<Path>>(
     document: &BicepDocument,
     output_path: P,
+    use_emoji: bool,
 ) -> Result<(), Box<dyn Error>> {
-    exports::asciidoc::export_to_file(document, output_path)
+    exports::asciidoc::export_to_file(document, output_path, use_emoji)
 }
 
 /// Export a parsed Bicep document as AsciiDoc string
@@ -168,14 +174,16 @@ pub fn export_bicep_document_to_asciidoc<P: AsRef<Path>>(
 /// # Arguments
 ///
 /// * `document` - The BicepDocument to export
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
 ///
 /// # Returns
 ///
 /// A Result containing the AsciiDoc string or an error
 pub fn export_bicep_document_to_asciidoc_string(
     document: &BicepDocument,
+    use_emoji: bool,
 ) -> Result<String, Box<dyn Error>> {
-    exports::asciidoc::export_to_string(document)
+    exports::asciidoc::export_to_string(document, use_emoji)
 }
 
 /// Parse a Bicep file and export it as AsciiDoc in one step

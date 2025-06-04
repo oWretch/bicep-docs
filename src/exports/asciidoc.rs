@@ -10,12 +10,32 @@ use crate::parsing::{
     BicepDocument, BicepFunctionArgument, BicepImport, BicepType, BicepValue, ModuleSource,
 };
 
+/// Helper function to format Yes/No values with or without emoji
+///
+/// # Arguments
+///
+/// * `value` - Boolean value to format
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) or plain text (Yes/No)
+///
+/// # Returns
+///
+/// Formatted string with either emoji or plain text
+fn format_yes_no(value: bool, use_emoji: bool) -> String {
+    match (value, use_emoji) {
+        (true, true) => "✅ Yes".to_string(),
+        (true, false) => "Yes".to_string(),
+        (false, true) => "❌ No".to_string(),
+        (false, false) => "No".to_string(),
+    }
+}
+
 /// Export a Bicep document to an AsciiDoc file
 ///
 /// # Arguments
 ///
 /// * `document` - The BicepDocument to export
 /// * `file_path` - Path where the AsciiDoc file should be written
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
 ///
 /// # Returns
 ///
@@ -27,8 +47,9 @@ use crate::parsing::{
 pub fn export_to_file<P: AsRef<Path>>(
     document: &BicepDocument,
     file_path: P,
+    use_emoji: bool,
 ) -> Result<(), Box<dyn StdError>> {
-    let asciidoc_content = export_to_string(document)?;
+    let asciidoc_content = export_to_string(document, use_emoji)?;
     fs::write(file_path, asciidoc_content)?;
     Ok(())
 }
@@ -38,6 +59,7 @@ pub fn export_to_file<P: AsRef<Path>>(
 /// # Arguments
 ///
 /// * `document` - The BicepDocument to export
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
 ///
 /// # Returns
 ///
@@ -46,7 +68,10 @@ pub fn export_to_file<P: AsRef<Path>>(
 /// # Errors
 ///
 /// Returns an error if serialization fails
-pub fn export_to_string(document: &BicepDocument) -> Result<String, Box<dyn StdError>> {
+pub fn export_to_string(
+    document: &BicepDocument,
+    use_emoji: bool,
+) -> Result<String, Box<dyn StdError>> {
     let mut asciidoc = String::new();
 
     // Title and document attributes
@@ -168,25 +193,25 @@ pub fn export_to_string(document: &BicepDocument) -> Result<String, Box<dyn StdE
     }
 
     // Types section
-    generate_types_section(&mut asciidoc, document);
+    generate_types_section(&mut asciidoc, document, use_emoji);
 
     // Functions section
-    generate_functions_section(&mut asciidoc, document);
+    generate_functions_section(&mut asciidoc, document, use_emoji);
 
     // Parameters section
-    generate_parameters_section(&mut asciidoc, document);
+    generate_parameters_section(&mut asciidoc, document, use_emoji);
 
     // Variables section
-    generate_variables_section(&mut asciidoc, document);
+    generate_variables_section(&mut asciidoc, document, use_emoji);
 
     // Resources section
-    generate_resources_section(&mut asciidoc, document);
+    generate_resources_section(&mut asciidoc, document, use_emoji);
 
     // Modules section
-    generate_modules_section(&mut asciidoc, document);
+    generate_modules_section(&mut asciidoc, document, use_emoji);
 
     // Outputs section
-    generate_outputs_section(&mut asciidoc, document);
+    generate_outputs_section(&mut asciidoc, document, use_emoji);
 
     Ok(asciidoc)
 }
@@ -211,12 +236,12 @@ pub fn parse_and_export<P: AsRef<Path>, Q: AsRef<Path>>(
 ) -> Result<(), Box<dyn StdError>> {
     let content = std::fs::read_to_string(file_path)?;
     let document = crate::parse_bicep_document(&content)?;
-    export_to_file(&document, output_path)?;
+    export_to_file(&document, output_path, true)?;
     Ok(())
 }
 
 /// Generate the Types section of the AsciiDoc
-fn generate_types_section(asciidoc: &mut String, document: &BicepDocument) {
+fn generate_types_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
     asciidoc.push_str("== Types\n\n");
 
     if document.types.is_empty() {
@@ -240,24 +265,13 @@ fn generate_types_section(asciidoc: &mut String, document: &BicepDocument) {
             ),
             (
                 "Exported",
-                if custom_type.is_exported {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
+                format_yes_no(custom_type.is_exported, use_emoji),
             ),
             (
                 "Nullable",
-                "❌ No".to_string(), // Types themselves are not nullable
+                format_yes_no(false, use_emoji), // Types themselves are not nullable
             ),
-            (
-                "Secure",
-                if custom_type.is_secure {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
-            ),
+            ("Secure", format_yes_no(custom_type.is_secure, use_emoji)),
         ];
 
         generate_key_value_display(asciidoc, &items, "h,1");
@@ -333,7 +347,7 @@ fn generate_types_section(asciidoc: &mut String, document: &BicepDocument) {
                     // Handle nested object properties recursively
                     if let BicepType::Object(Some(nested_props)) = &prop_param.parameter_type {
                         if !nested_props.is_empty() {
-                            generate_nested_object_properties(asciidoc, nested_props, 5);
+                            generate_nested_object_properties(asciidoc, nested_props, 5, use_emoji);
                         }
                     }
 
@@ -361,7 +375,7 @@ fn generate_types_section(asciidoc: &mut String, document: &BicepDocument) {
 }
 
 /// Generate the Functions section of the AsciiDoc
-fn generate_functions_section(asciidoc: &mut String, document: &BicepDocument) {
+fn generate_functions_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
     asciidoc.push_str("== Functions\n\n");
 
     if document.functions.is_empty() {
@@ -383,21 +397,14 @@ fn generate_functions_section(asciidoc: &mut String, document: &BicepDocument) {
                 "Return Type",
                 format!("m| {}", format_bicep_type(&function.return_type)),
             ),
-            (
-                "Exported",
-                if function.is_exported {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
-            ),
+            ("Exported", format_yes_no(function.is_exported, use_emoji)),
         ];
         generate_key_value_display(asciidoc, &items, "h,1");
 
         // Parameters
         if !function.arguments.is_empty() {
             asciidoc.push_str("\n.Parameters\n");
-            generate_function_arguments_display(asciidoc, &function.arguments);
+            generate_function_arguments_display(asciidoc, &function.arguments, use_emoji);
         }
 
         // Function definition
@@ -412,7 +419,7 @@ fn generate_functions_section(asciidoc: &mut String, document: &BicepDocument) {
 }
 
 /// Generate the Parameters section of the AsciiDoc
-fn generate_parameters_section(asciidoc: &mut String, document: &BicepDocument) {
+fn generate_parameters_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
     asciidoc.push_str("== Parameters\n\n");
 
     if document.parameters.is_empty() {
@@ -457,30 +464,9 @@ fn generate_parameters_section(asciidoc: &mut String, document: &BicepDocument) 
                 "Type",
                 format!("m| {}", format_bicep_type(&parameter.parameter_type)),
             ),
-            (
-                "Nullable",
-                if parameter.is_nullable {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
-            ),
-            (
-                "Secure",
-                if parameter.is_secure {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
-            ),
-            (
-                "Sealed",
-                if parameter.is_sealed {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
-            ),
+            ("Nullable", format_yes_no(parameter.is_nullable, use_emoji)),
+            ("Secure", format_yes_no(parameter.is_secure, use_emoji)),
+            ("Sealed", format_yes_no(parameter.is_sealed, use_emoji)),
         ];
 
         generate_key_value_display(asciidoc, &items, "h,1");
@@ -542,22 +528,8 @@ fn generate_parameters_section(asciidoc: &mut String, document: &BicepDocument) 
                             "Type",
                             format!("m| {}", format_bicep_type(&prop_param.parameter_type)),
                         ),
-                        (
-                            "Nullable",
-                            if prop_param.is_nullable {
-                                "✅ Yes".to_string()
-                            } else {
-                                "❌ No".to_string()
-                            },
-                        ),
-                        (
-                            "Secure",
-                            if prop_param.is_secure {
-                                "✅ Yes".to_string()
-                            } else {
-                                "❌ No".to_string()
-                            },
-                        ),
+                        ("Nullable", format_yes_no(prop_param.is_nullable, use_emoji)),
+                        ("Secure", format_yes_no(prop_param.is_secure, use_emoji)),
                     ];
 
                     generate_key_value_display(asciidoc, &prop_items, "h,1");
@@ -586,7 +558,12 @@ fn generate_parameters_section(asciidoc: &mut String, document: &BicepDocument) 
                     if let BicepType::Object(Some(nested_properties)) = &prop_param.parameter_type {
                         if !nested_properties.is_empty() {
                             asciidoc.push_str("\n*Object Definition*\n\n");
-                            generate_nested_object_properties(asciidoc, nested_properties, 5);
+                            generate_nested_object_properties(
+                                asciidoc,
+                                nested_properties,
+                                5,
+                                use_emoji,
+                            );
                         }
                     }
 
@@ -610,6 +587,7 @@ fn generate_nested_object_properties(
     asciidoc: &mut String,
     properties: &indexmap::IndexMap<String, crate::parsing::BicepParameter>,
     header_level: usize,
+    use_emoji: bool,
 ) {
     let header_prefix = "=".repeat(header_level);
 
@@ -630,22 +608,8 @@ fn generate_nested_object_properties(
                 "Type",
                 format!("m| {}", format_bicep_type(&prop_param.parameter_type)),
             ),
-            (
-                "Nullable",
-                if prop_param.is_nullable {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
-            ),
-            (
-                "Secure",
-                if prop_param.is_secure {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
-            ),
+            ("Nullable", format_yes_no(prop_param.is_nullable, use_emoji)),
+            ("Secure", format_yes_no(prop_param.is_secure, use_emoji)),
         ];
 
         generate_key_value_display(asciidoc, &prop_items, "h,1");
@@ -679,6 +643,7 @@ fn generate_nested_object_properties(
                         asciidoc,
                         nested_properties,
                         header_level + 1,
+                        use_emoji,
                     );
                 }
             }
@@ -689,7 +654,7 @@ fn generate_nested_object_properties(
 }
 
 /// Generate the Variables section of the AsciiDoc
-fn generate_variables_section(asciidoc: &mut String, document: &BicepDocument) {
+fn generate_variables_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
     asciidoc.push_str("== Variables\n\n");
 
     if document.variables.is_empty() {
@@ -706,14 +671,7 @@ fn generate_variables_section(asciidoc: &mut String, document: &BicepDocument) {
 
         // Basic information table
         asciidoc.push_str(".Properties\n");
-        let items = vec![(
-            "Exported",
-            if variable.is_exported {
-                "✅ Yes".to_string()
-            } else {
-                "❌ No".to_string()
-            },
-        )];
+        let items = vec![("Exported", format_yes_no(variable.is_exported, use_emoji))];
         generate_key_value_display(asciidoc, &items, "h,1");
 
         // Value section
@@ -728,7 +686,7 @@ fn generate_variables_section(asciidoc: &mut String, document: &BicepDocument) {
 }
 
 /// Generate the Resources section of the AsciiDoc
-fn generate_resources_section(asciidoc: &mut String, document: &BicepDocument) {
+fn generate_resources_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
     asciidoc.push_str("== Resources\n\n");
 
     if document.resources.is_empty() {
@@ -757,7 +715,7 @@ fn generate_resources_section(asciidoc: &mut String, document: &BicepDocument) {
         }
 
         if resource.existing {
-            items.push(("Existing", "d| ✅ Yes".to_string()));
+            items.push(("Existing", format!("d| {}", format_yes_no(true, use_emoji))));
         }
 
         if let Some(parent) = &resource.parent {
@@ -800,7 +758,7 @@ fn generate_resources_section(asciidoc: &mut String, document: &BicepDocument) {
 }
 
 /// Generate the Modules section of the AsciiDoc
-fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument) {
+fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, _use_emoji: bool) {
     asciidoc.push_str("== Modules\n\n");
 
     if document.modules.is_empty() {
@@ -865,7 +823,7 @@ fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument) {
 }
 
 /// Generate the Outputs section of the AsciiDoc
-fn generate_outputs_section(asciidoc: &mut String, document: &BicepDocument) {
+fn generate_outputs_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
     asciidoc.push_str("== Outputs\n\n");
 
     if document.outputs.is_empty() {
@@ -887,22 +845,11 @@ fn generate_outputs_section(asciidoc: &mut String, document: &BicepDocument) {
                 "Type",
                 format!("m| {}", format_bicep_type(&output.output_type)),
             ),
-            (
-                "Exported",
-                "❌ No".to_string(), // Outputs are not typically exported
-            ),
-            (
-                "Secure",
-                if output.secure {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
-            ),
+            ("Secure", format_yes_no(output.secure, use_emoji)),
         ];
 
         if output.sealed {
-            items.push(("Sealed", "✅ Yes".to_string()));
+            items.push(("Sealed", format_yes_no(true, use_emoji)));
         }
 
         if let Some(discriminator) = &output.discriminator {
@@ -1062,7 +1009,11 @@ fn generate_key_value_display(asciidoc: &mut String, items: &[(&str, String)], c
 ///
 /// * `asciidoc` - The string buffer to append AsciiDoc content to
 /// * `arguments` - The function arguments to display
-fn generate_function_arguments_display(asciidoc: &mut String, arguments: &[BicepFunctionArgument]) {
+fn generate_function_arguments_display(
+    asciidoc: &mut String,
+    arguments: &[BicepFunctionArgument],
+    use_emoji: bool,
+) {
     asciidoc.push_str("[%autowidth,cols=\"h,m,1\",frame=none]\n");
     asciidoc.push_str("|===\n");
     asciidoc.push_str("| Name\n| Type\n| Required\n\n");
@@ -1071,7 +1022,7 @@ fn generate_function_arguments_display(asciidoc: &mut String, arguments: &[Bicep
             "| {}\n| {}\n| {}\n\n",
             escape_asciidoc(&arg.name),
             escape_asciidoc(&format_bicep_type(&arg.argument_type)),
-            if arg.is_nullable { "❌ No" } else { "✅ Yes" }
+            format_yes_no(!arg.is_nullable, use_emoji)
         ));
     }
     asciidoc.push_str("|===\n");
@@ -1091,7 +1042,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = export_to_string(&document);
+        let result = export_to_string(&document, true);
         assert!(result.is_ok());
 
         let asciidoc = result.unwrap();
@@ -1117,7 +1068,7 @@ mod tests {
             .parameters
             .insert("testParam".to_string(), parameter);
 
-        let result = export_to_string(&document);
+        let result = export_to_string(&document, true);
         assert!(result.is_ok());
 
         let asciidoc = result.unwrap();

@@ -10,12 +10,32 @@ use crate::parsing::{
     BicepDocument, BicepFunctionArgument, BicepImport, BicepType, BicepValue, ModuleSource,
 };
 
+/// Helper function to format Yes/No values with or without emoji
+///
+/// # Arguments
+///
+/// * `value` - Boolean value to format
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) or plain text (Yes/No)
+///
+/// # Returns
+///
+/// Formatted string with either emoji or plain text
+fn format_yes_no(value: bool, use_emoji: bool) -> String {
+    match (value, use_emoji) {
+        (true, true) => "✅ Yes".to_string(),
+        (true, false) => "Yes".to_string(),
+        (false, true) => "❌ No".to_string(),
+        (false, false) => "No".to_string(),
+    }
+}
+
 /// Export a Bicep document to a Markdown file
 ///
 /// # Arguments
 ///
 /// * `document` - The BicepDocument to export
 /// * `file_path` - Path where the Markdown file should be written
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
 ///
 /// # Returns
 ///
@@ -27,8 +47,9 @@ use crate::parsing::{
 pub fn export_to_file<P: AsRef<Path>>(
     document: &BicepDocument,
     file_path: P,
+    use_emoji: bool,
 ) -> Result<(), Box<dyn StdError>> {
-    let markdown_content = export_to_string(document)?;
+    let markdown_content = export_to_string(document, use_emoji)?;
     fs::write(file_path, markdown_content)?;
     Ok(())
 }
@@ -38,6 +59,7 @@ pub fn export_to_file<P: AsRef<Path>>(
 /// # Arguments
 ///
 /// * `document` - The BicepDocument to export
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
 ///
 /// # Returns
 ///
@@ -46,7 +68,10 @@ pub fn export_to_file<P: AsRef<Path>>(
 /// # Errors
 ///
 /// Returns an error if serialization fails
-pub fn export_to_string(document: &BicepDocument) -> Result<String, Box<dyn StdError>> {
+pub fn export_to_string(
+    document: &BicepDocument,
+    use_emoji: bool,
+) -> Result<String, Box<dyn StdError>> {
     let mut markdown = String::new();
 
     // Title and overview section
@@ -157,25 +182,25 @@ pub fn export_to_string(document: &BicepDocument) -> Result<String, Box<dyn StdE
     }
 
     // Types section
-    generate_types_section(&mut markdown, document);
+    generate_types_section(&mut markdown, document, use_emoji);
 
     // Functions section
-    generate_functions_section(&mut markdown, document);
+    generate_functions_section(&mut markdown, document, use_emoji);
 
     // Parameters section
-    generate_parameters_section(&mut markdown, document);
+    generate_parameters_section(&mut markdown, document, use_emoji);
 
     // Variables section
-    generate_variables_section(&mut markdown, document);
+    generate_variables_section(&mut markdown, document, use_emoji);
 
     // Resources section
-    generate_resources_section(&mut markdown, document);
+    generate_resources_section(&mut markdown, document, use_emoji);
 
     // Modules section
-    generate_modules_section(&mut markdown, document);
+    generate_modules_section(&mut markdown, document, use_emoji);
 
     // Outputs section
-    generate_outputs_section(&mut markdown, document);
+    generate_outputs_section(&mut markdown, document, use_emoji);
 
     Ok(markdown)
 }
@@ -200,12 +225,12 @@ pub fn parse_and_export<P: AsRef<Path>, Q: AsRef<Path>>(
 ) -> Result<(), Box<dyn StdError>> {
     let content = std::fs::read_to_string(file_path)?;
     let document = crate::parse_bicep_document(&content)?;
-    export_to_file(&document, output_path)?;
+    export_to_file(&document, output_path, true)?;
     Ok(())
 }
 
 /// Generate the Types section of the markdown
-fn generate_types_section(markdown: &mut String, document: &BicepDocument) {
+fn generate_types_section(markdown: &mut String, document: &BicepDocument, use_emoji: bool) {
     markdown.push_str("## Types\n\n");
 
     if document.types.is_empty() {
@@ -228,24 +253,13 @@ fn generate_types_section(markdown: &mut String, document: &BicepDocument) {
             ),
             (
                 "Exported",
-                if custom_type.is_exported {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
+                format_yes_no(custom_type.is_exported, use_emoji),
             ),
             (
                 "Nullable",
-                "❌ No".to_string(), // Types are not nullable
+                format_yes_no(false, use_emoji), // Types are not nullable
             ),
-            (
-                "Secure",
-                if custom_type.is_secure {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
-            ),
+            ("Secure", format_yes_no(custom_type.is_secure, use_emoji)),
         ];
         generate_key_value_display(markdown, &items);
 
@@ -266,17 +280,9 @@ fn generate_types_section(markdown: &mut String, document: &BicepDocument) {
                         format_bicep_type_with_backticks(&prop_param.parameter_type),
                     )];
 
-                    if prop_param.is_nullable {
-                        prop_items.push(("Nullable", "✅ Yes".to_string()));
-                    } else {
-                        prop_items.push(("Nullable", "❌ No".to_string()));
-                    }
+                    prop_items.push(("Nullable", format_yes_no(prop_param.is_nullable, use_emoji)));
 
-                    if prop_param.is_secure {
-                        prop_items.push(("Secure", "✅ Yes".to_string()));
-                    } else {
-                        prop_items.push(("Secure", "❌ No".to_string()));
-                    }
+                    prop_items.push(("Secure", format_yes_no(prop_param.is_secure, use_emoji)));
 
                     generate_key_value_display(markdown, &prop_items);
 
@@ -338,7 +344,7 @@ fn generate_types_section(markdown: &mut String, document: &BicepDocument) {
                     if let BicepType::Object(Some(nested_props)) = &prop_param.parameter_type {
                         if !nested_props.is_empty() {
                             markdown.push_str("\n**Object Definition**\n\n");
-                            generate_nested_object_properties(markdown, nested_props, 5);
+                            generate_nested_object_properties(markdown, nested_props, 5, use_emoji);
                         }
                     }
 
@@ -357,7 +363,7 @@ fn generate_types_section(markdown: &mut String, document: &BicepDocument) {
 }
 
 /// Generate the Functions section of the markdown
-fn generate_functions_section(markdown: &mut String, document: &BicepDocument) {
+fn generate_functions_section(markdown: &mut String, document: &BicepDocument, use_emoji: bool) {
     markdown.push_str("## Functions\n\n");
 
     if document.functions.is_empty() {
@@ -378,14 +384,7 @@ fn generate_functions_section(markdown: &mut String, document: &BicepDocument) {
                 "Return Type",
                 format_bicep_type_with_backticks(&function.return_type),
             ),
-            (
-                "Exported",
-                if function.is_exported {
-                    "✅ Yes".to_string()
-                } else {
-                    "❌ No".to_string()
-                },
-            ),
+            ("Exported", format_yes_no(function.is_exported, use_emoji)),
         ];
         generate_key_value_display(markdown, &items);
 
@@ -413,7 +412,7 @@ fn generate_functions_section(markdown: &mut String, document: &BicepDocument) {
 }
 
 /// Generate the Parameters section of the markdown
-fn generate_parameters_section(markdown: &mut String, document: &BicepDocument) {
+fn generate_parameters_section(markdown: &mut String, document: &BicepDocument, use_emoji: bool) {
     markdown.push_str("## Parameters\n\n");
 
     if document.parameters.is_empty() {
@@ -441,23 +440,11 @@ fn generate_parameters_section(markdown: &mut String, document: &BicepDocument) 
             format_bicep_type_with_backticks(&parameter.parameter_type),
         )];
 
-        if parameter.is_nullable {
-            items.push(("Nullable", "✅ Yes".to_string()));
-        } else {
-            items.push(("Nullable", "❌ No".to_string()));
-        }
+        items.push(("Nullable", format_yes_no(parameter.is_nullable, use_emoji)));
 
-        if parameter.is_secure {
-            items.push(("Secure", "✅ Yes".to_string()));
-        } else {
-            items.push(("Secure", "❌ No".to_string()));
-        }
+        items.push(("Secure", format_yes_no(parameter.is_secure, use_emoji)));
 
-        if parameter.is_sealed {
-            items.push(("Sealed", "✅ Yes".to_string()));
-        } else {
-            items.push(("Sealed", "❌ No".to_string()));
-        }
+        items.push(("Sealed", format_yes_no(parameter.is_sealed, use_emoji)));
 
         generate_key_value_display(markdown, &items);
 
@@ -519,7 +506,7 @@ fn generate_parameters_section(markdown: &mut String, document: &BicepDocument) 
         if let BicepType::Object(Some(properties)) = &parameter.parameter_type {
             if !properties.is_empty() {
                 markdown.push_str("\n**Object Definition**\n\n");
-                generate_nested_object_properties(markdown, properties, 4);
+                generate_nested_object_properties(markdown, properties, 4, use_emoji);
             }
         }
 
@@ -538,6 +525,7 @@ fn generate_nested_object_properties(
     markdown: &mut String,
     properties: &indexmap::IndexMap<String, crate::parsing::BicepParameter>,
     header_level: usize,
+    use_emoji: bool,
 ) {
     let header_prefix = "#".repeat(header_level);
 
@@ -558,15 +546,15 @@ fn generate_nested_object_properties(
         )];
 
         if prop_param.is_nullable {
-            prop_items.push(("Nullable", "✅ Yes".to_string()));
+            prop_items.push(("Nullable", format_yes_no(true, use_emoji)));
         } else {
-            prop_items.push(("Nullable", "❌ No".to_string()));
+            prop_items.push(("Nullable", format_yes_no(false, use_emoji)));
         }
 
         if prop_param.is_secure {
-            prop_items.push(("Secure", "✅ Yes".to_string()));
+            prop_items.push(("Secure", format_yes_no(true, use_emoji)));
         } else {
-            prop_items.push(("Secure", "❌ No".to_string()));
+            prop_items.push(("Secure", format_yes_no(false, use_emoji)));
         }
 
         generate_key_value_display(markdown, &prop_items);
@@ -630,6 +618,7 @@ fn generate_nested_object_properties(
                         markdown,
                         nested_properties,
                         header_level + 1,
+                        use_emoji,
                     );
                 }
             }
@@ -640,7 +629,7 @@ fn generate_nested_object_properties(
 }
 
 /// Generate the Variables section of the markdown
-fn generate_variables_section(markdown: &mut String, document: &BicepDocument) {
+fn generate_variables_section(markdown: &mut String, document: &BicepDocument, use_emoji: bool) {
     markdown.push_str("## Variables\n\n");
 
     if document.variables.is_empty() {
@@ -656,14 +645,7 @@ fn generate_variables_section(markdown: &mut String, document: &BicepDocument) {
         }
 
         // Basic information table
-        let items = vec![(
-            "Exported",
-            if variable.is_exported {
-                "✅ Yes".to_string()
-            } else {
-                "❌ No".to_string()
-            },
-        )];
+        let items = vec![("Exported", format_yes_no(variable.is_exported, use_emoji))];
         generate_key_value_display(markdown, &items);
 
         // Value
@@ -678,7 +660,7 @@ fn generate_variables_section(markdown: &mut String, document: &BicepDocument) {
 }
 
 /// Generate the Resources section of the markdown
-fn generate_resources_section(markdown: &mut String, document: &BicepDocument) {
+fn generate_resources_section(markdown: &mut String, document: &BicepDocument, use_emoji: bool) {
     markdown.push_str("## Resources\n\n");
 
     if document.resources.is_empty() {
@@ -706,7 +688,7 @@ fn generate_resources_section(markdown: &mut String, document: &BicepDocument) {
         }
 
         if resource.existing {
-            items.push(("Existing", "✅ Yes".to_string()));
+            items.push(("Existing", format_yes_no(true, use_emoji)));
         }
 
         if let Some(parent) = &resource.parent {
@@ -755,7 +737,7 @@ fn generate_resources_section(markdown: &mut String, document: &BicepDocument) {
 }
 
 /// Generate the Modules section of the markdown
-fn generate_modules_section(markdown: &mut String, document: &BicepDocument) {
+fn generate_modules_section(markdown: &mut String, document: &BicepDocument, _use_emoji: bool) {
     markdown.push_str("## Modules\n\n");
 
     if document.modules.is_empty() {
@@ -851,7 +833,7 @@ fn generate_modules_section(markdown: &mut String, document: &BicepDocument) {
 }
 
 /// Generate the Outputs section of the markdown
-fn generate_outputs_section(markdown: &mut String, document: &BicepDocument) {
+fn generate_outputs_section(markdown: &mut String, document: &BicepDocument, use_emoji: bool) {
     markdown.push_str("## Outputs\n\n");
 
     if document.outputs.is_empty() {
@@ -867,28 +849,25 @@ fn generate_outputs_section(markdown: &mut String, document: &BicepDocument) {
         }
 
         // Basic information table
-        let mut items = vec![
-            (
-                "Type",
-                format_bicep_type_with_backticks(&output.output_type),
-            ),
-            ("Exported", "❌ No".to_string()), // Outputs are not exported
-        ];
+        let mut items = vec![(
+            "Type",
+            format_bicep_type_with_backticks(&output.output_type),
+        )];
 
         if let Some(discriminator) = &output.discriminator {
             items.push(("Discriminator", discriminator.clone()));
         }
 
         if output.sealed {
-            items.push(("Sealed", "✅ Yes".to_string()));
+            items.push(("Sealed", format_yes_no(true, use_emoji)));
         } else {
-            items.push(("Sealed", "❌ No".to_string()));
+            items.push(("Sealed", format_yes_no(false, use_emoji)));
         }
 
         if output.secure {
-            items.push(("Secure", "✅ Yes".to_string()));
+            items.push(("Secure", format_yes_no(true, use_emoji)));
         } else {
-            items.push(("Secure", "❌ No".to_string()));
+            items.push(("Secure", format_yes_no(false, use_emoji)));
         }
 
         generate_key_value_display(markdown, &items);
@@ -1104,7 +1083,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = export_to_string(&document);
+        let result = export_to_string(&document, true);
         assert!(result.is_ok());
 
         let markdown = result.unwrap();
@@ -1130,7 +1109,7 @@ mod tests {
             .parameters
             .insert("testParam".to_string(), parameter);
 
-        let result = export_to_string(&document);
+        let result = export_to_string(&document, true);
         assert!(result.is_ok());
 
         let markdown = result.unwrap();

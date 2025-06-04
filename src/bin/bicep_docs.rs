@@ -78,6 +78,10 @@ struct CommonExportOptions {
     /// Output file path. Defaults to input filename with appropriate extension.
     #[arg(short, long)]
     output: Option<PathBuf>,
+
+    /// Enable emoji usage in documentation output
+    #[arg(long, default_value_t = false)]
+    emoji: bool,
 }
 
 /// Handle the YAML export command
@@ -101,7 +105,7 @@ fn handle_yaml_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>>
         Path::new(file_stem).with_extension("yaml")
     };
 
-    // Export the document
+    // Export the document (YAML doesn't use emoji, so we don't pass the flag)
     export_bicep_document_to_yaml(&document, &output_path)?;
     debug!("YAML exported to: {}", output_path.display());
 
@@ -141,7 +145,7 @@ fn handle_json_export(common: CommonExportOptions, pretty: bool) -> Result<(), B
         Path::new(file_stem).with_extension("json")
     };
 
-    // Export the document
+    // Export the document (JSON doesn't use emoji, so we don't pass the flag)
     export_bicep_document_to_json(&document, &output_path, pretty)?;
     debug!("JSON exported to: {}", output_path.display());
     if pretty {
@@ -184,7 +188,7 @@ fn handle_markdown_export(common: CommonExportOptions) -> Result<(), Box<dyn Err
     };
 
     // Export the document
-    export_bicep_document_to_markdown(&document, &output_path)?;
+    export_bicep_document_to_markdown(&document, &output_path, common.emoji)?;
     debug!("Markdown exported to: {}", output_path.display());
 
     Ok(())
@@ -223,7 +227,7 @@ fn handle_asciidoc_export(common: CommonExportOptions) -> Result<(), Box<dyn Err
     };
 
     // Export the document
-    export_bicep_document_to_asciidoc(&document, &output_path)?;
+    export_bicep_document_to_asciidoc(&document, &output_path, common.emoji)?;
     debug!("AsciiDoc exported to: {}", output_path.display());
 
     Ok(())

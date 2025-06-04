@@ -37,13 +37,13 @@ Type description
 m| object
 
 | Exported
-| ❌ No
+| No
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 |===
 
@@ -118,13 +118,13 @@ m| grade
 m| A \| B \| C \| D \| E
 
 | Exported
-| ✅ Yes
+| Yes
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 |===
 
@@ -137,13 +137,13 @@ m| A \| B \| C \| D \| E
 m| object
 
 | Exported
-| ❌ No
+| No
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 |===
 
@@ -211,7 +211,7 @@ Generate Name Function
 m| string
 
 | Exported
-| ✅ Yes
+| Yes
 
 |===
 
@@ -224,11 +224,11 @@ m| string
 
 | argument1
 | string
-| ✅ Yes
+| Yes
 
 | argument2
 | int
-| ❌ No
+| No
 
 |===
 
@@ -247,7 +247,7 @@ toLower('${argument1}-${argument2}')
 m| bool
 
 | Exported
-| ❌ No
+| No
 
 |===
 
@@ -270,13 +270,13 @@ This is a required parameter
 m| string
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ✅ Yes
+| Yes
 
 | Sealed
-| ❌ No
+| No
 
 |===
 
@@ -302,13 +302,13 @@ This is an optional parameter
 m| string
 
 | Nullable
-| ✅ Yes
+| Yes
 
 | Secure
-| ❌ No
+| No
 
 | Sealed
-| ❌ No
+| No
 
 |===
 
@@ -321,13 +321,13 @@ m| string
 m| int
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 | Sealed
-| ❌ No
+| No
 
 |===
 
@@ -368,13 +368,13 @@ I have a description in metadata
 m| object
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 | Sealed
-| ❌ No
+| No
 
 |===
 
@@ -393,13 +393,13 @@ m| object
 m| object
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 | Sealed
-| ✅ Yes
+| Yes
 
 |===
 
@@ -416,10 +416,10 @@ Description of the property
 m| string
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ✅ Yes
+| Yes
 
 |===
 
@@ -440,10 +440,10 @@ m| string
 m| int
 
 | Nullable
-| ✅ Yes
+| Yes
 
 | Secure
-| ❌ No
+| No
 
 |===
 
@@ -464,10 +464,10 @@ m| int
 m| object
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 |===
 
@@ -482,10 +482,10 @@ m| object
 m| string
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 |===
 
@@ -498,10 +498,10 @@ m| string
 m| int
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 |===
 
@@ -516,13 +516,13 @@ m| int
 m| customObject[]
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 | Sealed
-| ❌ No
+| No
 
 |===
 
@@ -535,13 +535,13 @@ m| customObject[]
 m| one \| two \| three
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 | Sealed
-| ❌ No
+| No
 
 |===
 
@@ -554,13 +554,13 @@ m| one \| two \| three
 m| string
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 | Sealed
-| ❌ No
+| No
 
 |===
 
@@ -590,13 +590,13 @@ alpha
 m| string
 
 | Nullable
-| ❌ No
+| No
 
 | Secure
-| ❌ No
+| No
 
 | Sealed
-| ❌ No
+| No
 
 |===
 
@@ -622,7 +622,7 @@ Variable description
 [%autowidth,cols="h,1",frame=none]
 |===
 | Exported
-| ❌ No
+| No
 
 |===
 
@@ -640,7 +640,7 @@ Exported variable description
 [%autowidth,cols="h,1",frame=none]
 |===
 | Exported
-| ✅ Yes
+| Yes
 
 |===
 
@@ -658,7 +658,7 @@ Boolean variable
 [%autowidth,cols="h,1",frame=none]
 |===
 | Exported
-| ✅ Yes
+| Yes
 
 |===
 
@@ -676,7 +676,7 @@ The answer to life, the universe, and everything
 [%autowidth,cols="h,1",frame=none]
 |===
 | Exported
-| ❌ No
+| No
 
 |===
 
@@ -703,7 +703,7 @@ The answer to life, the universe, and everything
 | 2023-04-01
 
 | Existing
-d| ✅ Yes
+d| Yes
 
 |===
 
@@ -722,7 +722,7 @@ d| ✅ Yes
 | 2023-04-01
 
 | Existing
-d| ✅ Yes
+d| Yes
 
 |===
 
@@ -883,11 +883,8 @@ Output Description
 | Type
 m| string
 
-| Exported
-| ❌ No
-
 | Secure
-| ✅ Yes
+| Yes
 
 |===
 
@@ -905,11 +902,8 @@ one
 | Type
 m| resourceType
 
-| Exported
-| ❌ No
-
 | Secure
-| ❌ No
+| No
 
 |===
 
@@ -927,11 +921,8 @@ m| resourceType
 | Type
 m| int
 
-| Exported
-| ❌ No
-
 | Secure
-| ❌ No
+| No
 
 |===
 
@@ -960,11 +951,8 @@ true ? 50 : 100
 | Type
 m| string[]
 
-| Exported
-| ❌ No
-
 | Secure
-| ❌ No
+| No
 
 |===
 
