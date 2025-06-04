@@ -5,7 +5,6 @@ use tree_sitter::{Parser, Tree};
 pub mod exports;
 pub mod parsing;
 
-pub use exports::asciidoc::AsciiDocFormat;
 pub use parsing::{BicepDocument, BicepParserError, BicepType, BicepValue};
 
 /// Parse a bicep file content and return the tree-sitter Tree
@@ -164,25 +163,6 @@ pub fn export_bicep_document_to_asciidoc<P: AsRef<Path>>(
     exports::asciidoc::export_to_file(document, output_path)
 }
 
-/// Export a parsed Bicep document as AsciiDoc to a file with specified format
-///
-/// # Arguments
-///
-/// * `document` - The BicepDocument to export
-/// * `output_path` - The path where the AsciiDoc file should be written
-/// * `format` - The format to use for displaying properties (Table or List)
-///
-/// # Returns
-///
-/// A Result indicating success or an error
-pub fn export_bicep_document_to_asciidoc_with_format<P: AsRef<Path>>(
-    document: &BicepDocument,
-    output_path: P,
-    format: exports::asciidoc::AsciiDocFormat,
-) -> Result<(), Box<dyn Error>> {
-    exports::asciidoc::export_to_file_with_format(document, output_path, format)
-}
-
 /// Export a parsed Bicep document as AsciiDoc string
 ///
 /// # Arguments
@@ -196,23 +176,6 @@ pub fn export_bicep_document_to_asciidoc_string(
     document: &BicepDocument,
 ) -> Result<String, Box<dyn Error>> {
     exports::asciidoc::export_to_string(document)
-}
-
-/// Export a parsed Bicep document as AsciiDoc string with specified format
-///
-/// # Arguments
-///
-/// * `document` - The BicepDocument to export
-/// * `format` - The format to use for displaying properties (Table or List)
-///
-/// # Returns
-///
-/// A Result containing the AsciiDoc string or an error
-pub fn export_bicep_document_to_asciidoc_string_with_format(
-    document: &BicepDocument,
-    format: exports::asciidoc::AsciiDocFormat,
-) -> Result<String, Box<dyn Error>> {
-    exports::asciidoc::export_to_string_with_format(document, format)
 }
 
 /// Parse a Bicep file and export it as AsciiDoc in one step

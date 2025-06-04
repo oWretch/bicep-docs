@@ -25,10 +25,41 @@ Type description
 |===
 | Property | Value
 
-| Type | { name: string, score: int, grade: grade }
+| Type | object
 | Exported | No
 | Secure | No
 |===
+
+==== Object properties
+
+===== name
+
+|===
+| Property | Value
+
+| Type | string
+| Nullable | Yes
+| Secure | Yes
+|===
+
+===== score
+
+|===
+| Property | Value
+
+| Type | int
+| Minimum Value | 0
+| Maximum Value | 100
+|===
+
+===== grade
+
+|===
+| Property | Value
+
+| Type | grade
+|===
+
 
 === grade
 
@@ -45,10 +76,37 @@ Type description
 |===
 | Property | Value
 
-| Type | { id: string, name: string, resourceGroup: string }
+| Type | object
 | Exported | No
 | Secure | No
 |===
+
+==== Object properties
+
+===== id
+
+|===
+| Property | Value
+
+| Type | string
+|===
+
+===== name
+
+|===
+| Property | Value
+
+| Type | string
+|===
+
+===== resourceGroup
+
+|===
+| Property | Value
+
+| Type | string
+|===
+
 
 == Functions
 
@@ -70,6 +128,14 @@ Generate Name Function
 
 | argument1 | string | No
 | argument2 | int | Yes
+|===
+
+==== Metadata
+
+|===
+| Key | Value
+
+| description | Generate Name Function
 |===
 
 === somethingElse
@@ -142,7 +208,7 @@ I have a description in metadata
 |===
 | Property | Value
 
-| Type | { property: string, otionalProperty: int, objectProperty: { key1: string, key2: int } }
+| Type | object
 |===
 
 === typedObjects
@@ -374,3 +440,4 @@ Output Description
 | Minimum Length | 1
 | Maximum Length | 34
 |===
+

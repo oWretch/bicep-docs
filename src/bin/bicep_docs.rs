@@ -1,6 +1,6 @@
 use bicep_docs::{
-    export_bicep_document_to_asciidoc_with_format, export_bicep_document_to_json,
-    export_bicep_document_to_markdown, export_bicep_document_to_yaml, AsciiDocFormat,
+    export_bicep_document_to_asciidoc, export_bicep_document_to_json,
+    export_bicep_document_to_markdown, export_bicep_document_to_yaml,
 };
 use clap::{self, Args, Parser, Subcommand};
 use std::error::Error;
@@ -48,10 +48,6 @@ enum Commands {
     /// Document Bicep file in AsciiDoc format
     #[clap(alias = "adoc")]
     Asciidoc {
-        /// Format for displaying properties (table or list)
-        #[arg(short, long, default_value = "table")]
-        format: AsciiDocFormat,
-
         #[command(flatten)]
         common: CommonExportOptions,
     },
@@ -155,9 +151,7 @@ fn handle_json_export(common: CommonExportOptions, pretty: bool) -> Result<(), B
 }
 
 /// Handle the Markdown export command
-fn handle_markdown_export(
-    common: CommonExportOptions,
-) -> Result<(), Box<dyn Error>> {
+fn handle_markdown_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>> {
     debug!(
         "Beginning Markdown export for file: {}",
         common.input.display()
@@ -190,10 +184,7 @@ fn handle_markdown_export(
 
     // Export the document
     export_bicep_document_to_markdown(&document, &output_path)?;
-    debug!(
-        "Markdown exported to: {}",
-        output_path.display()
-    );
+    debug!("Markdown exported to: {}", output_path.display());
 
     Ok(())
 }
@@ -201,16 +192,10 @@ fn handle_markdown_export(
 /// Handle the AsciiDoc export command
 fn handle_asciidoc_export(
     common: CommonExportOptions,
-    format: AsciiDocFormat,
 ) -> Result<(), Box<dyn Error>> {
     debug!(
-        "Beginning AsciiDoc export for file: {} (format: {})",
-        common.input.display(),
-        if matches!(format, AsciiDocFormat::Table) {
-            "table"
-        } else {
-            "list"
-        }
+        "Beginning AsciiDoc export for file: {}",
+        common.input.display()
     );
 
     // Read the Bicep file
@@ -238,17 +223,9 @@ fn handle_asciidoc_export(
         Path::new(file_stem).with_extension("adoc")
     };
 
-    // Export the document with the specified format
-    export_bicep_document_to_asciidoc_with_format(&document, &output_path, format)?;
-    debug!(
-        "AsciiDoc exported to: {} (format: {})",
-        output_path.display(),
-        if matches!(format, AsciiDocFormat::Table) {
-            "table"
-        } else {
-            "list"
-        }
-    );
+    // Export the document
+    export_bicep_document_to_asciidoc(&document, &output_path)?;
+    debug!("AsciiDoc exported to: {}", output_path.display());
 
     Ok(())
 }
@@ -317,7 +294,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         Commands::Yaml { common } => handle_yaml_export(common),
         Commands::Json { common, pretty } => handle_json_export(common, pretty),
         Commands::Markdown { common } => handle_markdown_export(common),
-        Commands::Asciidoc { common, format } => handle_asciidoc_export(common, format),
+        Commands::Asciidoc { common } => handle_asciidoc_export(common),
     };
 
     if let Err(ref e) = result {

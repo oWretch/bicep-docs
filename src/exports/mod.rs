@@ -26,5 +26,5 @@ pub use yaml::{
 
 pub use asciidoc::{
     export_to_file as export_asciidoc_to_file, export_to_string as export_asciidoc_to_string,
-    parse_and_export as parse_and_export_asciidoc, AsciiDocFormat,
+    parse_and_export as parse_and_export_asciidoc,
 };

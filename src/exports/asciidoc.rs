@@ -10,28 +10,6 @@ use crate::parsing::{
     BicepDocument, BicepFunctionArgument, BicepImport, BicepType, BicepValue, ModuleSource,
 };
 
-/// Format options for AsciiDoc output
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum AsciiDocFormat {
-    /// Use tables for displaying properties (default)
-    #[default]
-    Table,
-    /// Use lists for displaying properties
-    List,
-}
-
-impl std::str::FromStr for AsciiDocFormat {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "table" => Ok(AsciiDocFormat::Table),
-            "list" => Ok(AsciiDocFormat::List),
-            _ => Err(format!("Invalid format '{}'. Use 'table' or 'list'", s)),
-        }
-    }
-}
-
 /// Export a Bicep document to an AsciiDoc file
 ///
 /// # Arguments
@@ -50,30 +28,7 @@ pub fn export_to_file<P: AsRef<Path>>(
     document: &BicepDocument,
     file_path: P,
 ) -> Result<(), Box<dyn StdError>> {
-    export_to_file_with_format(document, file_path, AsciiDocFormat::default())
-}
-
-/// Export a Bicep document to an AsciiDoc file with specific format
-///
-/// # Arguments
-///
-/// * `document` - The BicepDocument to export
-/// * `file_path` - Path where the AsciiDoc file should be written
-/// * `format` - The AsciiDoc format to use (table or list)
-///
-/// # Returns
-///
-/// Result indicating success or failure of the export operation
-///
-/// # Errors
-///
-/// Returns an error if file writing fails
-pub fn export_to_file_with_format<P: AsRef<Path>>(
-    document: &BicepDocument,
-    file_path: P,
-    format: AsciiDocFormat,
-) -> Result<(), Box<dyn StdError>> {
-    let asciidoc_content = export_to_string_with_format(document, format)?;
+    let asciidoc_content = export_to_string(document)?;
     fs::write(file_path, asciidoc_content)?;
     Ok(())
 }
@@ -92,27 +47,6 @@ pub fn export_to_file_with_format<P: AsRef<Path>>(
 ///
 /// Returns an error if serialization fails
 pub fn export_to_string(document: &BicepDocument) -> Result<String, Box<dyn StdError>> {
-    export_to_string_with_format(document, AsciiDocFormat::default())
-}
-
-/// Export a Bicep document to an AsciiDoc string with specific format
-///
-/// # Arguments
-///
-/// * `document` - The BicepDocument to export
-/// * `format` - The AsciiDoc format to use (table or list)
-///
-/// # Returns
-///
-/// Result containing the AsciiDoc string representation of the document
-///
-/// # Errors
-///
-/// Returns an error if serialization fails
-pub fn export_to_string_with_format(
-    document: &BicepDocument,
-    format: AsciiDocFormat,
-) -> Result<String, Box<dyn StdError>> {
     let mut asciidoc = String::new();
 
     // Title and overview section
@@ -137,7 +71,7 @@ pub fn export_to_string_with_format(
     // Additional metadata
     if !document.metadata.is_empty() {
         asciidoc.push_str("\n=== Additional Metadata\n\n");
-        generate_metadata_display(&mut asciidoc, format, &document.metadata);
+        generate_metadata_display(&mut asciidoc, &document.metadata);
     }
 
     asciidoc.push('\n');
@@ -224,25 +158,25 @@ pub fn export_to_string_with_format(
     }
 
     // Types section
-    generate_types_section(&mut asciidoc, document, format);
+    generate_types_section(&mut asciidoc, document);
 
     // Functions section
-    generate_functions_section(&mut asciidoc, document, format);
+    generate_functions_section(&mut asciidoc, document);
 
     // Parameters section
-    generate_parameters_section(&mut asciidoc, document, format);
+    generate_parameters_section(&mut asciidoc, document);
 
     // Variables section
-    generate_variables_section(&mut asciidoc, document, format);
+    generate_variables_section(&mut asciidoc, document);
 
     // Resources section
-    generate_resources_section(&mut asciidoc, document, format);
+    generate_resources_section(&mut asciidoc, document);
 
     // Modules section
-    generate_modules_section(&mut asciidoc, document, format);
+    generate_modules_section(&mut asciidoc, document);
 
     // Outputs section
-    generate_outputs_section(&mut asciidoc, document, format);
+    generate_outputs_section(&mut asciidoc, document);
 
     Ok(asciidoc)
 }
@@ -272,7 +206,7 @@ pub fn parse_and_export<P: AsRef<Path>, Q: AsRef<Path>>(
 }
 
 /// Generate the Types section of the AsciiDoc
-fn generate_types_section(asciidoc: &mut String, document: &BicepDocument, format: AsciiDocFormat) {
+fn generate_types_section(asciidoc: &mut String, document: &BicepDocument) {
     asciidoc.push_str("== Types\n\n");
 
     if document.types.is_empty() {
@@ -289,7 +223,7 @@ fn generate_types_section(asciidoc: &mut String, document: &BicepDocument, forma
 
         // Basic information table
         let items = vec![
-            ("Type", format_bicep_type(&custom_type.definition, format)),
+            ("Type", format_bicep_type(&custom_type.definition)),
             (
                 "Exported",
                 if custom_type.is_exported {
@@ -307,18 +241,81 @@ fn generate_types_section(asciidoc: &mut String, document: &BicepDocument, forma
                 },
             ),
         ];
-        generate_key_value_display(asciidoc, format, &items);
+        generate_key_value_display(asciidoc, &items);
+
+        // Check if this is an object type with properties and add object properties section
+        if let BicepType::Object(Some(properties)) = &custom_type.definition {
+            if !properties.is_empty() {
+                asciidoc.push_str("\n==== Object properties\n\n");
+
+                for (prop_name, prop_param) in properties {
+                    asciidoc.push_str(&format!("===== {}\n\n", escape_asciidoc(prop_name)));
+
+                    if let Some(description) = &prop_param.description {
+                        asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+                    }
+
+                    let mut prop_items =
+                        vec![("Type", format_bicep_type(&prop_param.parameter_type))];
+
+                    if prop_param.is_nullable {
+                        prop_items.push(("Nullable", "Yes".to_string()));
+                    }
+
+                    if prop_param.is_secure {
+                        prop_items.push(("Secure", "Yes".to_string()));
+                    }
+
+                    if let Some(default_value) = &prop_param.default_value {
+                        let value_str = format_bicep_value(default_value);
+                        prop_items.push(("Default Value", value_str));
+                    }
+
+                    if let Some(min_value) = prop_param.min_value {
+                        prop_items.push(("Minimum Value", min_value.to_string()));
+                    }
+
+                    if let Some(max_value) = prop_param.max_value {
+                        prop_items.push(("Maximum Value", max_value.to_string()));
+                    }
+
+                    if let Some(min_length) = prop_param.min_length {
+                        prop_items.push(("Minimum Length", min_length.to_string()));
+                    }
+
+                    if let Some(max_length) = prop_param.max_length {
+                        prop_items.push(("Maximum Length", max_length.to_string()));
+                    }
+
+                    if let Some(allowed_values) = &prop_param.allowed_values {
+                        if !allowed_values.is_empty() {
+                            let values = allowed_values
+                                .iter()
+                                .map(|v| format_bicep_value(v))
+                                .collect::<Vec<_>>()
+                                .join(", ");
+                            prop_items.push(("Allowed Values", values));
+                        }
+                    }
+
+                    generate_key_value_display(asciidoc, &prop_items);
+
+                    if !prop_param.metadata.is_empty() {
+                        asciidoc.push_str("\n====== Metadata\n\n");
+                        generate_metadata_display(asciidoc, &prop_param.metadata);
+                    }
+
+                    asciidoc.push('\n');
+                }
+            }
+        }
 
         asciidoc.push('\n');
     }
 }
 
 /// Generate the Functions section of the AsciiDoc
-fn generate_functions_section(
-    asciidoc: &mut String,
-    document: &BicepDocument,
-    format: AsciiDocFormat,
-) {
+fn generate_functions_section(asciidoc: &mut String, document: &BicepDocument) {
     asciidoc.push_str("== Functions\n\n");
 
     if document.functions.is_empty() {
@@ -335,10 +332,7 @@ fn generate_functions_section(
 
         // Basic information table
         let items = vec![
-            (
-                "Return Type",
-                format_bicep_type(&function.return_type, format),
-            ),
+            ("Return Type", format_bicep_type(&function.return_type)),
             (
                 "Exported",
                 if function.is_exported {
@@ -348,17 +342,17 @@ fn generate_functions_section(
                 },
             ),
         ];
-        generate_key_value_display(asciidoc, format, &items);
+        generate_key_value_display(asciidoc, &items);
 
         // Parameters
         if !function.arguments.is_empty() {
             asciidoc.push_str("\n==== Parameters\n\n");
-            generate_function_arguments_display(asciidoc, format, &function.arguments);
+            generate_function_arguments_display(asciidoc, &function.arguments);
         }
 
         if !function.metadata.is_empty() {
             asciidoc.push_str("\n==== Metadata\n\n");
-            generate_metadata_display(asciidoc, format, &function.metadata);
+            generate_metadata_display(asciidoc, &function.metadata);
         }
 
         asciidoc.push('\n');
@@ -366,11 +360,7 @@ fn generate_functions_section(
 }
 
 /// Generate the Parameters section of the AsciiDoc
-fn generate_parameters_section(
-    asciidoc: &mut String,
-    document: &BicepDocument,
-    format: AsciiDocFormat,
-) {
+fn generate_parameters_section(asciidoc: &mut String, document: &BicepDocument) {
     asciidoc.push_str("== Parameters\n\n");
 
     if document.parameters.is_empty() {
@@ -386,14 +376,14 @@ fn generate_parameters_section(
         }
 
         // Basic information table
-        let mut items = vec![("Type", format_bicep_type(&parameter.parameter_type, format))];
+        let mut items = vec![("Type", format_bicep_type(&parameter.parameter_type))];
 
         if parameter.is_nullable {
             items.push(("Nullable", "Yes".to_string()));
         }
 
         if let Some(default_value) = &parameter.default_value {
-            let value_str = format_bicep_value_with_format(default_value, format);
+            let value_str = format_bicep_value(default_value);
             items.push(("Default Value", value_str));
         }
 
@@ -417,18 +407,18 @@ fn generate_parameters_section(
             if !allowed_values.is_empty() {
                 let values = allowed_values
                     .iter()
-                    .map(|v| format_bicep_value_with_format(v, format))
+                    .map(|v| format_bicep_value(v))
                     .collect::<Vec<_>>()
                     .join(", ");
                 items.push(("Allowed Values", values));
             }
         }
 
-        generate_key_value_display(asciidoc, format, &items);
+        generate_key_value_display(asciidoc, &items);
 
         if !parameter.metadata.is_empty() {
             asciidoc.push_str("\n==== Metadata\n\n");
-            generate_metadata_display(asciidoc, format, &parameter.metadata);
+            generate_metadata_display(asciidoc, &parameter.metadata);
         }
 
         asciidoc.push('\n');
@@ -436,11 +426,7 @@ fn generate_parameters_section(
 }
 
 /// Generate the Variables section of the AsciiDoc
-fn generate_variables_section(
-    asciidoc: &mut String,
-    document: &BicepDocument,
-    format: AsciiDocFormat,
-) {
+fn generate_variables_section(asciidoc: &mut String, document: &BicepDocument) {
     asciidoc.push_str("== Variables\n\n");
 
     if document.variables.is_empty() {
@@ -456,7 +442,7 @@ fn generate_variables_section(
         }
 
         // Basic information table
-        let value_str = format_bicep_value_with_format(&variable.value, format);
+        let value_str = format_bicep_value(&variable.value);
         let items = vec![
             ("Value", value_str),
             (
@@ -468,18 +454,14 @@ fn generate_variables_section(
                 },
             ),
         ];
-        generate_key_value_display(asciidoc, format, &items);
+        generate_key_value_display(asciidoc, &items);
 
         asciidoc.push('\n');
     }
 }
 
 /// Generate the Resources section of the AsciiDoc
-fn generate_resources_section(
-    asciidoc: &mut String,
-    document: &BicepDocument,
-    format: AsciiDocFormat,
-) {
+fn generate_resources_section(asciidoc: &mut String, document: &BicepDocument) {
     asciidoc.push_str("== Resources\n\n");
 
     if document.resources.is_empty() {
@@ -501,7 +483,7 @@ fn generate_resources_section(
         ];
 
         if let Some(scope) = &resource.scope {
-            let scope_str = format_bicep_value_with_format(scope, format);
+            let scope_str = format_bicep_value(scope);
             items.push(("Scope", scope_str));
         }
 
@@ -532,18 +514,14 @@ fn generate_resources_section(
             items.push(("Batch Size", batch_size.to_string()));
         }
 
-        generate_key_value_display(asciidoc, format, &items);
+        generate_key_value_display(asciidoc, &items);
 
         asciidoc.push('\n');
     }
 }
 
 /// Generate the Modules section of the AsciiDoc
-fn generate_modules_section(
-    asciidoc: &mut String,
-    document: &BicepDocument,
-    format: AsciiDocFormat,
-) {
+fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument) {
     asciidoc.push_str("== Modules\n\n");
 
     if document.modules.is_empty() {
@@ -601,18 +579,14 @@ fn generate_modules_section(
         };
 
         let items = vec![("Source", source_str)];
-        generate_key_value_display(asciidoc, format, &items);
+        generate_key_value_display(asciidoc, &items);
 
         asciidoc.push('\n');
     }
 }
 
 /// Generate the Outputs section of the AsciiDoc
-fn generate_outputs_section(
-    asciidoc: &mut String,
-    document: &BicepDocument,
-    format: AsciiDocFormat,
-) {
+fn generate_outputs_section(asciidoc: &mut String, document: &BicepDocument) {
     asciidoc.push_str("== Outputs\n\n");
 
     if document.outputs.is_empty() {
@@ -629,11 +603,8 @@ fn generate_outputs_section(
 
         // Basic information table
         let mut items = vec![
-            ("Type", format_bicep_type(&output.output_type, format)),
-            (
-                "Value",
-                format_bicep_value_with_format(&output.value, format),
-            ),
+            ("Type", format_bicep_type(&output.output_type)),
+            ("Value", format_bicep_value(&output.value)),
         ];
 
         if let Some(discriminator) = &output.discriminator {
@@ -664,12 +635,12 @@ fn generate_outputs_section(
             items.push(("Secure", "Yes".to_string()));
         }
 
-        generate_key_value_display(asciidoc, format, &items);
+        generate_key_value_display(asciidoc, &items);
 
         if let Some(metadata) = &output.metadata {
             if !metadata.is_empty() {
                 asciidoc.push_str("\n==== Metadata\n\n");
-                generate_metadata_display(asciidoc, format, metadata);
+                generate_metadata_display(asciidoc, metadata);
             }
         }
 
@@ -677,18 +648,14 @@ fn generate_outputs_section(
     }
 }
 
-/// Format a BicepValue for display in AsciiDoc with format-aware handling
-#[allow(clippy::only_used_in_recursion)]
-fn format_bicep_value_with_format(value: &BicepValue, format: AsciiDocFormat) -> String {
+/// Format a BicepValue for display in AsciiDoc
+fn format_bicep_value(value: &BicepValue) -> String {
     match value {
         BicepValue::String(s) => s.clone(),
         BicepValue::Int(n) => n.to_string(),
         BicepValue::Bool(b) => b.to_string(),
         BicepValue::Array(arr) => {
-            let items: Vec<String> = arr
-                .iter()
-                .map(|v| format_bicep_value_with_format(v, format))
-                .collect();
+            let items: Vec<String> = arr.iter().map(|v| format_bicep_value(v)).collect();
             format!("[{}]", items.join(", "))
         },
         BicepValue::Object(obj) => {
@@ -697,7 +664,7 @@ fn format_bicep_value_with_format(value: &BicepValue, format: AsciiDocFormat) ->
             } else {
                 let items: Vec<String> = obj
                     .iter()
-                    .map(|(k, v)| format!("{}: {}", k, format_bicep_value_with_format(v, format)))
+                    .map(|(k, v)| format!("{}: {}", k, format_bicep_value(v)))
                     .collect();
                 format!("{{ {} }}", items.join(", "))
             }
@@ -706,50 +673,23 @@ fn format_bicep_value_with_format(value: &BicepValue, format: AsciiDocFormat) ->
     }
 }
 
-/// Format a BicepValue for display in AsciiDoc (legacy function for compatibility)
-#[allow(dead_code)]
-fn format_bicep_value(value: &BicepValue) -> String {
-    format_bicep_value_with_format(value, AsciiDocFormat::Table)
-}
-
-/// Format a BicepType for display in AsciiDoc with format-aware escaping
-fn format_bicep_type(bicep_type: &BicepType, format: AsciiDocFormat) -> String {
+/// Format a BicepType for display in AsciiDoc
+fn format_bicep_type(bicep_type: &BicepType) -> String {
     match bicep_type {
-        BicepType::Array(inner) => format!("{}[]", format_bicep_type(inner, format)),
+        BicepType::Array(inner) => format!("{}[]", format_bicep_type(inner)),
         BicepType::String => "string".to_string(),
         BicepType::Int => "int".to_string(),
         BicepType::Bool => "bool".to_string(),
-        BicepType::Object(Some(properties)) => {
-            // Format object with properties
-            if properties.is_empty() {
-                "object".to_string()
-            } else {
-                let props: Vec<String> = properties
-                    .iter()
-                    .map(|(key, param)| {
-                        format!(
-                            "{}: {}",
-                            key,
-                            format_bicep_type(&param.parameter_type, format)
-                        )
-                    })
-                    .collect();
-                format!("{{ {} }}", props.join(", "))
-            }
+        BicepType::Object(Some(_properties)) => {
+            // Always return "object" for objects with properties
+            // Individual properties will be documented separately
+            "object".to_string()
         },
         BicepType::Object(None) => "object".to_string(),
         BicepType::CustomType(name) => name.clone(),
         BicepType::Union(values) => {
-            match format {
-                AsciiDocFormat::Table => {
-                    // Escape | characters for AsciiDoc tables
-                    values.join(" \\| ")
-                },
-                AsciiDocFormat::List => {
-                    // No escaping needed for list format
-                    values.join(" | ")
-                },
-            }
+            // Use table format (escape pipes for AsciiDoc tables)
+            values.join(" \\| ")
         },
     }
 }
@@ -763,107 +703,56 @@ fn escape_asciidoc(text: &str) -> String {
         .replace('\n', " +\n") // Preserve newlines
 }
 
-/// Generate property display for BicepValue properties using either table or list format
+/// Generate property display for BicepValue properties using table format
 fn generate_metadata_display(
     asciidoc: &mut String,
-    format: AsciiDocFormat,
     metadata: &indexmap::IndexMap<String, BicepValue>,
 ) {
-    match format {
-        AsciiDocFormat::Table => {
-            asciidoc.push_str("|===\n");
-            asciidoc.push_str("| Key | Value\n\n");
-            for (key, value) in metadata {
-                let value_str = format_bicep_value_with_format(value, format);
-                asciidoc.push_str(&format!(
-                    "| {} | {}\n",
-                    escape_asciidoc(key),
-                    escape_asciidoc(&value_str)
-                ));
-            }
-            asciidoc.push_str("|===\n");
-        },
-        AsciiDocFormat::List => {
-            for (key, value) in metadata {
-                let value_str = format_bicep_value_with_format(value, format);
-                asciidoc.push_str(&format!(
-                    "* *{}*: {}\n",
-                    escape_asciidoc(key),
-                    escape_asciidoc(&value_str)
-                ));
-            }
-        },
+    asciidoc.push_str("|===\n");
+    asciidoc.push_str("| Key | Value\n\n");
+    for (key, value) in metadata {
+        let value_str = format_bicep_value(value);
+        asciidoc.push_str(&format!(
+            "| {} | {}\n",
+            escape_asciidoc(key),
+            escape_asciidoc(&value_str)
+        ));
     }
+    asciidoc.push_str("|===\n");
 }
 
-/// Generate key-value property display with optional values
-fn generate_key_value_display(
-    asciidoc: &mut String,
-    format: AsciiDocFormat,
-    items: &[(&str, String)],
-) {
-    match format {
-        AsciiDocFormat::Table => {
-            asciidoc.push_str("|===\n");
-            asciidoc.push_str("| Property | Value\n\n");
-            for (key, value) in items {
-                asciidoc.push_str(&format!(
-                    "| {} | {}\n",
-                    escape_asciidoc(key),
-                    escape_asciidoc(value)
-                ));
-            }
-            asciidoc.push_str("|===\n");
-        },
-        AsciiDocFormat::List => {
-            for (key, value) in items {
-                asciidoc.push_str(&format!(
-                    "* *{}*: {}\n",
-                    escape_asciidoc(key),
-                    escape_asciidoc(value)
-                ));
-            }
-        },
+/// Generate key-value property display
+fn generate_key_value_display(asciidoc: &mut String, items: &[(&str, String)]) {
+    asciidoc.push_str("|===\n");
+    asciidoc.push_str("| Property | Value\n\n");
+    for (key, value) in items {
+        asciidoc.push_str(&format!(
+            "| {} | {}\n",
+            escape_asciidoc(key),
+            escape_asciidoc(value)
+        ));
     }
+    asciidoc.push_str("|===\n");
 }
 
-/// Generate display for function arguments in table or list format
+/// Generate display for function arguments in table format
 ///
 /// # Arguments
 ///
 /// * `asciidoc` - The string buffer to append AsciiDoc content to
-/// * `format` - The format to use (table or list)
 /// * `arguments` - The function arguments to display
-fn generate_function_arguments_display(
-    asciidoc: &mut String,
-    format: AsciiDocFormat,
-    arguments: &[BicepFunctionArgument],
-) {
-    match format {
-        AsciiDocFormat::Table => {
-            asciidoc.push_str("|===\n");
-            asciidoc.push_str("| Parameter | Type | Optional\n\n");
-            for arg in arguments {
-                asciidoc.push_str(&format!(
-                    "| {} | {} | {}\n",
-                    escape_asciidoc(&arg.name),
-                    escape_asciidoc(&format_bicep_type(&arg.argument_type, format)),
-                    if arg.is_nullable { "Yes" } else { "No" }
-                ));
-            }
-            asciidoc.push_str("|===\n");
-        },
-        AsciiDocFormat::List => {
-            for arg in arguments {
-                asciidoc.push_str(&format!(
-                    "* *{}* ({}){}\n",
-                    escape_asciidoc(&arg.name),
-                    escape_asciidoc(&format_bicep_type(&arg.argument_type, format)),
-                    if arg.is_nullable { " - Optional" } else { "" }
-                ));
-            }
-        },
+fn generate_function_arguments_display(asciidoc: &mut String, arguments: &[BicepFunctionArgument]) {
+    asciidoc.push_str("|===\n");
+    asciidoc.push_str("| Parameter | Type | Optional\n\n");
+    for arg in arguments {
+        asciidoc.push_str(&format!(
+            "| {} | {} | {}\n",
+            escape_asciidoc(&arg.name),
+            escape_asciidoc(&format_bicep_type(&arg.argument_type)),
+            if arg.is_nullable { "Yes" } else { "No" }
+        ));
     }
+    asciidoc.push_str("|===\n");
 }
 
 #[cfg(test)]
@@ -942,51 +831,30 @@ mod tests {
 
     #[test]
     fn test_format_bicep_type() {
+        assert_eq!(format_bicep_type(&BicepType::String), "string");
+        assert_eq!(format_bicep_type(&BicepType::Int), "int");
+        assert_eq!(format_bicep_type(&BicepType::Bool), "bool");
         assert_eq!(
-            format_bicep_type(&BicepType::String, AsciiDocFormat::Table),
-            "string"
-        );
-        assert_eq!(
-            format_bicep_type(&BicepType::Int, AsciiDocFormat::Table),
-            "int"
-        );
-        assert_eq!(
-            format_bicep_type(&BicepType::Bool, AsciiDocFormat::Table),
-            "bool"
-        );
-        assert_eq!(
-            format_bicep_type(
-                &BicepType::Array(Box::new(BicepType::String)),
-                AsciiDocFormat::Table
-            ),
+            format_bicep_type(&BicepType::Array(Box::new(BicepType::String))),
             "string[]"
         );
         assert_eq!(
-            format_bicep_type(
-                &BicepType::CustomType("MyType".to_string()),
-                AsciiDocFormat::Table
-            ),
+            format_bicep_type(&BicepType::CustomType("MyType".to_string())),
             "MyType"
         );
         assert_eq!(
-            format_bicep_type(
-                &BicepType::Union(vec!["A".to_string(), "B".to_string()]),
-                AsciiDocFormat::Table
-            ),
+            format_bicep_type(&BicepType::Union(vec!["A".to_string(), "B".to_string()])),
             "A \\| B"
         );
 
         // Test Object types
-        assert_eq!(
-            format_bicep_type(&BicepType::Object(None), AsciiDocFormat::Table),
-            "object"
-        );
+        assert_eq!(format_bicep_type(&BicepType::Object(None)), "object");
 
         // Test empty object with properties
         use indexmap::IndexMap;
         let empty_props = IndexMap::new();
         assert_eq!(
-            format_bicep_type(&BicepType::Object(Some(empty_props)), AsciiDocFormat::Table),
+            format_bicep_type(&BicepType::Object(Some(empty_props))),
             "object"
         );
     }
@@ -1007,28 +875,15 @@ mod tests {
     fn test_format_bicep_type_union_formats() {
         let union_type = BicepType::Union(vec!["A".to_string(), "B".to_string()]);
 
-        // Test table format (should escape pipes)
-        assert_eq!(
-            format_bicep_type(&union_type, AsciiDocFormat::Table),
-            "A \\| B"
-        );
-
-        // Test list format (should not escape pipes)
-        assert_eq!(
-            format_bicep_type(&union_type, AsciiDocFormat::List),
-            "A | B"
-        );
+        // Test format (should escape pipes for table format)
+        assert_eq!(format_bicep_type(&union_type), "A \\| B");
     }
 
     #[test]
     fn test_format_bicep_value_with_multiline_string() {
-        // Test multiline string in table format
+        // Test multiline string
         let multiline = BicepValue::String("line1\nline2\nline3".to_string());
-        let result = format_bicep_value_with_format(&multiline, AsciiDocFormat::Table);
-        assert_eq!(result, "line1\nline2\nline3");
-
-        // Test multiline string in list format
-        let result = format_bicep_value_with_format(&multiline, AsciiDocFormat::List);
+        let result = format_bicep_value(&multiline);
         assert_eq!(result, "line1\nline2\nline3");
     }
 }
