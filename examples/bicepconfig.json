@@ -1,4 +1,15 @@
 {
+  "analyzers": {
+    "core": {
+      "enabled": true,
+      "no-unused-params": {
+        "level": "off"
+      },
+      "no-unused-vars": {
+        "level": "off"
+      }
+    }
+  },
   "experimentalFeaturesEnabled": {
     "assertions": true,
     "extensibility": true,
