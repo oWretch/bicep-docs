@@ -2,11 +2,11 @@
 
 Description of the example Bicep file
 
-Target Scope: resourceGroup
+**Target Scope:** `resourceGroup`
 
-### Additional Metadata
+## Additional Metadata
 
-- **author**: File Author
+**author:** File Author
 
 ## Imports
 
@@ -14,235 +14,409 @@ Target Scope: resourceGroup
 
 ## Types
 
-### customObject
+### `customObject`
 
 Type description
 
-- **Type**: object
-- **Exported**: No
-- **Secure**: No
+**Type:** `object`  
+**Exported:** ❌ No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
-#### Object properties
+**Object Definition**
 
-##### name
+#### `name`
 
-- **Type**: string
-- **Nullable**: Yes
-- **Secure**: Yes
+**Type:** `string`  
+**Nullable:** ✅ Yes  
+**Secure:** ✅ Yes  
 
-##### score
+#### `score`
 
-- **Type**: int
-- **Minimum Value**: 0
-- **Maximum Value**: 100
+**Type:** `int`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
-##### grade
+**Constraints**
 
-- **Type**: grade
+**Minimum Value:** `0`  
+**Maximum Value:** `100`  
+
+#### `grade`
+
+**Type:** `grade`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
 
-### grade
+### `grade`
 
-- **Type**: A | B | C | D | E
-- **Exported**: Yes
-- **Secure**: No
+**Type:** `'A' | 'B' | 'C' | 'D' | 'E'`  
+**Exported:** ✅ Yes  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
-### resourceType
+### `resourceType`
 
-- **Type**: object
-- **Exported**: No
-- **Secure**: No
+**Type:** `object`  
+**Exported:** ❌ No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
-#### Object properties
+**Object Definition**
 
-##### id
+#### `id`
 
-- **Type**: string
+**Type:** `string`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
-##### name
+#### `name`
 
-- **Type**: string
+**Type:** `string`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
-##### resourceGroup
+#### `resourceGroup`
 
-- **Type**: string
+**Type:** `string`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
 
 ## Functions
 
-### generateName
+### `generateName`
 
 Generate Name Function
 
-- **Return Type**: string
-- **Exported**: Yes
+**Return Type:** `string`  
+**Exported:** ✅ Yes  
 
-#### Parameters
+**Parameters**
 
-- **argument1** (string)
-- **argument2** (int) - Optional
+**argument1:** `string`
+**argument2:** `int` (Optional)
 
-#### Metadata
+**Definition**
 
-- **description**: Generate Name Function
+```bicep
+toLower('${argument1}-${argument2}')
+```
 
-### somethingElse
+**Metadata**
 
-- **Return Type**: bool
-- **Exported**: No
+**description:** Generate Name Function
+
+
+### `somethingElse`
+
+**Return Type:** `bool`  
+**Exported:** ❌ No  
+
+**Definition**
+
+```bicep
+true
+```
 
 ## Parameters
 
-### requiredParam
+### `requiredParam`
 
 This is a required parameter
 
-- **Type**: string
-- **Minimum Length**: 3
-- **Maximum Length**: 10
+**Type:** `string`  
+**Nullable:** ❌ No  
+**Secure:** ✅ Yes  
+**Sealed:** ❌ No  
 
-### optionalParam
+**Constraints**
+
+**Minimum Length:** `3`  
+**Maximum Length:** `10`  
+
+### `optionalParam`
 
 This is an optional parameter
 
-- **Type**: string
-- **Nullable**: Yes
+**Type:** `string`  
+**Nullable:** ✅ Yes  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
 
-### simpleParamWithDefault
+### `simpleParamWithDefault`
 
-- **Type**: int
-- **Default Value**: 100
-- **Minimum Value**: 0
-- **Maximum Value**: 100
+**Type:** `int`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
 
-### genericObject
+**Constraints**
+
+**Minimum Value:** `0`  
+**Maximum Value:** `100`  
+
+**Default Value**
+
+```bicep
+100
+```
+
+### `genericObject`
 
 I have a description in metadata
 
-- **Type**: object
-- **Default Value**: { name: value, number: 1000 }
+**Metadata**
 
-#### Metadata
+**name:** A name in metadata
 
-- **name**: A name in metadata
-- **somethingElse**: Another metadata property
+**somethingElse:** Another metadata property
 
-### inlineSpecificObject
 
-- **Type**: object
+**Type:** `object`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
 
-### typedObjects
+**Default Value**
 
-- **Type**: customObject[]
+```bicep
+{ name: value, number: 1000 }
+```
 
-### individualOptions
+### `inlineSpecificObject`
 
-- **Type**: one | two | three
+**Type:** `object`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ✅ Yes  
 
-### greekLetter
+**Object Definition**
 
-- **Type**: string
-- **Default Value**: alpha
-- **Allowed Values**: alpha, beta, gamma, delta
+#### `property`
 
-### multiLine
+Description of the property
 
-- **Type**: string
-- **Default Value**:   
-This is a multi line string.  
-  It covers multiple lines, and has indentation.  
-  It also has a tab character ( ).	And a new line.  
-  It also has a double backslash \\\\ and a single \\  
-  And a single quote: '  
+**Type:** `string`  
+**Nullable:** ❌ No  
+**Secure:** ✅ Yes  
 
+**Constraints**
+
+**Maximum Length:** `10`  
+
+#### `otionalProperty`
+
+**Type:** `int`  
+**Nullable:** ✅ Yes  
+**Secure:** ❌ No  
+
+**Constraints**
+
+**Minimum Value:** `23`  
+
+#### `objectProperty`
+
+**Type:** `object`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+
+**Object Definition**
+
+##### `key1`
+
+**Type:** `string`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+
+##### `key2`
+
+**Type:** `int`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+
+
+
+### `typedObjects`
+
+**Type:** `customObject[]`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
+
+### `individualOptions`
+
+**Type:** `'one' | 'two' | 'three'`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
+
+### `greekLetter`
+
+**Type:** `string`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
+
+**Constraints**
+
+**Allowed Values:**   
+`alpha`    
+`beta`    
+`gamma`    
+`delta`  
+
+**Default Value**
+
+```bicep
+alpha
+```
+
+### `multiLine`
+
+**Type:** `string`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
+
+**Default Value**
+
+```bicep
+
+This is a multi line string.
+  It covers multiple lines, and has indentation.
+  It also has a tab character (	).	And a new line.
+  It also has a double backslash \\ and a single \
+  And a single quote: '
+
+```
 
 ## Variables
 
-### nameVar
+### `nameVar`
 
 Variable description
 
-- **Value**: someValue
-- **Exported**: No
+**Exported:** ❌ No  
 
-### exportedVar
+**Value**
+
+```bicep
+someValue
+```
+
+### `exportedVar`
 
 Exported variable description
 
-- **Value**: exportedValue
-- **Exported**: Yes
+**Exported:** ✅ Yes  
 
-### boolVar
+**Value**
+
+```bicep
+exportedValue
+```
+
+### `boolVar`
 
 Boolean variable
 
-- **Value**: true
-- **Exported**: Yes
+**Exported:** ✅ Yes  
 
-### numVar
+**Value**
+
+```bicep
+true
+```
+
+### `numVar`
 
 The answer to life, the universe, and everything
 
-- **Value**: 42
-- **Exported**: No
+**Exported:** ❌ No  
+
+**Value**
+
+```bicep
+42
+```
 
 ## Resources
 
-### storageAccount
+### `storageAccount`
 
-- **Type**: Microsoft.Storage/storageAccounts
-- **API Version**: 2023-04-01
-- **Existing**: Yes
+**Name:** `mystorageaccount`  
+**Type:** `Microsoft.Storage/storageAccounts`  
+**API Version:** `2023-04-01`  
+**Existing:** ✅ Yes  
 
-### storageAccount::blobServices
+### `storageAccount::blobServices`
 
-- **Type**: Microsoft.Storage/storageAccounts/blobServices
-- **API Version**: 2023-04-01
-- **Existing**: Yes
+**Name:** `default`  
+**Type:** `Microsoft.Storage/storageAccounts/blobServices`  
+**API Version:** `2023-04-01`  
+**Existing:** ✅ Yes  
 
-### storageAccount::blobServices::container
+### `storageAccount::blobServices::container`
 
-- **Type**: Microsoft.Storage/storageAccounts/blobServices/containers
-- **API Version**: 2023-04-01
+**Name:** `myContainer`  
+**Type:** `Microsoft.Storage/storageAccounts/blobServices/containers`  
+**API Version:** `2023-04-01`  
 
-### vnet
+### `vnet`
 
-- **Type**: Microsoft.Network/virtualNetworks
-- **API Version**: 2021-05-01
-- **Depends On**: roleAssignStorage
+**Name:** `${nameVar}`  
+**Type:** `Microsoft.Network/virtualNetworks`  
+**API Version:** `2021-05-01`  
+**Depends On:** `roleAssignStorage`  
 
-### vnet::defaultSubnet
+### `vnet::defaultSubnet`
 
-- **Type**: Microsoft.Network/virtualNetworks/subnets
-- **API Version**: 2021-05-01
+**Name:** `default`  
+**Type:** `Microsoft.Network/virtualNetworks/subnets`  
+**API Version:** `2021-05-01`  
 
-### vnet::diffApi
+### `vnet::diffApi`
 
-- **Type**: Microsoft.Network/virtualNetworks/subnets
-- **API Version**: 2024-05-01
+**Name:** `api`  
+**Type:** `Microsoft.Network/virtualNetworks/subnets`  
+**API Version:** `2024-05-01`  
 
-### externalChild
+### `externalChild`
 
 Resource Description
 
-- **Type**: Microsoft.Network/virtualNetworks/subnets
-- **API Version**: 2023-11-01
-- **Parent**: vnet
-- **Condition**: (1 == 1)
+**Name:** `another`  
+**Type:** `Microsoft.Network/virtualNetworks/subnets`  
+**API Version:** `2023-11-01`  
+**Parent:** `vnet`  
+**Condition:**   
+  
+```bicep  
+(1 == 1)  
+```  
+  
 
-### containerLoop
+### `containerLoop`
 
-- **Type**: Microsoft.Storage/storageAccounts/blobServices/containers
-- **API Version**: 2024-01-01
-- **Parent**: storageAccount::blobServices
-- **Loop**: for name in ['alice', 'bob', 'charlie']
-- **Batch Size**: 2
+**Name:** `container${name}`  
+**Type:** `Microsoft.Storage/storageAccounts/blobServices/containers`  
+**API Version:** `2024-01-01`  
+**Parent:** `storageAccount::blobServices`  
+**Batch Size:** `2`  
+**Loop:**   
+```bicep  
+for name in ['alice', 'bob', 'charlie']  
+```  
+  
 
-### roleAssignStorage
+### `roleAssignStorage`
 
-- **Type**: Microsoft.Authorization/roleAssignments
-- **API Version**: 2022-04-01
-- **Scope**: ${storageAccount}
+**Name:** `guid(storageAccount.name)`  
+**Type:** `Microsoft.Authorization/roleAssignments`  
+**API Version:** `2022-04-01`  
+**Scope:** `${storageAccount}`  
 
 ## Modules
 
@@ -250,30 +424,67 @@ Resource Description
 
 ## Outputs
 
-### one
+### `one`
 
 Output Description
 
-- **Type**: string
-- **Value**: one
-- **Secure**: Yes
+**Type:** `string`  
+**Exported:** ❌ No  
+**Sealed:** ❌ No  
+**Secure:** ✅ Yes  
 
-### storageAccountOutput
+**Value**
 
-- **Type**: resourceType
-- **Value**: { id: storageAccount.id, name: storageAccount.name, resourceGroup: resourceGroup().name }
+```bicep
+one
+```
 
-### percentage
+### `storageAccountOutput`
 
-- **Type**: int
-- **Value**: true ? 50 : 100
-- **Minimum Value**: 0
-- **Maximum Value**: 100
+**Type:** `resourceType`  
+**Exported:** ❌ No  
+**Sealed:** ❌ No  
+**Secure:** ❌ No  
 
-### fib
+**Value**
 
-- **Type**: string[]
-- **Value**: [1, 1, 2, 3, 5, 8]
-- **Minimum Length**: 1
-- **Maximum Length**: 34
+```bicep
+{ id: storageAccount.id, name: storageAccount.name, resourceGroup: resourceGroup().name }
+```
+
+### `percentage`
+
+**Type:** `int`  
+**Exported:** ❌ No  
+**Sealed:** ❌ No  
+**Secure:** ❌ No  
+
+**Constraints**
+
+**Minimum Value:** `0`  
+**Maximum Value:** `100`  
+
+**Value**
+
+```bicep
+true ? 50 : 100
+```
+
+### `fib`
+
+**Type:** `string[]`  
+**Exported:** ❌ No  
+**Sealed:** ❌ No  
+**Secure:** ❌ No  
+
+**Constraints**
+
+**Minimum Length:** `1`  
+**Maximum Length:** `34`  
+
+**Value**
+
+```bicep
+[1, 1, 2, 3, 5, 8]
+```
 
