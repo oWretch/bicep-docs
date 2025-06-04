@@ -71,10 +71,11 @@ enum Commands {
 #[derive(Args)]
 struct CommonExportOptions {
     /// Path to the Bicep file to parse
-    #[arg(value_name = "BICEP_FILE")]
+    #[arg(value_name = "BICEP FILE", required = true)]
+    #[arg(value_hint = clap::ValueHint::FilePath)]
     input: PathBuf,
 
-    /// Output file path (defaults to input filename with appropriate extension)
+    /// Output file path. Defaults to input filename with appropriate extension.
     #[arg(short, long)]
     output: Option<PathBuf>,
 }
