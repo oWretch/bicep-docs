@@ -8,6 +8,15 @@ param descriptionParam string
 @sys.description('System namespace description decorator')
 param sysDescriptionParam string
 
+@metadata({ description: 'Metadata description decorator example' })
+param metadataDescriptionParam string
+
+@description('''
+This is a multi-line description.
+It is enclosed in triple quotes.
+''')
+param multiLineDescriptionParam string
+
 // Constraint decorators for string parameters
 @minLength(3)
 @maxLength(20)

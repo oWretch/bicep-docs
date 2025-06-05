@@ -7,7 +7,7 @@
 //!
 //! - `mod.rs` - Core types, utilities, and document parsing
 //! - `parameters.rs` - Parameter declaration parsing
-//! - `resources.rs` - Resource declaration parsing  
+//! - `resources.rs` - Resource declaration parsing
 //! - `types.rs` - Type definition parsing
 //! - `variables.rs` - Variable declaration parsing
 //! - `functions.rs` - Function declaration parsing
@@ -78,7 +78,7 @@ impl Error for BicepParserError {}
 /// - Metadata and scope information
 /// - Import statements
 /// - Type definitions
-/// - Function definitions  
+/// - Function definitions
 /// - Parameter declarations
 /// - Variable declarations
 /// - Resource declarations
@@ -122,7 +122,7 @@ pub struct BicepDocument {
 ///
 /// Represents the various types available in Bicep, including:
 /// - Primitive types (string, int, bool)
-/// - Complex types (arrays, objects)  
+/// - Complex types (arrays, objects)
 /// - Custom type references
 /// - Union types for multiple allowed values
 #[derive(Debug, Deserialize, Clone, PartialEq)]
@@ -844,8 +844,14 @@ fn parse_decorator(node: Node, source_code: &str) -> Result<BicepDecorator, Box<
                 if open_paren < close_paren {
                     let arg_content = text_without_at[open_paren + 1..close_paren].trim();
 
-                    // Handle string arguments
-                    if (arg_content.starts_with('\'') && arg_content.ends_with('\''))
+                    // Handle string arguments - check for triple quotes first
+                    if arg_content.starts_with("'''") && arg_content.ends_with("'''") {
+                        if arg_content.len() >= 6 {
+                            argument = BicepValue::String(
+                                arg_content[3..arg_content.len() - 3].to_string(),
+                            );
+                        }
+                    } else if (arg_content.starts_with('\'') && arg_content.ends_with('\''))
                         || (arg_content.starts_with('"') && arg_content.ends_with('"'))
                     {
                         if arg_content.len() >= 2 {
@@ -1589,13 +1595,11 @@ pub(crate) fn get_node_text(node: Node, source_code: &str) -> String {
     // so we can properly determine if it's a multiline string
     if node.kind() == "string" {
         if let Ok(text) = node.utf8_text(source_code.as_bytes()) {
-            if text.starts_with("'''") && text.ends_with("'''") {
-                // This is a multiline string
-                return process_escape_sequences(text);
-            } else if (text.starts_with('\'') && text.ends_with('\''))
+            // Process the string regardless of quote style
+            if (text.starts_with("'''") && text.ends_with("'''"))
+                || (text.starts_with('\'') && text.ends_with('\''))
                 || (text.starts_with('"') && text.ends_with('"'))
             {
-                // Single or double quoted string
                 return process_escape_sequences(text);
             }
         }
@@ -1643,6 +1647,7 @@ fn process_escape_sequences(text: &str) -> String {
 
     // Extract the content without quotes
     let content = if is_multiline && text.len() >= 6 {
+        // For multiline strings, remove the triple quotes from beginning and end
         &text[3..text.len() - 3]
     } else if (is_single_quote || is_double_quote) && text.len() >= 2 {
         &text[1..text.len() - 1]

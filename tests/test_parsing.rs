@@ -338,6 +338,65 @@ mod parsing {
         let has_description = doc.parameters.values().any(|p| p.description.is_some());
         assert!(has_description, "No parameter with description found");
 
+        // Check for specific descriptions
+        let simple_description = doc
+            .parameters
+            .get("descriptionParam")
+            .unwrap()
+            .description
+            .as_ref();
+        assert_eq!(
+            simple_description,
+            Some(&"Description decorator example".to_string())
+        );
+
+        let sys_description = doc
+            .parameters
+            .get("sysDescriptionParam")
+            .unwrap()
+            .description
+            .as_ref();
+        assert_eq!(
+            sys_description,
+            Some(&"System namespace description decorator".to_string())
+        );
+
+        let metadata_description = doc
+            .parameters
+            .get("metadataDescriptionParam")
+            .unwrap()
+            .description
+            .as_ref();
+        assert_eq!(
+            metadata_description,
+            Some(&"Metadata description decorator example".to_string())
+        );
+
+        let multiline_description = doc
+            .parameters
+            .get("multiLineDescriptionParam")
+            .unwrap()
+            .description
+            .as_ref();
+        println!("Multiline description: {:?}", multiline_description);
+
+        if let Some(desc) = multiline_description {
+            let mut char_codes = String::new();
+            for c in desc.chars() {
+                char_codes.push_str(&format!("U+{:04X} ", c as u32));
+            }
+            println!("Character codes: {}", char_codes);
+        }
+
+        assert_eq!(
+            multiline_description,
+            Some(
+                &"\nThis is a multi-line description.\nIt is enclosed in triple quotes.\n"
+                    .to_string()
+            ),
+            "Multiline description does not match expected value"
+        );
+
         // Check for constraints
         let has_constraints = doc.parameters.values().any(|p| {
             p.min_length.is_some()
