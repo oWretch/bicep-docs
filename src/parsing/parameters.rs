@@ -5,10 +5,10 @@ use std::error::Error;
 use tracing::{debug, warn};
 use tree_sitter::Node;
 
-use super::{
-    extract_description_from_decorators, get_node_text, parse_type_node, parse_value_node,
-    BicepDecorator, BicepType, BicepValue,
-};
+use super::utils::decorators::extract_description_from_decorators;
+use super::utils::types::parse_type_node;
+use super::utils::values::parse_value_node;
+use super::{get_node_text, BicepDecorator, BicepType, BicepValue};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types
@@ -150,9 +150,9 @@ pub(crate) fn parse_parameter_declaration(
 
         match parse_value_node(value_node, source_code) {
             Ok(Some(value)) => {
-                parameter.default_value = Some(value.clone());
                 // Infer better type information from default value if needed
                 infer_type_from_default_value(&mut parameter, &value, &name);
+                parameter.default_value = Some(value);
             },
             Err(e) => {
                 warn!(
@@ -275,7 +275,7 @@ fn create_param_properties_from_object(
             ..Default::default()
         };
 
-        param_props.insert(key.clone(), param);
+        param_props.insert(key.to_string(), param);
     }
 
     param_props
@@ -308,7 +308,7 @@ fn process_parameter_decorators(
             },
             "discriminator" | "sys.discriminator" => {
                 if let BicepValue::String(value) = &decorator.argument {
-                    parameter.discriminator = Some(value.clone());
+                    parameter.discriminator = Some(value.to_string());
                 }
             },
             "metadata" | "sys.metadata" => {
@@ -317,7 +317,7 @@ fn process_parameter_decorators(
                     parameter.metadata = map
                         .iter()
                         .filter(|(k, _)| *k != "description")
-                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .map(|(k, v)| (k.to_string(), v.clone()))
                         .collect();
                 }
             },
@@ -365,7 +365,7 @@ fn process_parameter_decorators(
 /// Returns an error if string-based array parsing fails
 fn parse_allowed_values(argument: &BicepValue) -> Result<Option<Vec<BicepValue>>, Box<dyn Error>> {
     match argument {
-        BicepValue::Array(array) => Ok(Some(array.clone())),
+        BicepValue::Array(array) => Ok(Some(array.to_vec())),
         BicepValue::String(str_val) if str_val.starts_with('[') && str_val.ends_with(']') => {
             // Parse string representation of array
             let inner_content = str_val[1..str_val.len() - 1].trim();

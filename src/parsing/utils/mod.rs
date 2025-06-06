@@ -7,12 +7,12 @@
 //! - text: Text processing utilities for node extraction and string handling
 
 pub mod decorators;
+pub mod text;
 pub mod types;
 pub mod values;
-pub mod text;
 
 // Re-export commonly used utilities
-pub use decorators::{extract_description_from_decorators, parse_decorators, parse_decorator};
-pub use types::{parse_property_type, parse_union_type, parse_array_type, parse_type_node};
-pub use values::{parse_value_node, parse_array_items};
+pub use decorators::{extract_description_from_decorators, parse_decorator, parse_decorators};
 pub use text::{get_node_text, get_primitive_value};
+pub use types::{parse_array_type, parse_property_type, parse_type_node, parse_union_type};
+pub use values::{parse_array_items, parse_value_node};

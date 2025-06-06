@@ -10,7 +10,8 @@ use serde_with::skip_serializing_none;
 use std::error::Error;
 use tree_sitter::Node;
 
-use super::{get_node_text, parse_value_node, BicepDecorator, BicepValue};
+use super::utils::values::parse_value_node;
+use super::{get_node_text, BicepDecorator, BicepValue};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types

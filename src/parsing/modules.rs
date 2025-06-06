@@ -12,7 +12,9 @@
 //! - **Registry**: Azure Container Registry or other OCI registries with aliases or FQDNs
 //! - **TypeSpec**: Template specifications with subscription and resource group references
 
-use super::{get_node_text, parse_value_node, BicepDecorator, BicepParserError, BicepValue};
+use super::utils::decorators::extract_description_from_decorators;
+use super::utils::values::parse_value_node;
+use super::{get_node_text, BicepDecorator, BicepParserError, BicepValue};
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use serde_with::skip_serializing_none;
 use std::error::Error;
@@ -419,31 +421,6 @@ pub struct BicepModule {
 /// * `decorators` - A vector of BicepDecorator objects to search
 ///
 /// # Returns
-///
-/// An Option containing the description string if found, None otherwise
-fn extract_description_from_decorators(decorators: &Vec<BicepDecorator>) -> Option<String> {
-    // First, prioritize explicit description decorators
-    for decorator in decorators {
-        match decorator.name.as_str() {
-            "sys.description" | "description" => {
-                if let BicepValue::String(desc_text) = &decorator.argument {
-                    return Some(desc_text.clone());
-                }
-            },
-            "metadata" => {
-                if let BicepValue::Object(map) = &decorator.argument {
-                    if let Some(BicepValue::String(desc_text)) = map.get("description") {
-                        return Some(desc_text.clone());
-                    }
-                }
-            },
-            _ => {},
-        }
-    }
-
-    None
-}
-
 /// Parse a module declaration in a Bicep file
 ///
 /// This function parses a module declaration node from a Bicep AST and extracts
@@ -557,10 +534,10 @@ pub fn parse_module_declaration(
                                 for dep in deps {
                                     match dep {
                                         BicepValue::String(dep_name) => {
-                                            dep_names.push(dep_name.clone());
+                                            dep_names.push(dep_name.to_string());
                                         },
                                         BicepValue::Identifier(identifier) => {
-                                            dep_names.push(identifier.clone());
+                                            dep_names.push(identifier.to_string());
                                         },
                                         _ => {
                                             dep_names.push(format!("{}", dep));
@@ -572,10 +549,10 @@ pub fn parse_module_declaration(
                                 }
                             },
                             BicepValue::String(dep_name) => {
-                                depends_on = Some(vec![dep_name.clone()]);
+                                depends_on = Some(vec![dep_name.to_string()]);
                             },
                             BicepValue::Identifier(identifier) => {
-                                depends_on = Some(vec![identifier.clone()]);
+                                depends_on = Some(vec![identifier.to_string()]);
                             },
                             _ => {
                                 depends_on = Some(vec![format!("{}", depends_value)]);

@@ -10,7 +10,9 @@ use std::error::Error;
 use tracing::{debug, warn};
 use tree_sitter::Node;
 
-use super::{get_node_text, parse_value_node, BicepDecorator, BicepParserError, BicepValue};
+use super::utils::decorators::extract_description_from_decorators;
+use super::utils::values::parse_value_node;
+use super::{get_node_text, BicepDecorator, BicepParserError, BicepValue};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types
@@ -78,8 +80,11 @@ pub fn parse_variable_declaration(
 ) -> Result<(String, BicepVariable), Box<dyn Error>> {
     let mut is_exported = false;
 
-    // Extract description and export status from decorators
-    let description = process_variable_decorators(&decorators, &mut is_exported);
+    // Extract description from centralized function
+    let description = extract_description_from_decorators(&decorators);
+
+    // Process export status from decorators
+    process_variable_export_decorators(&decorators, &mut is_exported);
 
     // Extract variable name and value from child nodes
     let mut cursor = node.walk();
@@ -125,39 +130,22 @@ pub fn parse_variable_declaration(
     ))
 }
 
-/// Processes decorators to extract description and export status.
+/// Processes decorators to extract export status.
 ///
 /// # Arguments
 ///
 /// * `decorators` - The decorators to process
 /// * `is_exported` - Mutable reference to set export status
-///
-/// # Returns
-///
-/// Optional description string extracted from decorators
-fn process_variable_decorators(
-    decorators: &[BicepDecorator],
-    is_exported: &mut bool,
-) -> Option<String> {
-    let mut description = None;
-
+fn process_variable_export_decorators(decorators: &[BicepDecorator], is_exported: &mut bool) {
     for decorator in decorators {
         match decorator.name.as_str() {
             "export" | "sys.export" => {
                 *is_exported = true;
                 debug!("Variable marked as exported");
             },
-            "description" | "sys.description" => {
-                if let BicepValue::String(desc_text) = &decorator.argument {
-                    description = Some(desc_text.clone());
-                    debug!("Variable description: {}", desc_text);
-                }
-            },
             _ => {
-                debug!("Ignoring unknown decorator: {}", decorator.name);
+                debug!("Processing decorator: {}", decorator.name);
             },
         }
     }
-
-    description
 }

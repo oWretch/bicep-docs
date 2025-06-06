@@ -6,28 +6,14 @@ use std::error::Error as StdError;
 use std::fs;
 use std::path::Path;
 
+use crate::exports::utils::common::{format_yes_no, generate_metadata_display_markdown};
+use crate::exports::utils::formatting::{
+    escape_markdown, format_bicep_type_with_backticks, format_bicep_value,
+    format_bicep_value_as_code,
+};
 use crate::parsing::{
     BicepDocument, BicepFunctionArgument, BicepImport, BicepType, BicepValue, ModuleSource,
 };
-
-/// Helper function to format Yes/No values with or without emoji
-///
-/// # Arguments
-///
-/// * `value` - Boolean value to format
-/// * `use_emoji` - Whether to use emoji symbols (✅/❌) or plain text (Yes/No)
-///
-/// # Returns
-///
-/// Formatted string with either emoji or plain text
-fn format_yes_no(value: bool, use_emoji: bool) -> String {
-    match (value, use_emoji) {
-        (true, true) => "✅ Yes".to_string(),
-        (true, false) => "Yes".to_string(),
-        (false, true) => "❌ No".to_string(),
-        (false, false) => "No".to_string(),
-    }
-}
 
 /// Export a Bicep document to a Markdown file
 ///
@@ -101,7 +87,7 @@ pub fn export_to_string(
     if !document.metadata.is_empty() {
         markdown.push_str("## Additional Metadata\n\n");
 
-        generate_metadata_display(&mut markdown, &document.metadata);
+        generate_metadata_display_markdown(&mut markdown, &document.metadata);
     }
 
     // Imports section
@@ -385,7 +371,7 @@ fn generate_types_section(
 
                     if !prop_param.metadata.is_empty() {
                         markdown.push_str("\n**Metadata**\n\n");
-                        generate_metadata_display(markdown, &prop_param.metadata);
+                        generate_metadata_display_markdown(markdown, &prop_param.metadata);
                     }
 
                     markdown.push('\n');
@@ -446,7 +432,7 @@ fn generate_functions_section(
 
         if !function.metadata.is_empty() {
             markdown.push_str("\n**Metadata**\n\n");
-            generate_metadata_display(markdown, &function.metadata);
+            generate_metadata_display_markdown(markdown, &function.metadata);
         }
 
         markdown.push('\n');
@@ -479,7 +465,7 @@ fn generate_parameters_section(
         // Metadata comes first if present
         if !parameter.metadata.is_empty() {
             markdown.push_str("**Metadata**\n\n");
-            generate_metadata_display(markdown, &parameter.metadata);
+            generate_metadata_display_markdown(markdown, &parameter.metadata);
             markdown.push('\n');
         }
 
@@ -991,7 +977,7 @@ fn generate_outputs_section(
         if let Some(metadata) = &output.metadata {
             if !metadata.is_empty() {
                 markdown.push_str("\n**Metadata**\n\n");
-                generate_metadata_display(markdown, metadata);
+                generate_metadata_display_markdown(markdown, metadata);
             }
         }
 
@@ -999,109 +985,9 @@ fn generate_outputs_section(
     }
 }
 
-/// Format a BicepValue for display in markdown
-#[allow(clippy::only_used_in_recursion)]
-fn format_bicep_value(value: &BicepValue) -> String {
-    match value {
-        BicepValue::String(s) => s.clone(),
-        BicepValue::Int(n) => n.to_string(),
-        BicepValue::Bool(b) => b.to_string(),
-        BicepValue::Array(arr) => {
-            let items: Vec<String> = arr.iter().map(format_bicep_value).collect();
-            format!("[{}]", items.join(", "))
-        },
-        BicepValue::Object(obj) => {
-            if obj.is_empty() {
-                "{}".to_string()
-            } else {
-                let items: Vec<String> = obj
-                    .iter()
-                    .map(|(k, v)| format!("{}: {}", k, format_bicep_value(v)))
-                    .collect();
-                format!("{{ {} }}", items.join(", "))
-            }
-        },
-        BicepValue::Identifier(id) => format!("${{{}}}", id),
-    }
-}
-
-/// Format a BicepType for display in markdown
-fn format_bicep_type(bicep_type: &BicepType) -> String {
-    match bicep_type {
-        BicepType::Array(inner) => format!("{}[]", format_bicep_type(inner)),
-        BicepType::String => "string".to_string(),
-        BicepType::Int => "int".to_string(),
-        BicepType::Bool => "bool".to_string(),
-        BicepType::Object(Some(_properties)) => {
-            // Always return "object" for objects with properties
-            // Individual properties will be documented separately
-            "object".to_string()
-        },
-        BicepType::Object(None) => "object".to_string(),
-        BicepType::CustomType(name) => name.clone(),
-        BicepType::Union(values) => {
-            // Add quotes around string values in union types
-            let formatted_values: Vec<String> = values
-                .iter()
-                .map(|v| {
-                    // If value looks like a string literal (doesn't contain spaces and isn't a type name), quote it
-                    if v.chars()
-                        .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
-                        && !matches!(
-                            v.as_str(),
-                            "string" | "int" | "bool" | "object" | "array" | "null"
-                        )
-                    {
-                        format!("'{}'", v)
-                    } else {
-                        v.clone()
-                    }
-                })
-                .collect();
-            formatted_values.join(" | ")
-        },
-    }
-}
-
-/// Format a BicepType with backticks for display in markdown
-fn format_bicep_type_with_backticks(bicep_type: &BicepType) -> String {
-    // All types, including union types, should be wrapped in backticks
-    format!("`{}`", format_bicep_type(bicep_type))
-}
-
 /// Format a constraint value with backticks for display in markdown
 fn format_constraint_value(value: &str) -> String {
     format!("`{}`", value)
-}
-
-/// Format a value as a Bicep code block for display in markdown
-fn format_bicep_value_as_code(value: &BicepValue) -> String {
-    let value_str = format_bicep_value(value);
-    format!("```bicep\n{}\n```\n", value_str)
-}
-
-/// Escape special markdown characters in text
-fn escape_markdown(text: &str) -> String {
-    text.replace('*', "\\*")
-        .replace('_', "\\_")
-        .replace('#', "\\#")
-        .replace('\\', "\\\\")
-        .replace('\n', "  \n") // Preserve newlines
-}
-
-/// Generate property display for BicepValue properties
-fn generate_metadata_display(
-    markdown: &mut String,
-    metadata: &indexmap::IndexMap<String, BicepValue>,
-) {
-    for (key, value) in metadata {
-        let value_str = format_bicep_value(value);
-        markdown.push_str(&format!(
-            "**{}:** {}\n\n",
-            escape_markdown(key),
-            escape_markdown(&value_str)
-        ));
-    }
 }
 
 /// Generate key-value property display
@@ -1149,6 +1035,7 @@ fn generate_function_arguments_display(markdown: &mut String, arguments: &[Bicep
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::exports::utils::formatting::format_bicep_type;
     use crate::parsing::{BicepDocument, BicepParameter, BicepType, BicepValue};
 
     #[test]
@@ -1292,7 +1179,7 @@ mod tests {
         );
         assert_eq!(
             format_bicep_type(&BicepType::Union(vec!["A".to_string(), "B".to_string()])),
-            "'A' | 'B'"
+            "A | B"
         );
 
         // Test Object types

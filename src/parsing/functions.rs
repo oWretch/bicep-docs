@@ -11,10 +11,9 @@ use std::error::Error;
 use tracing::{debug, warn};
 use tree_sitter::Node;
 
-use super::{
-    extract_description_from_decorators, get_node_text, parse_property_type, parse_type_node,
-    BicepDecorator, BicepParserError, BicepType, BicepValue,
-};
+use super::utils::decorators::extract_description_from_decorators;
+use super::utils::types::{parse_property_type, parse_type_node};
+use super::{get_node_text, BicepDecorator, BicepParserError, BicepType, BicepValue};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types

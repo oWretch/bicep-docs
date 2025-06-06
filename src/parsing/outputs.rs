@@ -17,10 +17,10 @@ use std::error::Error;
 use tracing::debug;
 use tree_sitter::Node;
 
-use super::{
-    get_node_text, parse_array_items, parse_array_type, parse_value_node, BicepDecorator,
-    BicepParameter, BicepType, BicepValue,
-};
+use super::utils::decorators::extract_description_from_decorators;
+use super::utils::types::parse_array_type;
+use super::utils::values::{parse_array_items, parse_value_node};
+use super::{get_node_text, BicepDecorator, BicepParameter, BicepType, BicepValue};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types
@@ -89,49 +89,6 @@ pub struct BicepOutput {
 // Functions
 // ---------------------------------------------------------------
 
-/// Extract description from decorators
-///
-/// This function searches through a list of decorators for description metadata
-/// and returns the first description found.
-///
-/// # Arguments
-///
-/// * `decorators` - A vector of BicepDecorator objects to search
-///
-/// # Returns
-///
-/// An Option containing the description string if found, None otherwise
-fn extract_description_from_decorators(decorators: &Vec<BicepDecorator>) -> Option<String> {
-    // First, prioritize explicit description decorators
-    for decorator in decorators {
-        match decorator.name.as_str() {
-            "sys.description" | "description" => {
-                if let BicepValue::String(desc_text) = &decorator.argument {
-                    if !desc_text.is_empty() {
-                        return Some(desc_text.clone());
-                    }
-                }
-            },
-            _ => {},
-        }
-    }
-
-    // If no explicit description decorator, check metadata
-    for decorator in decorators {
-        if decorator.name == "metadata" {
-            if let BicepValue::Object(map) = &decorator.argument {
-                if let Some(BicepValue::String(desc_text)) = map.get("description") {
-                    if !desc_text.is_empty() {
-                        return Some(desc_text.clone());
-                    }
-                }
-            }
-        }
-    }
-
-    None
-}
-
 /// Extract constraint and property values from decorators
 ///
 /// This function processes decorators to extract various constraint values
@@ -144,7 +101,7 @@ fn extract_description_from_decorators(decorators: &Vec<BicepDecorator>) -> Opti
 /// # Returns
 ///
 /// A tuple containing (discriminator, max_length, min_length, max_value, min_value, metadata, sealed, secure)
-fn extract_decorator_properties(decorators: &Vec<BicepDecorator>) -> DecoratorProperties {
+fn extract_decorator_properties(decorators: &[BicepDecorator]) -> DecoratorProperties {
     let mut discriminator = None;
     let mut max_length = None;
     let mut min_length = None;

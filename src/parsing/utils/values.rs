@@ -3,12 +3,12 @@
 //! This module contains utilities for parsing various value expressions in Bicep,
 //! including arrays, objects, and literal values.
 
+use indexmap::IndexMap;
 use std::error::Error;
 use tree_sitter::Node;
-use indexmap::IndexMap;
 
-use crate::BicepValue;
 use super::text::{get_node_text, get_primitive_value_from_text};
+use crate::BicepValue;
 
 /// Parse an array value from array items
 ///
@@ -63,15 +63,17 @@ pub fn parse_value_node(
     match node.kind() {
         "string" => {
             let text = get_node_text(node, source_code);
-            Ok(Some(BicepValue::String(get_primitive_value_from_text(&text))))
-        }
+            Ok(Some(BicepValue::String(get_primitive_value_from_text(
+                &text,
+            ))))
+        },
         "integer" => {
             let text = get_node_text(node, source_code);
             match text.parse::<i64>() {
                 Ok(num) => Ok(Some(BicepValue::Int(num))),
                 Err(_) => Ok(Some(BicepValue::String(text))), // Fallback to string if parsing fails
             }
-        }
+        },
         "boolean" => {
             let text = get_node_text(node, source_code);
             match text.as_str() {
@@ -79,7 +81,7 @@ pub fn parse_value_node(
                 "false" => Ok(Some(BicepValue::Bool(false))),
                 _ => Ok(Some(BicepValue::String(text))),
             }
-        }
+        },
         "array" => {
             let mut cursor = node.walk();
             let children = node.children(&mut cursor).collect::<Vec<_>>();
@@ -92,31 +94,31 @@ pub fn parse_value_node(
             }
             // Empty array
             Ok(Some(BicepValue::Array(Vec::new())))
-        }
+        },
         "object" => {
             let properties = parse_object_properties_for_value(node, source_code)?;
             Ok(Some(BicepValue::Object(properties)))
-        }
+        },
         "identifier" => {
             let name = get_node_text(node, source_code);
             Ok(Some(BicepValue::String(name)))
-        }
+        },
         "member_expression" => {
             let text = get_node_text(node, source_code);
             Ok(Some(BicepValue::String(text)))
-        }
+        },
         "call_expression" => {
             let text = get_node_text(node, source_code);
             Ok(Some(BicepValue::String(text)))
-        }
+        },
         "binary_expression" => {
             let text = get_node_text(node, source_code);
             Ok(Some(BicepValue::String(text)))
-        }
+        },
         "unary_expression" => {
             let text = get_node_text(node, source_code);
             Ok(Some(BicepValue::String(text)))
-        }
+        },
         "parenthesized_expression" => {
             let mut cursor = node.walk();
             let children = node.children(&mut cursor).collect::<Vec<_>>();
@@ -127,17 +129,17 @@ pub fn parse_value_node(
                 }
             }
             Ok(Some(BicepValue::String(get_node_text(node, source_code))))
-        }
+        },
         "subscription_expression" => {
             let text = get_node_text(node, source_code);
             Ok(Some(BicepValue::String(text)))
-        }
+        },
         "null" => Ok(Some(BicepValue::String("null".to_string()))),
         _ => {
             // For unknown node types, just get the text
             let text = get_node_text(node, source_code);
             Ok(Some(BicepValue::String(text)))
-        }
+        },
     }
 }
 
@@ -179,16 +181,16 @@ pub fn parse_object_properties_for_value(
                         } else if value.is_none() {
                             value = parse_value_node(prop_child, source_code)?;
                         }
-                    }
+                    },
                     ":" => {
                         // Skip the colon separator
                         continue;
-                    }
+                    },
                     _ => {
                         if value.is_none() {
                             value = parse_value_node(prop_child, source_code)?;
                         }
-                    }
+                    },
                 }
             }
 

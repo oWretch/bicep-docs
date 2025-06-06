@@ -6,6 +6,7 @@
 pub mod asciidoc;
 pub mod json;
 pub mod markdown;
+pub mod utils;
 pub mod yaml;
 
 // Re-export the main export functions for convenience

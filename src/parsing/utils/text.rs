@@ -21,7 +21,7 @@ use tree_sitter::Node;
 pub fn get_node_text(node: Node, source_code: &str) -> String {
     let start_byte = node.start_byte();
     let end_byte = node.end_byte();
-    
+
     // Ensure we don't go out of bounds
     if start_byte <= source_code.len() && end_byte <= source_code.len() && start_byte <= end_byte {
         source_code[start_byte..end_byte].to_string()
@@ -141,7 +141,7 @@ pub fn process_escape_sequences(text: &str) -> String {
 /// The processed primitive value as a String
 pub fn get_primitive_value_from_text(text: &str) -> String {
     let trimmed = text.trim();
-    
+
     // Handle quoted strings (both single and double quotes)
     if (trimmed.starts_with('"') && trimmed.ends_with('"') && trimmed.len() >= 2)
         || (trimmed.starts_with('\'') && trimmed.ends_with('\'') && trimmed.len() >= 2)
@@ -167,7 +167,10 @@ pub fn get_primitive_value_from_text(text: &str) -> String {
 /// # Returns
 ///
 /// A Result containing the parsed BicepValue
-pub fn get_primitive_value(node: Node, source_code: &str) -> Result<crate::BicepValue, Box<dyn std::error::Error>> {
+pub fn get_primitive_value(
+    node: Node,
+    source_code: &str,
+) -> Result<crate::BicepValue, Box<dyn std::error::Error>> {
     let node_text = get_node_text(node, source_code);
     match node.kind() {
         "string" => {
@@ -187,21 +190,21 @@ pub fn get_primitive_value(node: Node, source_code: &str) -> Result<crate::Bicep
                 node_text
             };
             Ok(crate::BicepValue::String(process_escape_sequences(&text)))
-        }
+        },
         "integer" => {
             let value = node_text.parse::<i64>();
             match value {
                 Ok(num) => Ok(crate::BicepValue::Int(num)),
                 Err(_) => Ok(crate::BicepValue::String(node_text)),
             }
-        }
+        },
         "boolean" => {
             let value = node_text.parse::<bool>();
             match value {
                 Ok(b) => Ok(crate::BicepValue::Bool(b)),
                 Err(_) => Ok(crate::BicepValue::String(node_text)),
             }
-        }
+        },
         _ => Ok(crate::BicepValue::String(node_text)),
     }
 }

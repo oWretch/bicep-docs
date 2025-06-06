@@ -11,11 +11,10 @@ use std::error::Error;
 use tracing::{debug, warn};
 use tree_sitter::Node;
 
-use super::{
-    extract_description_from_decorators, get_node_text, parse_array_type, parse_decorator,
-    parse_decorators, parse_property_type, parse_union_type, BicepParameter, BicepParserError,
-    BicepType, BicepValue,
-};
+use super::utils::decorators::parse_decorator;
+use super::utils::decorators::{extract_description_from_decorators, parse_decorators};
+use super::utils::types::{parse_array_type, parse_property_type, parse_union_type};
+use super::{get_node_text, BicepParameter, BicepParserError, BicepType, BicepValue};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types
@@ -390,25 +389,25 @@ pub fn parse_object_property(
                             "minLength" | "sys.minLength" => {
                                 if let BicepValue::Int(num) = &decorator.argument {
                                     min_length = Some(*num);
-                                    debug!("Property {} has minLength: {}", name, num);
+                                    debug!("Property {} has minLength: {}", name, *num);
                                 }
                             },
                             "maxLength" | "sys.maxLength" => {
                                 if let BicepValue::Int(num) = &decorator.argument {
                                     max_length = Some(*num);
-                                    debug!("Property {} has maxLength: {}", name, num);
+                                    debug!("Property {} has maxLength: {}", name, *num);
                                 }
                             },
                             "minValue" | "sys.minValue" => {
                                 if let BicepValue::Int(num) = &decorator.argument {
                                     min_value = Some(*num);
-                                    debug!("Property {} has minValue: {}", name, num);
+                                    debug!("Property {} has minValue: {}", name, *num);
                                 }
                             },
                             "maxValue" | "sys.maxValue" => {
                                 if let BicepValue::Int(num) = &decorator.argument {
                                     max_value = Some(*num);
-                                    debug!("Property {} has maxValue: {}", name, num);
+                                    debug!("Property {} has maxValue: {}", name, *num);
                                 }
                             },
                             "secure" | "sys.secure" => {

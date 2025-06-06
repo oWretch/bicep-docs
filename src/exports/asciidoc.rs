@@ -6,28 +6,9 @@ use std::error::Error as StdError;
 use std::fs;
 use std::path::Path;
 
-use crate::parsing::{
-    BicepDocument, BicepFunctionArgument, BicepImport, BicepType, BicepValue, ModuleSource,
-};
-
-/// Helper function to format Yes/No values with or without emoji
-///
-/// # Arguments
-///
-/// * `value` - Boolean value to format
-/// * `use_emoji` - Whether to use emoji symbols (✅/❌) or plain text (Yes/No)
-///
-/// # Returns
-///
-/// Formatted string with either emoji or plain text
-fn format_yes_no(value: bool, use_emoji: bool) -> String {
-    match (value, use_emoji) {
-        (true, true) => "✅ Yes".to_string(),
-        (true, false) => "Yes".to_string(),
-        (false, true) => "❌ No".to_string(),
-        (false, false) => "No".to_string(),
-    }
-}
+use crate::exports::utils::common::{format_yes_no, generate_metadata_display_asciidoc};
+use crate::exports::utils::formatting::{escape_asciidoc, format_bicep_type, format_bicep_value};
+use crate::parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType, ModuleSource};
 
 /// Export a Bicep document to an AsciiDoc file
 ///
@@ -109,7 +90,7 @@ pub fn export_to_string(
     if !document.metadata.is_empty() {
         asciidoc.push_str(".Additional Metadata\n");
         asciidoc.push_str("[%autowidth,cols=\"h,1\",frame=none]\n");
-        generate_metadata_display(&mut asciidoc, &document.metadata);
+        generate_metadata_display_asciidoc(&mut asciidoc, &document.metadata);
     }
 
     asciidoc.push('\n');
@@ -399,7 +380,7 @@ fn generate_types_section(
                     if !prop_param.metadata.is_empty() {
                         asciidoc.push_str("\n.Metadata\n");
                         asciidoc.push_str("[%autowidth,cols=\"h,1\",frame=none]\n");
-                        generate_metadata_display(asciidoc, &prop_param.metadata);
+                        generate_metadata_display_asciidoc(asciidoc, &prop_param.metadata);
                     }
 
                     asciidoc.push('\n');
@@ -503,7 +484,7 @@ fn generate_parameters_section(
             if !other_metadata.is_empty() {
                 asciidoc.push_str(".Metadata\n");
                 asciidoc.push_str("[%autowidth,cols=\"h,1\",frame=none]\n");
-                generate_metadata_display(asciidoc, &other_metadata);
+                generate_metadata_display_asciidoc(asciidoc, &other_metadata);
                 asciidoc.push('\n');
             }
         }
@@ -963,89 +944,12 @@ fn generate_outputs_section(
             if !metadata.is_empty() {
                 asciidoc.push_str("\n.Metadata\n");
                 asciidoc.push_str("[%autowidth,cols=\"h,1\",frame=none]\n");
-                generate_metadata_display(asciidoc, metadata);
+                generate_metadata_display_asciidoc(asciidoc, metadata);
             }
         }
 
         asciidoc.push('\n');
     }
-}
-
-/// Format a BicepValue for display in AsciiDoc
-fn format_bicep_value(value: &BicepValue) -> String {
-    match value {
-        BicepValue::String(s) => s.clone(),
-        BicepValue::Int(n) => n.to_string(),
-        BicepValue::Bool(b) => b.to_string(),
-        BicepValue::Array(arr) => {
-            let items: Vec<String> = arr.iter().map(format_bicep_value).collect();
-            format!("[{}]", items.join(", "))
-        },
-        BicepValue::Object(obj) => {
-            if obj.is_empty() {
-                "{}".to_string()
-            } else {
-                let items: Vec<String> = obj
-                    .iter()
-                    .map(|(k, v)| format!("{}: {}", k, format_bicep_value(v)))
-                    .collect();
-                format!("{{ {} }}", items.join(", "))
-            }
-        },
-        BicepValue::Identifier(id) => format!("${{{}}}", id),
-    }
-}
-
-/// Format a BicepType for display in AsciiDoc
-fn format_bicep_type(bicep_type: &BicepType) -> String {
-    match bicep_type {
-        BicepType::Array(inner) => format!("{}[]", format_bicep_type(inner)),
-        BicepType::String => "string".to_string(),
-        BicepType::Int => "int".to_string(),
-        BicepType::Bool => "bool".to_string(),
-        BicepType::Object(Some(_properties)) => {
-            // Always return "object" for objects with properties
-            // Individual properties will be documented separately
-            "object".to_string()
-        },
-        BicepType::Object(None) => "object".to_string(),
-        BicepType::CustomType(name) => name.clone(),
-        BicepType::Union(values) => {
-            // Use table format (escape pipes for AsciiDoc tables)
-            values.join(" \\| ")
-        },
-    }
-}
-
-/// Escape special AsciiDoc characters in text
-fn escape_asciidoc(text: &str) -> String {
-    let escaped = text
-        .replace('*', "\\*")
-        .replace('_', "\\_")
-        .replace('#', "\\#");
-
-    if escaped.contains('\n') && !escaped.contains("+\n") {
-        escaped.replace('\n', " +\n")
-    } else {
-        escaped
-    }
-}
-
-/// Generate property display for BicepValue properties using table format
-fn generate_metadata_display(
-    asciidoc: &mut String,
-    metadata: &indexmap::IndexMap<String, BicepValue>,
-) {
-    asciidoc.push_str("|===\n");
-    for (key, value) in metadata {
-        let value_str = format_bicep_value(value);
-        asciidoc.push_str(&format!(
-            "| {}\n| {}\n",
-            escape_asciidoc(key),
-            escape_asciidoc(&value_str)
-        ));
-    }
-    asciidoc.push_str("|===\n");
 }
 
 /// Generate key-value property display
@@ -1105,6 +1009,7 @@ fn generate_function_arguments_display(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::exports::utils::formatting::{format_bicep_type, format_bicep_value};
     use crate::parsing::{BicepDocument, BicepParameter, BicepType, BicepValue};
 
     #[test]
@@ -1202,7 +1107,7 @@ mod tests {
         let escaped = escape_asciidoc(text);
         assert_eq!(
             escaped,
-            "test | with \\* special \\_ characters [and] `code` \\#heading"
+            "test \\| with \\* special \\_ characters \\[and\\] \\`code\\` \\#heading"
         );
     }
 
@@ -1235,7 +1140,7 @@ mod tests {
         );
         assert_eq!(
             format_bicep_type(&BicepType::Union(vec!["A".to_string(), "B".to_string()])),
-            "A \\| B"
+            "A | B"
         );
 
         // Test Object types
@@ -1266,8 +1171,8 @@ mod tests {
     fn test_format_bicep_type_union_formats() {
         let union_type = BicepType::Union(vec!["A".to_string(), "B".to_string()]);
 
-        // Test format (should escape pipes for table format)
-        assert_eq!(format_bicep_type(&union_type), "A \\| B");
+        // Test format (now uses unified format same as Markdown)
+        assert_eq!(format_bicep_type(&union_type), "A | B");
     }
 
     #[test]

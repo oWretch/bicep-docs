@@ -237,35 +237,6 @@ fn handle_asciidoc_export(common: CommonExportOptions) -> Result<(), Box<dyn Err
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use clap::Parser;
-
-    #[test]
-    fn test_exclude_empty_flag_parsing() {
-        // Test without exclude_empty flag
-        let args = vec!["bicep-docs", "markdown", "input.bicep"];
-        let cli = Cli::parse_from(args);
-
-        if let Commands::Markdown { common } = cli.command {
-            assert!(!common.exclude_empty);
-        } else {
-            panic!("Expected Markdown command");
-        }
-
-        // Test with exclude_empty flag
-        let args = vec!["bicep-docs", "markdown", "--exclude-empty", "input.bicep"];
-        let cli = Cli::parse_from(args);
-
-        if let Commands::Markdown { common } = cli.command {
-            assert!(common.exclude_empty);
-        } else {
-            panic!("Expected Markdown command");
-        }
-    }
-}
-
 /// Configure the tracing subscriber based on command line options
 fn setup_tracing(verbose: u8, quiet: bool, json: bool) {
     // Set default filter level based on verbosity
@@ -340,4 +311,33 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     }
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    #[test]
+    fn test_exclude_empty_flag_parsing() {
+        // Test without exclude_empty flag
+        let args = vec!["bicep-docs", "markdown", "input.bicep"];
+        let cli = Cli::parse_from(args);
+
+        if let Commands::Markdown { common } = cli.command {
+            assert!(!common.exclude_empty);
+        } else {
+            panic!("Expected Markdown command");
+        }
+
+        // Test with exclude_empty flag
+        let args = vec!["bicep-docs", "markdown", "--exclude-empty", "input.bicep"];
+        let cli = Cli::parse_from(args);
+
+        if let Commands::Markdown { common } = cli.command {
+            assert!(common.exclude_empty);
+        } else {
+            panic!("Expected Markdown command");
+        }
+    }
 }
