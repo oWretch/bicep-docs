@@ -82,6 +82,10 @@ struct CommonExportOptions {
     /// Enable emoji usage in documentation output
     #[arg(long, default_value_t = false)]
     emoji: bool,
+
+    /// Skip exporting empty sections in the documentation
+    #[arg(long, default_value_t = false)]
+    exclude_empty: bool,
 }
 
 /// Handle the YAML export command
@@ -106,7 +110,7 @@ fn handle_yaml_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>>
     };
 
     // Export the document (YAML doesn't use emoji, so we don't pass the flag)
-    export_bicep_document_to_yaml(&document, &output_path)?;
+    export_bicep_document_to_yaml(&document, &output_path, common.exclude_empty)?;
     debug!("YAML exported to: {}", output_path.display());
 
     Ok(())
@@ -146,7 +150,7 @@ fn handle_json_export(common: CommonExportOptions, pretty: bool) -> Result<(), B
     };
 
     // Export the document (JSON doesn't use emoji, so we don't pass the flag)
-    export_bicep_document_to_json(&document, &output_path, pretty)?;
+    export_bicep_document_to_json(&document, &output_path, pretty, common.exclude_empty)?;
     debug!("JSON exported to: {}", output_path.display());
     if pretty {
         debug!("Output is formatted with indentation");
@@ -188,7 +192,7 @@ fn handle_markdown_export(common: CommonExportOptions) -> Result<(), Box<dyn Err
     };
 
     // Export the document
-    export_bicep_document_to_markdown(&document, &output_path, common.emoji)?;
+    export_bicep_document_to_markdown(&document, &output_path, common.emoji, common.exclude_empty)?;
     debug!("Markdown exported to: {}", output_path.display());
 
     Ok(())
@@ -227,10 +231,39 @@ fn handle_asciidoc_export(common: CommonExportOptions) -> Result<(), Box<dyn Err
     };
 
     // Export the document
-    export_bicep_document_to_asciidoc(&document, &output_path, common.emoji)?;
+    export_bicep_document_to_asciidoc(&document, &output_path, common.emoji, common.exclude_empty)?;
     debug!("AsciiDoc exported to: {}", output_path.display());
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    #[test]
+    fn test_exclude_empty_flag_parsing() {
+        // Test without exclude_empty flag
+        let args = vec!["bicep-docs", "markdown", "input.bicep"];
+        let cli = Cli::parse_from(args);
+
+        if let Commands::Markdown { common } = cli.command {
+            assert!(!common.exclude_empty);
+        } else {
+            panic!("Expected Markdown command");
+        }
+
+        // Test with exclude_empty flag
+        let args = vec!["bicep-docs", "markdown", "--exclude-empty", "input.bicep"];
+        let cli = Cli::parse_from(args);
+
+        if let Commands::Markdown { common } = cli.command {
+            assert!(common.exclude_empty);
+        } else {
+            panic!("Expected Markdown command");
+        }
+    }
 }
 
 /// Configure the tracing subscriber based on command line options

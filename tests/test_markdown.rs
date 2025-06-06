@@ -16,8 +16,8 @@ mod markdown {
         // Parse the document
         let document = parse_bicep_document(&content).expect("Failed to parse document");
 
-        // Export to markdown string
-        let markdown = export_bicep_document_to_markdown_string(&document, true)
+        // Export to markdown string (with exclude_empty = false)
+        let markdown = export_bicep_document_to_markdown_string(&document, true, false)
             .expect("Failed to export to markdown");
 
         // Basic checks
@@ -42,8 +42,8 @@ mod markdown {
     fn test_parse_and_export_to_markdown() {
         let output_path = "sample_parameters.md";
 
-        // Test the convenience function
-        parse_and_export_to_markdown("tests/parsing/parameters.bicep", output_path)
+        // Test the convenience function (with exclude_empty = false)
+        parse_and_export_to_markdown("tests/parsing/parameters.bicep", output_path, false)
             .expect("Failed to parse and export");
 
         // Verify the file was created
@@ -57,5 +57,43 @@ mod markdown {
 
         println!("Markdown successfully exported to {}", output_path);
         // Note: Not cleaning up the file so we can inspect it
+    }
+
+    #[test]
+    fn test_markdown_with_exclude_empty() {
+        // Read the parameters test file
+        let content =
+            fs::read_to_string("tests/parsing/parameters.bicep").expect("Failed to read test file");
+
+        // Parse the document
+        let document = parse_bicep_document(&content).expect("Failed to parse document");
+
+        // Test with exclude_empty = false (default behavior)
+        let markdown_with_empty = export_bicep_document_to_markdown_string(&document, true, false)
+            .expect("Failed to export to markdown");
+
+        // Test with exclude_empty = true
+        let markdown_without_empty =
+            export_bicep_document_to_markdown_string(&document, true, true)
+                .expect("Failed to export to markdown");
+
+        // Both should contain essential sections
+        assert!(markdown_with_empty.contains("# Bicep Template"));
+        assert!(markdown_without_empty.contains("# Bicep Template"));
+        assert!(markdown_with_empty.contains("## Parameters"));
+        assert!(markdown_without_empty.contains("## Parameters"));
+
+        // The version with empty sections should be longer
+        assert!(markdown_with_empty.len() > markdown_without_empty.len());
+
+        // Check if empty sections are present/missing as expected
+        if !document.resources.is_empty() {
+            assert!(markdown_with_empty.contains("## Resources"));
+            assert!(markdown_without_empty.contains("## Resources"));
+        } else {
+            assert!(markdown_with_empty.contains("## Resources"));
+            assert!(markdown_with_empty.contains("*No resources defined*"));
+            assert!(!markdown_without_empty.contains("## Resources"));
+        }
     }
 }

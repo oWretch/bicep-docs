@@ -15,6 +15,7 @@ use crate::parsing::BicepDocument;
 ///
 /// * `document` - The BicepDocument to export
 /// * `output_path` - The path where the YAML file should be written
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -22,8 +23,9 @@ use crate::parsing::BicepDocument;
 pub fn export_to_file<P: AsRef<Path>>(
     document: &BicepDocument,
     output_path: P,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn Error>> {
-    let yaml = export_to_string(document)?;
+    let yaml = export_to_string(document, exclude_empty)?;
     let mut file = File::create(output_path)?;
     file.write_all(yaml.as_bytes())?;
     Ok(())
@@ -34,12 +36,17 @@ pub fn export_to_file<P: AsRef<Path>>(
 /// # Arguments
 ///
 /// * `document` - The BicepDocument to export
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
 /// A Result containing the YAML string or an error
-pub fn export_to_string(document: &BicepDocument) -> Result<String, Box<dyn Error>> {
-    // First serialize using standard serde_yaml
+pub fn export_to_string(
+    document: &BicepDocument,
+    _exclude_empty: bool,
+) -> Result<String, Box<dyn Error>> {
+    // Note: exclude_empty parameter is kept for API consistency with other exporters
+    // The BicepDocument already has serde attributes that handle skipping empty collections
     let yaml = serde_yaml::to_string(document)?;
 
     // Post-process to improve multiline string representation
@@ -47,12 +54,17 @@ pub fn export_to_string(document: &BicepDocument) -> Result<String, Box<dyn Erro
     Ok(improved_yaml)
 }
 
+// We use the #[serde(skip_serializing_if = "...")] attributes on the BicepDocument struct
+// to handle skipping empty collections during serialization, so no explicit
+// filter_empty_sections function is needed.
+
 /// Parse a Bicep file and export it as YAML in one step
 ///
 /// # Arguments
 ///
 /// * `source_code` - The source code of the Bicep file
 /// * `output_path` - The path where the YAML file should be written
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -60,9 +72,10 @@ pub fn export_to_string(document: &BicepDocument) -> Result<String, Box<dyn Erro
 pub fn parse_and_export<P: AsRef<Path>>(
     source_code: &str,
     output_path: P,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn Error>> {
     let document = crate::parse_bicep_document(source_code)?;
-    export_to_file(&document, output_path)?;
+    export_to_file(&document, output_path, exclude_empty)?;
     Ok(())
 }
 
@@ -160,6 +173,7 @@ fn convert_to_block_scalar(content: &str, key_part: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::parsing::{BicepDocument, BicepType};
 
     #[test]
     fn test_convert_to_block_scalar_multiline() {
@@ -188,5 +202,41 @@ mod tests {
 
         let expected = "field: |-\n  Line 1\n  Line 2\n  Line 3";
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_export_to_string_with_exclude_empty() {
+        // Create a document with some empty collections
+        let mut document = BicepDocument {
+            name: Some("Test Template".to_string()),
+            description: Some("A test template".to_string()),
+            ..Default::default()
+        };
+
+        // Add one parameter to make that collection non-empty
+        document.parameters.insert(
+            "testParam".to_string(),
+            crate::parsing::BicepParameter {
+                parameter_type: BicepType::String,
+                description: Some("Test parameter".to_string()),
+                ..Default::default()
+            },
+        );
+
+        // Test with exclude_empty = false (default behavior)
+        let result_with_all = export_to_string(&document, false).unwrap();
+
+        // Test with exclude_empty = true
+        let result_without_empty = export_to_string(&document, true).unwrap();
+
+        // Both should contain the document name and the parameter
+        assert!(result_with_all.contains("name: Test Template"));
+        assert!(result_without_empty.contains("name: Test Template"));
+        assert!(result_with_all.contains("testParam:"));
+        assert!(result_without_empty.contains("testParam:"));
+
+        // The YAML export relies on the serde attributes to skip empty collections,
+        // so both outputs should be identical in this case
+        assert_eq!(result_with_all, result_without_empty);
     }
 }

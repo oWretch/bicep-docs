@@ -17,8 +17,8 @@ mod exports {
         // Parse the Bicep document
         let document = parse_bicep_document(&source_code).unwrap();
 
-        // Export to YAML
-        let yaml = export_bicep_document_to_yaml_string(&document).unwrap();
+        // Export to YAML (with exclude_empty = false)
+        let yaml = export_bicep_document_to_yaml_string(&document, false).unwrap();
 
         // Basic validation - check that the YAML contains key elements
         assert!(yaml.contains("name:"));
@@ -42,9 +42,9 @@ mod exports {
         // Parse the Bicep document
         let document = parse_bicep_document(&source_code).unwrap();
 
-        // Export to JSON (both pretty and compact)
-        let json_pretty = export_bicep_document_to_json_string(&document, true).unwrap();
-        let json_compact = export_bicep_document_to_json_string(&document, false).unwrap();
+        // Export to JSON (both pretty and compact, with exclude_empty = false)
+        let json_pretty = export_bicep_document_to_json_string(&document, true, false).unwrap();
+        let json_compact = export_bicep_document_to_json_string(&document, false, false).unwrap();
 
         // Basic validation - check that the JSON contains key elements
         assert!(json_pretty.contains("\"name\":"));

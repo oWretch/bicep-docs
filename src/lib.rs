@@ -52,6 +52,7 @@ pub fn parse_bicep_document(source_code: &str) -> Result<parsing::BicepDocument,
 ///
 /// * `document` - The BicepDocument to export
 /// * `output_path` - The path where the YAML file should be written
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -59,8 +60,9 @@ pub fn parse_bicep_document(source_code: &str) -> Result<parsing::BicepDocument,
 pub fn export_bicep_document_to_yaml<P: AsRef<Path>>(
     document: &BicepDocument,
     output_path: P,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn Error>> {
-    exports::yaml::export_to_file(document, output_path)
+    exports::yaml::export_to_file(document, output_path, exclude_empty)
 }
 
 /// Export a parsed Bicep document as YAML string
@@ -68,14 +70,16 @@ pub fn export_bicep_document_to_yaml<P: AsRef<Path>>(
 /// # Arguments
 ///
 /// * `document` - The BicepDocument to export
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
 /// A Result containing the YAML string or an error
 pub fn export_bicep_document_to_yaml_string(
     document: &BicepDocument,
+    exclude_empty: bool,
 ) -> Result<String, Box<dyn Error>> {
-    exports::yaml::export_to_string(document)
+    exports::yaml::export_to_string(document, exclude_empty)
 }
 
 /// Export a parsed Bicep document as JSON to a file
@@ -85,6 +89,7 @@ pub fn export_bicep_document_to_yaml_string(
 /// * `document` - The BicepDocument to export
 /// * `output_path` - The path where the JSON file should be written
 /// * `pretty` - Whether to format the JSON with indentation for readability
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -93,8 +98,9 @@ pub fn export_bicep_document_to_json<P: AsRef<Path>>(
     document: &BicepDocument,
     output_path: P,
     pretty: bool,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn Error>> {
-    exports::json::export_to_file(document, output_path, pretty)
+    exports::json::export_to_file(document, output_path, pretty, exclude_empty)
 }
 
 /// Export a parsed Bicep document as JSON string
@@ -103,6 +109,7 @@ pub fn export_bicep_document_to_json<P: AsRef<Path>>(
 ///
 /// * `document` - The BicepDocument to export
 /// * `pretty` - Whether to format the JSON with indentation for readability
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -110,8 +117,9 @@ pub fn export_bicep_document_to_json<P: AsRef<Path>>(
 pub fn export_bicep_document_to_json_string(
     document: &BicepDocument,
     pretty: bool,
+    exclude_empty: bool,
 ) -> Result<String, Box<dyn Error>> {
-    exports::json::export_to_string(document, pretty)
+    exports::json::export_to_string(document, pretty, exclude_empty)
 }
 
 /// Export a parsed Bicep document as Markdown to a file
@@ -121,6 +129,7 @@ pub fn export_bicep_document_to_json_string(
 /// * `document` - The BicepDocument to export
 /// * `output_path` - The path where the Markdown file should be written
 /// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -129,8 +138,9 @@ pub fn export_bicep_document_to_markdown<P: AsRef<Path>>(
     document: &BicepDocument,
     output_path: P,
     use_emoji: bool,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn Error>> {
-    exports::markdown::export_to_file(document, output_path, use_emoji)
+    exports::markdown::export_to_file(document, output_path, use_emoji, exclude_empty)
 }
 
 /// Export a parsed Bicep document as Markdown string
@@ -139,6 +149,7 @@ pub fn export_bicep_document_to_markdown<P: AsRef<Path>>(
 ///
 /// * `document` - The BicepDocument to export
 /// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -146,8 +157,9 @@ pub fn export_bicep_document_to_markdown<P: AsRef<Path>>(
 pub fn export_bicep_document_to_markdown_string(
     document: &BicepDocument,
     use_emoji: bool,
+    exclude_empty: bool,
 ) -> Result<String, Box<dyn Error>> {
-    exports::markdown::export_to_string(document, use_emoji)
+    exports::markdown::export_to_string(document, use_emoji, exclude_empty)
 }
 
 /// Export a parsed Bicep document as AsciiDoc to a file
@@ -157,6 +169,7 @@ pub fn export_bicep_document_to_markdown_string(
 /// * `document` - The BicepDocument to export
 /// * `output_path` - The path where the AsciiDoc file should be written
 /// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -165,8 +178,9 @@ pub fn export_bicep_document_to_asciidoc<P: AsRef<Path>>(
     document: &BicepDocument,
     output_path: P,
     use_emoji: bool,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn Error>> {
-    exports::asciidoc::export_to_file(document, output_path, use_emoji)
+    exports::asciidoc::export_to_file(document, output_path, use_emoji, exclude_empty)
 }
 
 /// Export a parsed Bicep document as AsciiDoc string
@@ -175,6 +189,7 @@ pub fn export_bicep_document_to_asciidoc<P: AsRef<Path>>(
 ///
 /// * `document` - The BicepDocument to export
 /// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -182,8 +197,9 @@ pub fn export_bicep_document_to_asciidoc<P: AsRef<Path>>(
 pub fn export_bicep_document_to_asciidoc_string(
     document: &BicepDocument,
     use_emoji: bool,
+    exclude_empty: bool,
 ) -> Result<String, Box<dyn Error>> {
-    exports::asciidoc::export_to_string(document, use_emoji)
+    exports::asciidoc::export_to_string(document, use_emoji, exclude_empty)
 }
 
 /// Parse a Bicep file and export it as AsciiDoc in one step
@@ -192,6 +208,7 @@ pub fn export_bicep_document_to_asciidoc_string(
 ///
 /// * `file_path` - The path to the Bicep file to parse
 /// * `output_path` - The path where the AsciiDoc file should be written
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -199,8 +216,9 @@ pub fn export_bicep_document_to_asciidoc_string(
 pub fn parse_and_export_to_asciidoc<P: AsRef<Path>, Q: AsRef<Path>>(
     file_path: P,
     output_path: Q,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn Error>> {
-    exports::asciidoc::parse_and_export(file_path, output_path)
+    exports::asciidoc::parse_and_export(file_path, output_path, exclude_empty)
 }
 
 /// Parse a Bicep file and export it as YAML in one step
@@ -209,6 +227,7 @@ pub fn parse_and_export_to_asciidoc<P: AsRef<Path>, Q: AsRef<Path>>(
 ///
 /// * `source_code` - The source code of the Bicep file
 /// * `output_path` - The path where the YAML file should be written
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -216,8 +235,9 @@ pub fn parse_and_export_to_asciidoc<P: AsRef<Path>, Q: AsRef<Path>>(
 pub fn parse_and_export_to_yaml<P: AsRef<Path>>(
     source_code: &str,
     output_path: P,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn Error>> {
-    exports::yaml::parse_and_export(source_code, output_path)
+    exports::yaml::parse_and_export(source_code, output_path, exclude_empty)
 }
 
 /// Parse a Bicep file and export it as JSON in one step
@@ -227,6 +247,7 @@ pub fn parse_and_export_to_yaml<P: AsRef<Path>>(
 /// * `source_code` - The source code of the Bicep file
 /// * `output_path` - The path where the JSON file should be written
 /// * `pretty` - Whether to format the JSON with indentation for readability
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -235,8 +256,9 @@ pub fn parse_and_export_to_json<P: AsRef<Path>>(
     source_code: &str,
     output_path: P,
     pretty: bool,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn Error>> {
-    exports::json::parse_and_export(source_code, output_path, pretty)
+    exports::json::parse_and_export(source_code, output_path, pretty, exclude_empty)
 }
 
 /// Parse a Bicep file and export it as Markdown in one step
@@ -245,6 +267,7 @@ pub fn parse_and_export_to_json<P: AsRef<Path>>(
 ///
 /// * `file_path` - The path to the Bicep file to parse
 /// * `output_path` - The path where the Markdown file should be written
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -252,6 +275,7 @@ pub fn parse_and_export_to_json<P: AsRef<Path>>(
 pub fn parse_and_export_to_markdown<P: AsRef<Path>, Q: AsRef<Path>>(
     file_path: P,
     output_path: Q,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn Error>> {
-    exports::markdown::parse_and_export(file_path, output_path)
+    exports::markdown::parse_and_export(file_path, output_path, exclude_empty)
 }

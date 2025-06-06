@@ -48,8 +48,9 @@ pub fn export_to_file<P: AsRef<Path>>(
     document: &BicepDocument,
     file_path: P,
     use_emoji: bool,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn StdError>> {
-    let asciidoc_content = export_to_string(document, use_emoji)?;
+    let asciidoc_content = export_to_string(document, use_emoji, exclude_empty)?;
     fs::write(file_path, asciidoc_content)?;
     Ok(())
 }
@@ -60,6 +61,7 @@ pub fn export_to_file<P: AsRef<Path>>(
 ///
 /// * `document` - The BicepDocument to export
 /// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
+/// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
 ///
@@ -71,6 +73,7 @@ pub fn export_to_file<P: AsRef<Path>>(
 pub fn export_to_string(
     document: &BicepDocument,
     use_emoji: bool,
+    exclude_empty: bool,
 ) -> Result<String, Box<dyn StdError>> {
     let mut asciidoc = String::new();
 
@@ -112,106 +115,123 @@ pub fn export_to_string(
     asciidoc.push('\n');
 
     // Imports section
-    asciidoc.push_str("== Imports\n\n");
-    if !document.imports.is_empty() {
-        // Separate namespace and module imports
-        let namespace_imports: Vec<_> = document
-            .imports
-            .iter()
-            .filter(|imp| matches!(imp, BicepImport::Namespace { .. }))
-            .collect();
-        let module_imports: Vec<_> = document
-            .imports
-            .iter()
-            .filter(|imp| matches!(imp, BicepImport::Module { .. }))
-            .collect();
+    if !document.imports.is_empty() || !exclude_empty {
+        asciidoc.push_str("== Imports\n\n");
+        if !document.imports.is_empty() {
+            // Separate namespace and module imports
+            let namespace_imports: Vec<_> = document
+                .imports
+                .iter()
+                .filter(|imp| matches!(imp, BicepImport::Namespace { .. }))
+                .collect();
+            let module_imports: Vec<_> = document
+                .imports
+                .iter()
+                .filter(|imp| matches!(imp, BicepImport::Module { .. }))
+                .collect();
 
-        if !namespace_imports.is_empty() {
-            asciidoc.push_str("=== Namespace Imports\n\n");
-            asciidoc.push_str("|===\n");
-            asciidoc.push_str("| Namespace | Version\n\n");
+            if !namespace_imports.is_empty() {
+                asciidoc.push_str("=== Namespace Imports\n\n");
+                asciidoc.push_str("|===\n");
+                asciidoc.push_str("| Namespace | Version\n\n");
 
-            for import in namespace_imports {
-                if let BicepImport::Namespace { namespace, version } = import {
-                    let version_str = version.as_deref().unwrap_or("N/A");
-                    asciidoc.push_str(&format!(
-                        "| {} | {}\n",
-                        escape_asciidoc(namespace),
-                        escape_asciidoc(version_str)
-                    ));
+                for import in namespace_imports {
+                    if let BicepImport::Namespace { namespace, version } = import {
+                        let version_str = version.as_deref().unwrap_or("N/A");
+                        asciidoc.push_str(&format!(
+                            "| {} | {}\n",
+                            escape_asciidoc(namespace),
+                            escape_asciidoc(version_str)
+                        ));
+                    }
                 }
+                asciidoc.push_str("|===\n\n");
             }
-            asciidoc.push_str("|===\n\n");
-        }
 
-        if !module_imports.is_empty() {
-            asciidoc.push_str("=== Module Imports\n\n");
-            asciidoc.push_str("|===\n");
-            asciidoc.push_str("| Source | Symbols | Wildcard Alias\n\n");
+            if !module_imports.is_empty() {
+                asciidoc.push_str("=== Module Imports\n\n");
+                asciidoc.push_str("|===\n");
+                asciidoc.push_str("| Source | Symbols | Wildcard Alias\n\n");
 
-            for import in module_imports {
-                if let BicepImport::Module {
-                    source,
-                    symbols,
-                    wildcard_alias,
-                } = import
-                {
-                    let symbols_str = if let Some(symbols) = symbols {
-                        if symbols.is_empty() {
-                            "None".to_string()
+                for import in module_imports {
+                    if let BicepImport::Module {
+                        source,
+                        symbols,
+                        wildcard_alias,
+                    } = import
+                    {
+                        let symbols_str = if let Some(symbols) = symbols {
+                            if symbols.is_empty() {
+                                "None".to_string()
+                            } else {
+                                symbols
+                                    .iter()
+                                    .map(|sym| {
+                                        if let Some(alias) = &sym.alias {
+                                            format!("{} as {}", sym.name, alias)
+                                        } else {
+                                            sym.name.clone()
+                                        }
+                                    })
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            }
                         } else {
-                            symbols
-                                .iter()
-                                .map(|sym| {
-                                    if let Some(alias) = &sym.alias {
-                                        format!("{} as {}", sym.name, alias)
-                                    } else {
-                                        sym.name.clone()
-                                    }
-                                })
-                                .collect::<Vec<_>>()
-                                .join(", ")
-                        }
-                    } else {
-                        "None".to_string()
-                    };
+                            "None".to_string()
+                        };
 
-                    let wildcard_str = wildcard_alias.as_deref().unwrap_or("N/A");
+                        let wildcard_str = wildcard_alias.as_deref().unwrap_or("N/A");
 
-                    asciidoc.push_str(&format!(
-                        "| {} | {} | {}\n",
-                        escape_asciidoc(&source.to_string()),
-                        escape_asciidoc(&symbols_str),
-                        escape_asciidoc(wildcard_str)
-                    ));
+                        asciidoc.push_str(&format!(
+                            "| {} | {} | {}\n",
+                            escape_asciidoc(&source.to_string()),
+                            escape_asciidoc(&symbols_str),
+                            escape_asciidoc(wildcard_str)
+                        ));
+                    }
                 }
+                asciidoc.push_str("|===\n\n");
+                asciidoc.push('\n');
             }
-            asciidoc.push_str("|===\n\n");
+        } else if !exclude_empty {
+            asciidoc.push_str("_No imports defined_\n\n");
         }
-    } else {
-        asciidoc.push_str("_No imports defined_\n\n");
     }
 
     // Types section
-    generate_types_section(&mut asciidoc, document, use_emoji);
+    if !document.types.is_empty() || !exclude_empty {
+        generate_types_section(&mut asciidoc, document, use_emoji, exclude_empty);
+    }
 
     // Functions section
-    generate_functions_section(&mut asciidoc, document, use_emoji);
+    if !document.functions.is_empty() || !exclude_empty {
+        generate_functions_section(&mut asciidoc, document, use_emoji, exclude_empty);
+    }
 
     // Parameters section
-    generate_parameters_section(&mut asciidoc, document, use_emoji);
+    if !document.parameters.is_empty() || !exclude_empty {
+        generate_parameters_section(&mut asciidoc, document, use_emoji, exclude_empty);
+    }
 
     // Variables section
-    generate_variables_section(&mut asciidoc, document, use_emoji);
+    if !document.variables.is_empty() || !exclude_empty {
+        generate_variables_section(&mut asciidoc, document, use_emoji, exclude_empty);
+    }
 
     // Resources section
-    generate_resources_section(&mut asciidoc, document, use_emoji);
+    if !document.resources.is_empty() || !exclude_empty {
+        generate_resources_section(&mut asciidoc, document, use_emoji, exclude_empty);
+    }
 
     // Modules section
-    generate_modules_section(&mut asciidoc, document, use_emoji);
+    if !document.modules.is_empty() || !exclude_empty {
+        generate_modules_section(&mut asciidoc, document, exclude_empty);
+    }
 
     // Outputs section
-    generate_outputs_section(&mut asciidoc, document, use_emoji);
+    if !document.outputs.is_empty() || !exclude_empty {
+        generate_outputs_section(&mut asciidoc, document, use_emoji, exclude_empty);
+    }
 
     Ok(asciidoc)
 }
@@ -233,19 +253,36 @@ pub fn export_to_string(
 pub fn parse_and_export<P: AsRef<Path>, Q: AsRef<Path>>(
     file_path: P,
     output_path: Q,
+    exclude_empty: bool,
 ) -> Result<(), Box<dyn StdError>> {
     let content = std::fs::read_to_string(file_path)?;
     let document = crate::parse_bicep_document(&content)?;
-    export_to_file(&document, output_path, true)?;
+    export_to_file(&document, output_path, true, exclude_empty)?;
     Ok(())
 }
 
+#[cfg(test)]
+pub fn test_parse_and_export<P: AsRef<Path>, Q: AsRef<Path>>(
+    file_path: P,
+    output_path: Q,
+    exclude_empty: bool,
+) -> Result<(), Box<dyn StdError>> {
+    parse_and_export(file_path, output_path, exclude_empty)
+}
+
 /// Generate the Types section of the AsciiDoc
-fn generate_types_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
+fn generate_types_section(
+    asciidoc: &mut String,
+    document: &BicepDocument,
+    use_emoji: bool,
+    exclude_empty: bool,
+) {
     asciidoc.push_str("== Types\n\n");
 
     if document.types.is_empty() {
-        asciidoc.push_str("_No custom types defined_\n\n");
+        if !exclude_empty {
+            asciidoc.push_str("_No custom types defined_\n\n");
+        }
         return;
     }
 
@@ -375,11 +412,18 @@ fn generate_types_section(asciidoc: &mut String, document: &BicepDocument, use_e
 }
 
 /// Generate the Functions section of the AsciiDoc
-fn generate_functions_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
+fn generate_functions_section(
+    asciidoc: &mut String,
+    document: &BicepDocument,
+    use_emoji: bool,
+    exclude_empty: bool,
+) {
     asciidoc.push_str("== Functions\n\n");
 
     if document.functions.is_empty() {
-        asciidoc.push_str("_No user-defined functions_\n\n");
+        if !exclude_empty {
+            asciidoc.push_str("_No user-defined functions_\n\n");
+        }
         return;
     }
 
@@ -419,11 +463,18 @@ fn generate_functions_section(asciidoc: &mut String, document: &BicepDocument, u
 }
 
 /// Generate the Parameters section of the AsciiDoc
-fn generate_parameters_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
+fn generate_parameters_section(
+    asciidoc: &mut String,
+    document: &BicepDocument,
+    use_emoji: bool,
+    exclude_empty: bool,
+) {
     asciidoc.push_str("== Parameters\n\n");
 
     if document.parameters.is_empty() {
-        asciidoc.push_str("_No parameters defined_\n\n");
+        if !exclude_empty {
+            asciidoc.push_str("_No parameters defined_\n\n");
+        }
         return;
     }
 
@@ -654,11 +705,18 @@ fn generate_nested_object_properties(
 }
 
 /// Generate the Variables section of the AsciiDoc
-fn generate_variables_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
+fn generate_variables_section(
+    asciidoc: &mut String,
+    document: &BicepDocument,
+    use_emoji: bool,
+    exclude_empty: bool,
+) {
     asciidoc.push_str("== Variables\n\n");
 
     if document.variables.is_empty() {
-        asciidoc.push_str("_No variables defined_\n\n");
+        if !exclude_empty {
+            asciidoc.push_str("_No variables defined_\n\n");
+        }
         return;
     }
 
@@ -686,11 +744,18 @@ fn generate_variables_section(asciidoc: &mut String, document: &BicepDocument, u
 }
 
 /// Generate the Resources section of the AsciiDoc
-fn generate_resources_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
+fn generate_resources_section(
+    asciidoc: &mut String,
+    document: &BicepDocument,
+    use_emoji: bool,
+    exclude_empty: bool,
+) {
     asciidoc.push_str("== Resources\n\n");
 
     if document.resources.is_empty() {
-        asciidoc.push_str("_No resources defined_\n\n");
+        if !exclude_empty {
+            asciidoc.push_str("_No resources defined_\n\n");
+        }
         return;
     }
 
@@ -758,11 +823,13 @@ fn generate_resources_section(asciidoc: &mut String, document: &BicepDocument, u
 }
 
 /// Generate the Modules section of the AsciiDoc
-fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, _use_emoji: bool) {
+fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, exclude_empty: bool) {
     asciidoc.push_str("== Modules\n\n");
 
     if document.modules.is_empty() {
-        asciidoc.push_str("_No modules defined_\n\n");
+        if !exclude_empty {
+            asciidoc.push_str("_No modules defined_\n\n");
+        }
         return;
     }
 
@@ -823,11 +890,18 @@ fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, _us
 }
 
 /// Generate the Outputs section of the AsciiDoc
-fn generate_outputs_section(asciidoc: &mut String, document: &BicepDocument, use_emoji: bool) {
+fn generate_outputs_section(
+    asciidoc: &mut String,
+    document: &BicepDocument,
+    use_emoji: bool,
+    exclude_empty: bool,
+) {
     asciidoc.push_str("== Outputs\n\n");
 
     if document.outputs.is_empty() {
-        asciidoc.push_str("_No outputs defined_\n\n");
+        if !exclude_empty {
+            asciidoc.push_str("_No outputs defined_\n\n");
+        }
         return;
     }
 
@@ -1042,13 +1116,19 @@ mod tests {
             ..Default::default()
         };
 
-        let result = export_to_string(&document, true);
+        let result = export_to_string(&document, true, false);
         assert!(result.is_ok());
 
         let asciidoc = result.unwrap();
         assert!(asciidoc.contains("= Test Template"));
         assert!(asciidoc.contains("A test template for unit testing"));
         assert!(asciidoc.contains("resourceGroup"));
+
+        // When exclude_empty is false, empty sections should be present
+        assert!(asciidoc.contains("== Parameters"));
+        assert!(asciidoc.contains("_No parameters defined_"));
+        assert!(asciidoc.contains("== Resources"));
+        assert!(asciidoc.contains("_No resources defined_"));
     }
 
     #[test]
@@ -1068,7 +1148,7 @@ mod tests {
             .parameters
             .insert("testParam".to_string(), parameter);
 
-        let result = export_to_string(&document, true);
+        let result = export_to_string(&document, true, false);
         assert!(result.is_ok());
 
         let asciidoc = result.unwrap();
@@ -1076,6 +1156,44 @@ mod tests {
         assert!(asciidoc.contains("=== `testParam`"));
         assert!(asciidoc.contains("Test parameter"));
         assert!(asciidoc.contains("default"));
+    }
+
+    #[test]
+    fn test_export_to_string_with_exclude_empty() {
+        // Create a document with some empty collections and one non-empty collection
+        let mut document = BicepDocument {
+            name: Some("Test Template".to_string()),
+            description: Some("A test template".to_string()),
+            ..Default::default()
+        };
+
+        // Add one parameter to make that collection non-empty
+        let parameter = BicepParameter {
+            parameter_type: BicepType::String,
+            description: Some("Test parameter".to_string()),
+            ..Default::default()
+        };
+        document
+            .parameters
+            .insert("testParam".to_string(), parameter);
+
+        // Test with exclude_empty = true
+        let result = export_to_string(&document, true, true).unwrap();
+
+        // Should contain the document name and the parameter section
+        assert!(result.contains("= Test Template"));
+        assert!(result.contains("== Parameters"));
+        assert!(result.contains("=== `testParam`"));
+
+        // Should NOT contain empty sections
+        assert!(!result.contains("== Resources"));
+        assert!(!result.contains("_No resources defined_"));
+        assert!(!result.contains("== Variables"));
+        assert!(!result.contains("_No variables defined_"));
+        assert!(!result.contains("== Modules"));
+        assert!(!result.contains("_No modules defined_"));
+        assert!(!result.contains("== Outputs"));
+        assert!(!result.contains("_No outputs defined_"));
     }
 
     #[test]
