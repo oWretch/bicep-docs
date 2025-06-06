@@ -2,9 +2,11 @@
 
 This document outlines the coding standards, best practices, and architectural patterns used in the Bicep-Docs project. Follow these guidelines when making suggestions or generating code.
 
+> **IMPORTANT**: This file must be kept up-to-date whenever structural changes are made to the project, including but not limited to: adding new commands or options to the CLI, adding new export formats, changing the organization of modules, or modifying core library functions.
+
 ## Project Overview
 
-Bicep-Docs is a Rust-based parser and documentation generator for Azure Bicep files. It uses tree-sitter for parsing and provides structured output in YAML format.
+Bicep-Docs is a Rust-based parser and documentation generator for Azure Bicep files. It uses tree-sitter for parsing and provides structured output in multiple formats including YAML, JSON, Markdown, and AsciiDoc.
 
 ## Coding Standards
 
@@ -116,22 +118,91 @@ Bicep-Docs is a Rust-based parser and documentation generator for Azure Bicep fi
    - Cache frequently accessed node properties
    - Use early returns to avoid unnecessary work
 
-## Architecture Patterns
+### Architecture Patterns
+
+### Project Structure
+
+```
+src/
+├── bin/
+│   ├── bicep_docs.rs      # Main CLI executable
+│   └── export_ast.rs      # AST export utility
+├── exports/
+│   ├── mod.rs             # Export module definitions
+│   ├── asciidoc.rs        # AsciiDoc export format
+│   ├── json.rs            # JSON export format
+│   ├── markdown.rs        # Markdown export format
+│   └── yaml.rs            # YAML export format
+├── parsing/
+│   ├── mod.rs             # Main types and utilities
+│   ├── parameters.rs      # Parameter parsing
+│   ├── resources.rs       # Resource parsing
+│   ├── types.rs           # Type definitions parsing
+│   ├── variables.rs       # Variable parsing
+│   ├── functions.rs       # Function parsing
+│   ├── modules.rs         # Module parsing
+│   ├── outputs.rs         # Output parsing
+│   ├── imports.rs         # Import parsing
+│   └── utils/             # Parsing utilities
+│       ├── mod.rs         # Utility module definitions
+│       ├── decorators.rs  # Decorator handling
+│       ├── text.rs        # Text processing
+│       ├── types.rs       # Type utilities
+│       └── values.rs      # Value processing
+└── lib.rs                 # Core library exports and functions
+```
+
+### CLI Structure
+
+The CLI is built using `clap` and structured as follows:
+
+```rust
+struct Cli {
+    verbose: u8,           // Verbosity level
+    quiet: bool,           // Suppress output
+    json: bool,            // Output logs as JSON
+    command: Commands,     // Subcommand to execute
+}
+
+enum Commands {
+    Markdown { common: CommonExportOptions },
+    Asciidoc { common: CommonExportOptions },
+    Yaml { common: CommonExportOptions },
+    Json { common: CommonExportOptions, pretty: bool },
+}
+
+struct CommonExportOptions {
+    input: PathBuf,            // Input Bicep file
+    output: Option<PathBuf>,   // Output file (optional)
+    emoji: bool,               // Enable emoji in output
+    exclude_empty: bool,       // Skip empty sections
+}
+```
+
+### Export Module Structure
+
+Each export format has its own module with consistent interface:
+
+```rust
+// Common interface pattern across all export formats
+pub fn export_to_file(document: &BicepDocument, path: P, use_emoji: bool, exclude_empty: bool) -> Result<(), Box<dyn Error>>;
+pub fn export_to_string(document: &BicepDocument, use_emoji: bool, exclude_empty: bool) -> Result<String, Box<dyn Error>>;
+pub fn parse_and_export(source: &str, path: P, use_emoji: bool, exclude_empty: bool) -> Result<(), Box<dyn Error>>;
+```
+
+The JSON export format has additional parameters:
+```rust
+pub fn export_to_file(document: &BicepDocument, path: P, pretty: bool, exclude_empty: bool) -> Result<(), Box<dyn Error>>;
+pub fn export_to_string(document: &BicepDocument, pretty: bool, exclude_empty: bool) -> Result<String, Box<dyn Error>>;
+```
+
+YAML exports don't use the emoji parameter as it's not relevant for that format:
+```rust
+pub fn export_to_file(document: &BicepDocument, path: P, exclude_empty: bool) -> Result<(), Box<dyn Error>>;
+pub fn export_to_string(document: &BicepDocument, exclude_empty: bool) -> Result<String, Box<dyn Error>>;
+```
 
 ### Parsing Module Structure
-
-```
-src/parsing/
-├── mod.rs           # Main types and utilities
-├── parameters.rs    # Parameter parsing
-├── resources.rs     # Resource parsing
-├── types.rs         # Type definitions parsing
-├── variables.rs     # Variable parsing
-├── functions.rs     # Function parsing
-├── modules.rs       # Module parsing
-├── outputs.rs       # Output parsing
-└── imports.rs       # Import parsing
-```
 
 ### Common Patterns
 
@@ -267,3 +338,28 @@ src/parsing/
    - `debug!`: Detailed diagnostic information
 
 Remember: The goal is maintainable, performant, and secure code that follows Rust best practices while being accessible to contributors of all levels.
+
+## Maintenance Instructions
+
+### Keeping This Documentation Updated
+
+This documentation should be updated whenever significant changes are made to the project structure or patterns, particularly:
+
+1. **New CLI Commands or Options**: When adding new commands, subcommands, or flags to the CLI, update the CLI Structure section.
+
+2. **New Export Formats**: When adding a new export format, update the Export Module Structure section and ensure it follows the established patterns.
+
+3. **Core Library Changes**: When adding or modifying core library functions, ensure they are documented here if they represent a pattern others should follow.
+
+4. **Module Organization**: When restructuring modules or adding new modules, update the relevant sections in this document.
+
+5. **New Coding Patterns**: When establishing new patterns that should be followed throughout the codebase, document them here.
+
+### Update Process
+
+1. Make your code changes
+2. Update this documentation file with relevant changes
+3. Include both in the same pull request
+4. Include a comment in your PR that you have updated this documentation
+
+This ensures that the Copilot instructions remain accurate and useful for all contributors.
