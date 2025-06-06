@@ -2,9 +2,9 @@ use bicep_docs::{
     export_bicep_document_to_asciidoc, export_bicep_document_to_json,
     export_bicep_document_to_markdown, export_bicep_document_to_yaml,
 };
-use clap::{self, Args, Parser, Subcommand};
+use clap::{self, Args, Parser, Subcommand, ValueEnum};
 use std::error::Error;
-use std::fs;
+use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 use tracing::{debug, debug_span, error, trace, Level};
 use tracing_subscriber::{
@@ -28,12 +28,24 @@ struct Cli {
     #[arg(short, long)]
     quiet: bool,
 
-    /// Output logs as JSON
+    /// Set the format for logging output
+    #[arg(long, value_enum, default_value_t = LogFormat::Text)]
+    log_format: LogFormat,
+
+    /// Path to a file to write logs to (instead of stdout/stderr)
     #[arg(long)]
-    json: bool,
+    log_file: Option<PathBuf>,
 
     #[command(subcommand)]
     command: Commands,
+}
+
+/// Available log formats
+#[derive(Clone, Debug, ValueEnum, Default)]
+enum LogFormat {
+    #[default]
+    Text,
+    Json,
 }
 
 /// Available commands
@@ -199,7 +211,7 @@ fn handle_asciidoc_export(common: CommonExportOptions) -> Result<(), Box<dyn Err
 }
 
 /// Configure the tracing subscriber based on command line options
-fn setup_tracing(verbose: u8, quiet: bool, json: bool) {
+fn setup_tracing(verbose: u8, quiet: bool, log_format: LogFormat, log_file: Option<PathBuf>) {
     // Set default filter level based on verbosity
     let filter_level = match (verbose, quiet) {
         (_, true) => Level::ERROR, // When quiet is enabled, only show errors
@@ -212,37 +224,71 @@ fn setup_tracing(verbose: u8, quiet: bool, json: bool) {
         .unwrap_or_else(|_| EnvFilter::new(""))
         .add_directive(filter_level.into());
 
-    // Configure formatting based on user preferences
-    if json {
-        // Use JSON formatter
-        tracing_subscriber::registry()
-            .with(filter)
-            .with(
-                fmt::Layer::default()
-                    .json()
-                    .with_target(true)
-                    .with_span_events(FmtSpan::CLOSE),
-            )
-            .init();
-    } else {
-        // Use human-readable formatter with color support
-        tracing_subscriber::registry()
-            .with(filter)
-            .with(
-                fmt::Layer::default()
-                    .with_target(true)
-                    .with_span_events(FmtSpan::CLOSE)
-                    .with_timer(fmt::time::time()),
-            )
-            .init();
+    let subscriber_builder = tracing_subscriber::registry().with(filter);
+
+    // Configure formatting and output based on user preferences
+    match log_file {
+        Some(path) => {
+            let file = File::create(path).expect("Unable to create log file");
+            match log_format {
+                LogFormat::Json => {
+                    subscriber_builder
+                        .with(
+                            fmt::Layer::default()
+                                .json()
+                                .with_writer(file)
+                                .with_target(true)
+                                .with_span_events(FmtSpan::CLOSE),
+                        )
+                        .init();
+                },
+                LogFormat::Text => {
+                    subscriber_builder
+                        .with(
+                            fmt::Layer::default()
+                                .with_writer(file)
+                                .with_target(true)
+                                .with_span_events(FmtSpan::CLOSE)
+                                .with_timer(fmt::time::time()),
+                        )
+                        .init();
+                },
+            }
+        },
+        None => {
+            match log_format {
+                LogFormat::Json => {
+                    subscriber_builder
+                        .with(
+                            fmt::Layer::default()
+                                .json()
+                                .with_writer(std::io::stdout)
+                                .with_target(true)
+                                .with_span_events(FmtSpan::CLOSE),
+                        )
+                        .init();
+                },
+                LogFormat::Text => {
+                    subscriber_builder
+                        .with(
+                            fmt::Layer::default()
+                                .with_writer(std::io::stderr) // Or stdout, depending on preference for text logs
+                                .with_target(true)
+                                .with_span_events(FmtSpan::CLOSE)
+                                .with_timer(fmt::time::time()),
+                        )
+                        .init();
+                },
+            }
+        },
     }
 }
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
-    // Setup tracing with the appropriate verbosity
-    setup_tracing(cli.verbose, cli.quiet, cli.json);
+    // Setup tracing with the appropriate verbosity and format
+    setup_tracing(cli.verbose, cli.quiet, cli.log_format, cli.log_file);
 
     trace!("Starting Bicep-Docs with verbosity level: {}", cli.verbose);
     debug!("Parsed command line arguments");
