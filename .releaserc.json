@@ -33,6 +33,7 @@
       "@semantic-release/git",
       {
         "assets": [
+          "Cargo.toml",
           "CHANGELOG.adoc",
           "package.json",
           "package-lock.json"
