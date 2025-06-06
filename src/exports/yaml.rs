@@ -130,6 +130,34 @@ fn improve_multiline_string_representation(yaml: &str) -> String {
     result.join("\n")
 }
 
+/// Unescapes a string containing common YAML escape sequences.
+///
+/// Handles \\n, \\t, \\\\, \\", \\'.
+fn unescape_yaml_string(s: &str) -> String {
+    let mut unescaped = String::with_capacity(s.len());
+    let mut chars = s.chars();
+    while let Some(c) = chars.next() {
+        if c == '\\' {
+            match chars.next() {
+                Some('n') => unescaped.push('\n'),
+                Some('t') => unescaped.push('\t'),
+                Some('\\') => unescaped.push('\\'),
+                Some('"') => unescaped.push('"'),
+                Some('\'') => unescaped.push('\''),
+                Some(other) => {
+                    // Pass through unrecognized escape sequences
+                    unescaped.push('\\');
+                    unescaped.push(other);
+                },
+                None => unescaped.push('\\'), // Trailing backslash
+            }
+        } else {
+            unescaped.push(c);
+        }
+    }
+    unescaped
+}
+
 /// Convert escaped string content to block scalar format
 ///
 /// This function converts escaped string content to YAML block scalar format
@@ -145,12 +173,7 @@ fn improve_multiline_string_representation(yaml: &str) -> String {
 /// A formatted YAML block scalar string
 fn convert_to_block_scalar(content: &str, key_part: &str) -> String {
     // Unescape the content
-    let unescaped = content
-        .replace("\\n", "\n")
-        .replace("\\t", "\t")
-        .replace("\\\\", "\\")
-        .replace("\\\"", "\"")
-        .replace("\\'", "'");
+    let unescaped = unescape_yaml_string(content);
 
     // Determine indentation based on key part
     let base_indent = key_part.len() - key_part.trim_start().len();

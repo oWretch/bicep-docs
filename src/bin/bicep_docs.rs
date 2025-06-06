@@ -52,6 +52,7 @@ enum Commands {
         common: CommonExportOptions,
     },
     /// Document Bicep file in YAML format
+    #[clap(alias = "yml")]
     Yaml {
         #[command(flatten)]
         common: CommonExportOptions,
@@ -88,32 +89,59 @@ struct CommonExportOptions {
     exclude_empty: bool,
 }
 
-/// Handle the YAML export command
-fn handle_yaml_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>> {
+/// Generic export handler to reduce duplication
+fn handle_export<F>(
+    common: CommonExportOptions,
+    extension: &str,
+    export_fn: F,
+) -> Result<(), Box<dyn Error>>
+where
+    F: Fn(&bicep_docs::parsing::BicepDocument, &Path, bool, bool) -> Result<(), Box<dyn Error>>,
+{
+    debug!(
+        "Beginning {} export for file: {}",
+        extension.to_uppercase(),
+        common.input.display()
+    );
+
     // Read the Bicep file
     let source_code = fs::read_to_string(&common.input)?;
+    debug!(
+        "Successfully read Bicep file: {} ({} bytes)",
+        common.input.display(),
+        source_code.len()
+    );
 
     // Parse the Bicep file
     let document = bicep_docs::parse_bicep_document(&source_code)?;
+    debug!("Successfully parsed Bicep document");
 
-    // Determine output path if not provided
-    let output_path = if let Some(path) = common.output {
-        path
-    } else {
+    // Determine output path
+    let output_path = common.output.clone().unwrap_or_else(|| {
         let file_stem = common
             .input
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("output");
+        Path::new(file_stem).with_extension(extension)
+    });
 
-        Path::new(file_stem).with_extension("yaml")
-    };
-
-    // Export the document (YAML doesn't use emoji, so we don't pass the flag)
-    export_bicep_document_to_yaml(&document, &output_path, common.exclude_empty)?;
-    debug!("YAML exported to: {}", output_path.display());
+    // Export the document
+    export_fn(&document, &output_path, common.emoji, common.exclude_empty)?;
+    debug!(
+        "{} exported to: {}",
+        extension.to_uppercase(),
+        output_path.display()
+    );
 
     Ok(())
+}
+
+/// Handle the YAML export command
+fn handle_yaml_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>> {
+    handle_export(common, "yaml", |doc, path, _emoji, exclude_empty| {
+        export_bicep_document_to_yaml(doc, path, exclude_empty)
+    })
 }
 
 /// Handle the JSON export command
@@ -136,20 +164,17 @@ fn handle_json_export(common: CommonExportOptions, pretty: bool) -> Result<(), B
     let document = bicep_docs::parse_bicep_document(&source_code)?;
     debug!("Successfully parsed Bicep document");
 
-    // Determine output path if not provided
-    let output_path = if let Some(path) = common.output {
-        path
-    } else {
+    // Determine output path
+    let output_path = common.output.clone().unwrap_or_else(|| {
         let file_stem = common
             .input
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("output");
-
         Path::new(file_stem).with_extension("json")
-    };
+    });
 
-    // Export the document (JSON doesn't use emoji, so we don't pass the flag)
+    // Export the document
     export_bicep_document_to_json(&document, &output_path, pretty, common.exclude_empty)?;
     debug!("JSON exported to: {}", output_path.display());
     if pretty {
@@ -161,80 +186,16 @@ fn handle_json_export(common: CommonExportOptions, pretty: bool) -> Result<(), B
 
 /// Handle the Markdown export command
 fn handle_markdown_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>> {
-    debug!(
-        "Beginning Markdown export for file: {}",
-        common.input.display()
-    );
-
-    // Read the Bicep file
-    let source_code = fs::read_to_string(&common.input)?;
-    debug!(
-        "Successfully read Bicep file: {} ({} bytes)",
-        common.input.display(),
-        source_code.len()
-    );
-
-    // Parse the Bicep file
-    let document = bicep_docs::parse_bicep_document(&source_code)?;
-    debug!("Successfully parsed Bicep document");
-
-    // Determine output path if not provided
-    let output_path = if let Some(path) = common.output {
-        path
-    } else {
-        let file_stem = common
-            .input
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("output");
-
-        Path::new(file_stem).with_extension("md")
-    };
-
-    // Export the document
-    export_bicep_document_to_markdown(&document, &output_path, common.emoji, common.exclude_empty)?;
-    debug!("Markdown exported to: {}", output_path.display());
-
-    Ok(())
+    handle_export(common, "md", |doc, path, emoji, exclude_empty| {
+        export_bicep_document_to_markdown(doc, path, emoji, exclude_empty)
+    })
 }
 
 /// Handle the AsciiDoc export command
 fn handle_asciidoc_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>> {
-    debug!(
-        "Beginning AsciiDoc export for file: {}",
-        common.input.display()
-    );
-
-    // Read the Bicep file
-    let source_code = fs::read_to_string(&common.input)?;
-    debug!(
-        "Successfully read Bicep file: {} ({} bytes)",
-        common.input.display(),
-        source_code.len()
-    );
-
-    // Parse the Bicep file
-    let document = bicep_docs::parse_bicep_document(&source_code)?;
-    debug!("Successfully parsed Bicep document");
-
-    // Determine output path if not provided
-    let output_path = if let Some(path) = common.output {
-        path
-    } else {
-        let file_stem = common
-            .input
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("output");
-
-        Path::new(file_stem).with_extension("adoc")
-    };
-
-    // Export the document
-    export_bicep_document_to_asciidoc(&document, &output_path, common.emoji, common.exclude_empty)?;
-    debug!("AsciiDoc exported to: {}", output_path.display());
-
-    Ok(())
+    handle_export(common, "adoc", |doc, path, emoji, exclude_empty| {
+        export_bicep_document_to_asciidoc(doc, path, emoji, exclude_empty)
+    })
 }
 
 /// Configure the tracing subscriber based on command line options

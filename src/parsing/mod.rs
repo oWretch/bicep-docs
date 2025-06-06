@@ -233,9 +233,8 @@ impl Serialize for BicepValue {
             BicepValue::Bool(b) => b.serialize(serializer),
             BicepValue::Object(map) => map.serialize(serializer),
             BicepValue::Identifier(id) => {
-                // Serialize identifiers as references with a special format that makes it clear this is a reference
-                let reference = format!("{{reference:{}}}", id);
-                reference.serialize(serializer)
+                // Corrected: use 'id' instead of 'reference'
+                id.serialize(serializer)
             },
         }
     }
@@ -381,6 +380,42 @@ pub struct BicepDecorator {
 // Functions
 // ---------------------------------------------------------------
 
+/// Parses decorator nodes associated with a main AST node.
+///
+/// # Arguments
+///
+/// * `decorator_nodes_opt` - An `Option` containing a reference to a `Vec<Node>` of decorator nodes.
+/// * `source_code` - The source code string slice.
+///
+/// # Returns
+///
+/// A `Vec<BicepDecorator>` containing all parsed decorators.
+fn parse_decorators_from_node_list(
+    decorator_nodes_opt: Option<&Vec<Node>>,
+    source_code: &str,
+) -> Vec<BicepDecorator> {
+    let mut all_decorators = Vec::new();
+    if let Some(dec_nodes) = decorator_nodes_opt {
+        // Pre-allocate based on the number of decorator group nodes.
+        // Each group node might contain multiple actual decorators.
+        // A small multiplier like 2 is a heuristic, adjust if needed.
+        all_decorators.reserve(dec_nodes.len().saturating_mul(2));
+        for dec_node in dec_nodes {
+            match utils::decorators::parse_decorators(*dec_node, source_code) {
+                Ok(parsed_decorators) => {
+                    all_decorators.extend(parsed_decorators);
+                },
+                Err(e) => {
+                    // The original code logged warnings for individual decorator parsing failures.
+                    // We maintain that behavior here.
+                    warn!("Failed to parse decorators from a decorator node: {}", e);
+                },
+            }
+        }
+    }
+    all_decorators
+}
+
 // parse_parameter_declaration function is now defined in parameters.rs
 
 pub fn parse_bicep_document(
@@ -445,40 +480,30 @@ pub fn parse_bicep_document(
             },
             "type_declaration" => {
                 // Get any decorators for this node
-                let decorators_nodes = decorators_map.get(&i).cloned();
+                let decorators_nodes_opt = decorators_map.get(&i);
+                let all_decorators =
+                    parse_decorators_from_node_list(decorators_nodes_opt, source_code);
 
                 // Parse custom type declaration
                 match types::parse_type_declaration(*node, source_code) {
                     Ok((type_name, mut custom_type)) => {
-                        // If we found decorators, parse them and add to the type
-                        if let Some(dec_nodes) = decorators_nodes {
-                            let mut all_decorators = Vec::with_capacity(dec_nodes.len() * 2);
-
-                            for dec_node in dec_nodes {
-                                match utils::decorators::parse_decorators(dec_node, source_code) {
-                                    Ok(decorators) => {
-                                        all_decorators.extend(decorators);
-                                    },
-                                    Err(e) => {
-                                        warn!("Failed to parse decorator: {}", e);
-                                    },
-                                }
-                            }
-
-                            // Extract description if present
-                            if custom_type.description.is_none() {
-                                custom_type.description =
-                                    extract_description_from_decorators(&all_decorators);
-                            }
-
-                            // Check for secure decorator
-                            custom_type.is_secure =
-                                all_decorators.iter().any(|d| d.name == "secure");
-
-                            // Check for export decorator
-                            custom_type.is_exported =
-                                all_decorators.iter().any(|d| d.name == "export");
+                        // Apply parsed decorators
+                        // Extract description if present and not already set
+                        if custom_type.description.is_none() {
+                            custom_type.description =
+                                extract_description_from_decorators(&all_decorators);
                         }
+
+                        // Check for secure decorator
+                        custom_type.is_secure = all_decorators.iter().any(|d| d.name == "secure");
+
+                        // Check for export decorator
+                        custom_type.is_exported = all_decorators.iter().any(|d| d.name == "export");
+
+                        // Add all decorators to the custom type if it has a field for them
+                        // Assuming BicepCustomType might have a field like `decorators: Vec<BicepDecorator>`
+                        // If not, this part can be adjusted or removed.
+                        // custom_type.decorators = all_decorators;
 
                         // Fix definition type for standard types
                         if let BicepType::CustomType(ref name) = custom_type.definition {
@@ -500,22 +525,9 @@ pub fn parse_bicep_document(
             },
             "parameter_declaration" => {
                 // Get any decorators for this node
-                let decorators_nodes = decorators_map.get(&i).cloned();
-
-                // Convert decorator nodes to BicepDecorator structs
-                let mut all_decorators = Vec::new();
-                if let Some(dec_nodes) = decorators_nodes {
-                    for dec_node in dec_nodes {
-                        match utils::decorators::parse_decorators(dec_node, source_code) {
-                            Ok(decorators) => {
-                                all_decorators.extend(decorators);
-                            },
-                            Err(e) => {
-                                warn!("Failed to parse decorator: {}", e);
-                            },
-                        }
-                    }
-                }
+                let decorators_nodes_opt = decorators_map.get(&i);
+                let all_decorators =
+                    parse_decorators_from_node_list(decorators_nodes_opt, source_code);
 
                 // Parse parameter declaration
                 match parameters::parse_parameter_declaration(*node, source_code, all_decorators) {
@@ -529,22 +541,9 @@ pub fn parse_bicep_document(
             },
             "variable_declaration" => {
                 // Get any decorators for this node
-                let decorators_nodes = decorators_map.get(&i).cloned();
-
-                // Convert decorator nodes to BicepDecorator structs
-                let mut all_decorators = Vec::new();
-                if let Some(dec_nodes) = decorators_nodes {
-                    for dec_node in dec_nodes {
-                        match utils::decorators::parse_decorators(dec_node, source_code) {
-                            Ok(decorators) => {
-                                all_decorators.extend(decorators);
-                            },
-                            Err(e) => {
-                                warn!("Failed to parse decorator: {}", e);
-                            },
-                        }
-                    }
-                }
+                let decorators_nodes_opt = decorators_map.get(&i);
+                let all_decorators =
+                    parse_decorators_from_node_list(decorators_nodes_opt, source_code);
 
                 // Parse variable declaration
                 match variables::parse_variable_declaration(*node, source_code, all_decorators) {
@@ -558,22 +557,9 @@ pub fn parse_bicep_document(
             },
             "user_defined_function" | "function_declaration" => {
                 // Get any decorators for this node
-                let decorators_nodes = decorators_map.get(&i).cloned();
-
-                // Convert decorator nodes to BicepDecorator structs
-                let mut all_decorators = Vec::new();
-                if let Some(dec_nodes) = decorators_nodes {
-                    for dec_node in dec_nodes {
-                        match utils::decorators::parse_decorators(dec_node, source_code) {
-                            Ok(decorators) => {
-                                all_decorators.extend(decorators);
-                            },
-                            Err(e) => {
-                                warn!("Failed to parse decorator: {}", e);
-                            },
-                        }
-                    }
-                }
+                let decorators_nodes_opt = decorators_map.get(&i);
+                let all_decorators =
+                    parse_decorators_from_node_list(decorators_nodes_opt, source_code);
 
                 // Parse function declaration
                 match functions::parse_function_declaration(*node, source_code, all_decorators) {
@@ -587,22 +573,9 @@ pub fn parse_bicep_document(
             },
             "resource_declaration" => {
                 // Get any decorators for this node
-                let decorators_nodes = decorators_map.get(&i).cloned();
-
-                // Convert decorator nodes to BicepDecorator structs
-                let mut all_decorators = Vec::new();
-                if let Some(dec_nodes) = decorators_nodes {
-                    for dec_node in dec_nodes {
-                        match utils::decorators::parse_decorators(dec_node, source_code) {
-                            Ok(decorators) => {
-                                all_decorators.extend(decorators);
-                            },
-                            Err(e) => {
-                                warn!("Failed to parse decorator: {}", e);
-                            },
-                        }
-                    }
-                }
+                let decorators_nodes_opt = decorators_map.get(&i);
+                let all_decorators =
+                    parse_decorators_from_node_list(decorators_nodes_opt, source_code);
 
                 // Parse resource declaration
                 match resources::parse_resource_declaration(*node, source_code, all_decorators) {
@@ -619,22 +592,9 @@ pub fn parse_bicep_document(
             },
             "module_declaration" => {
                 // Get any decorators for this node
-                let decorators_nodes = decorators_map.get(&i).cloned();
-
-                // Convert decorator nodes to BicepDecorator structs
-                let mut all_decorators = Vec::new();
-                if let Some(dec_nodes) = decorators_nodes {
-                    for dec_node in dec_nodes {
-                        match utils::decorators::parse_decorators(dec_node, source_code) {
-                            Ok(decorators) => {
-                                all_decorators.extend(decorators);
-                            },
-                            Err(e) => {
-                                warn!("Failed to parse decorator: {}", e);
-                            },
-                        }
-                    }
-                }
+                let decorators_nodes_opt = decorators_map.get(&i);
+                let all_decorators =
+                    parse_decorators_from_node_list(decorators_nodes_opt, source_code);
 
                 // Parse module declaration
                 match parse_module_declaration(*node, source_code, all_decorators) {
@@ -671,22 +631,9 @@ pub fn parse_bicep_document(
             },
             "output_declaration" => {
                 // Get any decorators for this node
-                let decorators_nodes = decorators_map.get(&i).cloned();
-
-                // Convert decorator nodes to BicepDecorator structs
-                let mut all_decorators = Vec::new();
-                if let Some(dec_nodes) = decorators_nodes {
-                    for dec_node in dec_nodes {
-                        match utils::decorators::parse_decorators(dec_node, source_code) {
-                            Ok(decorators) => {
-                                all_decorators.extend(decorators);
-                            },
-                            Err(e) => {
-                                warn!("Failed to parse decorator: {}", e);
-                            },
-                        }
-                    }
-                }
+                let decorators_nodes_opt = decorators_map.get(&i);
+                let all_decorators =
+                    parse_decorators_from_node_list(decorators_nodes_opt, source_code);
 
                 // Parse output declaration
                 match parse_output_declaration(*node, source_code, all_decorators) {
