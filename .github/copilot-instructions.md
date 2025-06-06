@@ -360,6 +360,55 @@ This documentation should be updated whenever significant changes are made to th
 1. Make your code changes
 2. Update this documentation file with relevant changes
 3. Include both in the same pull request
-4. Include a comment in your PR that you have updated this documentation
+4. Review the documentation for clarity and completeness
+5. Include a comment in your PR that you have updated this documentation
+6. Ensure that the code compiles without warnings, runs all tests, and passes `cargo clippy` checks
+7. Ensure all the pre-commit hooks pass
 
 This ensures that the Copilot instructions remain accurate and useful for all contributors.
+
+## Pull Request and Branching Guidelines
+
+When using Copilot to work on issues or features, follow these guidelines to ensure high-quality, maintainable contributions:
+
+### Branch Naming and Management
+
+- **Conventional Branching**: All branches must follow the [Conventional Branching standard](https://conventional-branch.github.io/). Use descriptive, semantically meaningful branch names (e.g., `feat/cli-add-yaml-export`, `fix/parsing-metadata-bug`, `docs/update-copilot-instructions`).
+- Branches should be created from the latest `main` branch unless otherwise specified.
+- Keep branches focused and limited in scope; avoid mixing unrelated changes.
+
+### Pull Request (PR) Best Practices
+
+- **PR Title**: Use a clear, concise, and descriptive title that summarizes the change. Prefer imperative mood (e.g., "Add YAML export to CLI").
+- **PR Description**:
+  - Reference the related issue(s) using GitHub keywords (e.g., `Closes #42`).
+  - Summarize what was changed and why.
+  - List any notable implementation details, especially if Copilot was used for non-trivial code generation.
+  - Describe any manual changes or fixes made to Copilot-generated code.
+  - Note if documentation or tests were updated.
+- **Checklist Before Submitting**:
+  - [ ] Branch name follows Conventional Branching
+  - [ ] PR title and description are clear and complete
+  - [ ] All code follows project coding standards and documentation guidelines
+  - [ ] All tests pass locally (`cargo test`)
+  - [ ] Code is formatted (`cargo fmt`) and linted (`cargo clippy`)
+  - [ ] Documentation is updated if needed
+  - [ ] No debug or leftover Copilot comments remain
+  - [ ] Pre-commit hooks pass
+
+### Copilot Usage Notes
+
+- Always review Copilot-generated code for correctness, security, and style. Do not blindly accept suggestions.
+- Refactor or rewrite Copilot code as needed to match project idioms and best practices.
+- If Copilot was used for a significant portion of the PR, mention this in the PR description.
+- Ensure that all new or changed code is covered by appropriate tests.
+- If Copilot introduces new patterns or abstractions, update this documentation accordingly.
+
+### General Best Practices
+
+- Keep PRs small and focused; large PRs are harder to review and maintain.
+- Use draft PRs for work in progress and convert to "Ready for review" when complete.
+- Respond promptly to code review feedback and address requested changes.
+- Squash or rebase commits as appropriate to maintain a clean history.
+
+By following these guidelines, you help maintain a high standard of quality and consistency in the Bicep-Docs project, especially when leveraging Copilot for development.
