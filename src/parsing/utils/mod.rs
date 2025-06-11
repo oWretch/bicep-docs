@@ -22,8 +22,8 @@ pub use values::{parse_array_items, parse_value_node};
 /// Extracts and trims the UTF-8 text for a given tree-sitter node from the source code.
 ///
 /// This utility function safely retrieves the text represented by a `tree_sitter::Node`
-/// from the provided source code, trims leading and trailing whitespace, and returns it
-/// as a `String`.
+/// from the provided source code, trims leading newline, trailing whitespace, and any
+/// common indentation whitespace, then returns it as a `String`.
 ///
 /// # Arguments
 ///
@@ -47,5 +47,38 @@ pub use values::{parse_array_items, parse_value_node};
 /// ```
 ///
 pub fn get_node_text(node: &Node, source_code: &str) -> Result<String, Box<dyn Error>> {
-    Ok(node.utf8_text(source_code.as_bytes())?.trim().to_string())
+    let mut text = node.utf8_text(source_code.as_bytes())?;
+
+    // Trim leading new line
+    text = if text.chars().nth(0) == Some('\n') {
+        &text[1..]
+    } else {
+        text
+    };
+
+    // Identify indentation
+    let mut leading_whitespace = String::new();
+    for c in text.chars() {
+        if c.is_whitespace() {
+            leading_whitespace.push(c);
+        } else {
+            break;
+        }
+    }
+    Ok(text
+        .trim_end()
+        .split('\n')
+        .map(|line| {
+            if line.starts_with(&leading_whitespace) {
+                // Remove indentation whitespace.
+                // Makes the assumption the indentation uses
+                // the same number of characters for each line.
+                &line[leading_whitespace.len()..].trim_end()
+            } else {
+                line.trim_end()
+            }
+        })
+        .collect::<Vec<&str>>()
+        .join("\n")
+        .to_string())
 }
