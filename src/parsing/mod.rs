@@ -250,7 +250,7 @@ impl BicepValue {
                     } else {
                         let mut s = String::new();
                         s.push_str("{\n");
-                        for (_i, (k, v)) in obj.iter().enumerate() {
+                        for (k, v) in obj.iter() {
                             s.push_str(&indent_str);
                             s.push_str("  ");
                             s.push_str(k);
@@ -282,7 +282,7 @@ impl BicepValue {
                 },
                 BicepValue::String(st) => {
                     if indent == 0 {
-                        format!("{}", st)
+                        st.to_string()
                     } else {
                         format!("'{}'", st)
                     }

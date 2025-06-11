@@ -194,7 +194,7 @@ pub fn parse_array_type(node: Node, source_code: &str) -> Result<BicepType, Box<
                 }
             },
             "primitive_type" => {
-                let type_text = super::get_node_text(&child, source_code)?;
+                let type_text = super::get_node_text(child, source_code)?;
                 inner_type = match type_text.as_str() {
                     "string" => BicepType::String,
                     "int" => BicepType::Int,
@@ -214,7 +214,7 @@ pub fn parse_array_type(node: Node, source_code: &str) -> Result<BicepType, Box<
                 break;
             },
             "identifier" | "type_reference" => {
-                let type_name = super::get_node_text(&child, source_code)?;
+                let type_name = super::get_node_text(child, source_code)?;
                 inner_type = BicepType::CustomType(type_name);
                 break;
             },
@@ -437,7 +437,7 @@ pub fn parse_type_node(node: Node, source_code: &str) -> Result<(BicepType, bool
     for child in &children {
         match child.kind() {
             "primitive_type" => {
-                let type_text = super::get_node_text(&child, source_code)?;
+                let type_text = super::get_node_text(child, source_code)?;
                 bicep_type = match type_text.as_str() {
                     "string" => BicepType::String,
                     "int" => BicepType::Int,
@@ -468,7 +468,7 @@ pub fn parse_type_node(node: Node, source_code: &str) -> Result<(BicepType, bool
                 }
             },
             "identifier" | "type_reference" => {
-                let type_name = super::get_node_text(&child, source_code)?;
+                let type_name = super::get_node_text(child, source_code)?;
                 bicep_type = BicepType::CustomType(type_name);
             },
             "?" => {

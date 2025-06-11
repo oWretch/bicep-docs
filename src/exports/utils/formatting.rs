@@ -44,12 +44,12 @@ pub fn format_bicep_value_with_backticks(value: &BicepValue) -> String {
 /// # Returns
 ///
 /// * `String` containing the newline-separated list
-pub fn format_bicep_array_as_list(array: &Vec<BicepValue>) -> String {
+pub fn format_bicep_array_as_list(array: &[BicepValue]) -> String {
     let mut formatted = '\n'.to_string();
     formatted.push_str(
         &array
             .iter()
-            .map(|item| format!("- `{}`", item.to_string()))
+            .map(|item| format!("- `{}`", item))
             .collect::<Vec<_>>()
             .join("\n"),
     );

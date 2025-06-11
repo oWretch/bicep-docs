@@ -48,13 +48,7 @@ pub use values::{parse_array_items, parse_value_node};
 ///
 pub fn get_node_text(node: &Node, source_code: &str) -> Result<String, Box<dyn Error>> {
     let mut text = node.utf8_text(source_code.as_bytes())?;
-
-    // Trim leading new line
-    text = if text.chars().nth(0) == Some('\n') {
-        &text[1..]
-    } else {
-        text
-    };
+    text = text.strip_prefix('\n').unwrap_or(text);
 
     // Identify indentation
     let mut leading_whitespace = String::new();
@@ -69,14 +63,9 @@ pub fn get_node_text(node: &Node, source_code: &str) -> Result<String, Box<dyn E
         .trim_end()
         .split('\n')
         .map(|line| {
-            if line.starts_with(&leading_whitespace) {
-                // Remove indentation whitespace.
-                // Makes the assumption the indentation uses
-                // the same number of characters for each line.
-                &line[leading_whitespace.len()..].trim_end()
-            } else {
-                line.trim_end()
-            }
+            line.strip_prefix(&leading_whitespace)
+                .unwrap_or(line)
+                .trim_end()
         })
         .collect::<Vec<&str>>()
         .join("\n")
