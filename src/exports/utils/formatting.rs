@@ -18,19 +18,6 @@ pub fn format_bicep_type_with_backticks(bicep_type: &BicepType) -> String {
     format!("`{}`", bicep_type)
 }
 
-/// Format a Bicep type with monospace formatting for AsciiDoc
-///
-/// # Arguments
-///
-/// * `bicep_type` - The BicepType to format
-///
-/// # Returns
-///
-/// String representation of the type with AsciiDoc monospace formatting
-pub fn format_bicep_type_with_monospace(bicep_type: &BicepType) -> String {
-    format!("`{}`", bicep_type)
-}
-
 /// Format a Bicep value as code with backticks for Markdown
 ///
 /// # Arguments
