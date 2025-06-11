@@ -35,14 +35,14 @@ pub fn generate_metadata_display_markdown(
     output: &mut String,
     metadata: &IndexMap<String, BicepValue>,
 ) {
-    use super::formatting::{escape_markdown, format_bicep_value};
+    use super::formatting::escape_markdown;
 
     if !metadata.is_empty() {
         output.push_str("| Key | Value |\n");
         output.push_str("|-----|-------|\n");
 
         for (key, value) in metadata {
-            let value_str = format_bicep_value(value);
+            let value_str = value.to_string();
             output.push_str(&format!(
                 "| {} | {} |\n",
                 escape_markdown(key),
@@ -63,14 +63,14 @@ pub fn generate_metadata_display_asciidoc(
     output: &mut String,
     metadata: &IndexMap<String, BicepValue>,
 ) {
-    use super::formatting::{escape_asciidoc, format_bicep_value};
+    use super::formatting::escape_asciidoc;
 
     if !metadata.is_empty() {
         output.push_str("[%autowidth,cols=\"h,1\",frame=none]\n");
         output.push_str("|===\n");
 
         for (key, value) in metadata {
-            let value_str = format_bicep_value(value);
+            let value_str = value.to_string();
             output.push_str(&format!(
                 "| {}\n| {}\n\n",
                 escape_asciidoc(key),

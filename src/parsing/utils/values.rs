@@ -8,7 +8,6 @@ use std::error::Error;
 use indexmap::IndexMap;
 use tree_sitter::Node;
 
-use super::text::{get_node_text, get_primitive_value_from_text};
 use crate::BicepValue;
 
 /// Parse an array value from array items
@@ -67,30 +66,23 @@ pub fn parse_value_node(
             let mut cursor = node.walk();
             for child in node.children(&mut cursor) {
                 if child.kind() == "string_content" {
-                    let content = get_node_text(child, source_code);
+                    let content = child.utf8_text(source_code.as_bytes())?.to_string();
                     return Ok(Some(BicepValue::String(content)));
                 }
             }
-
-            // Fallback to the old method if no string_content is found
-            let text = get_node_text(node, source_code);
-            Ok(Some(BicepValue::String(get_primitive_value_from_text(
-                &text,
-            ))))
+            Err("No string_content child found".into())
         },
-        "integer" => {
-            let text = get_node_text(node, source_code);
-            match text.parse::<i64>() {
-                Ok(num) => Ok(Some(BicepValue::Int(num))),
-                Err(_) => Ok(Some(BicepValue::String(text))), // Fallback to string if parsing fails
-            }
-        },
+        "integer" => Ok(Some(BicepValue::Int(
+            node.utf8_text(source_code.as_bytes())?
+                .to_string()
+                .parse::<i64>()?,
+        ))),
         "boolean" => {
-            let text = get_node_text(node, source_code);
+            let text = node.utf8_text(source_code.as_bytes())?.to_string();
             match text.as_str() {
                 "true" => Ok(Some(BicepValue::Bool(true))),
                 "false" => Ok(Some(BicepValue::Bool(false))),
-                _ => Ok(Some(BicepValue::String(text))),
+                _ => Err("Invalid boolean value".into()),
             }
         },
         "array" => {
@@ -111,23 +103,23 @@ pub fn parse_value_node(
             Ok(Some(BicepValue::Object(properties)))
         },
         "identifier" => {
-            let name = get_node_text(node, source_code);
+            let name = node.utf8_text(source_code.as_bytes())?.to_string();
             Ok(Some(BicepValue::String(name)))
         },
         "member_expression" => {
-            let text = get_node_text(node, source_code);
+            let text = node.utf8_text(source_code.as_bytes())?.to_string();
             Ok(Some(BicepValue::String(text)))
         },
         "call_expression" => {
-            let text = get_node_text(node, source_code);
+            let text = node.utf8_text(source_code.as_bytes())?.to_string();
             Ok(Some(BicepValue::String(text)))
         },
         "binary_expression" => {
-            let text = get_node_text(node, source_code);
+            let text = node.utf8_text(source_code.as_bytes())?.to_string();
             Ok(Some(BicepValue::String(text)))
         },
         "unary_expression" => {
-            let text = get_node_text(node, source_code);
+            let text = node.utf8_text(source_code.as_bytes())?.to_string();
             Ok(Some(BicepValue::String(text)))
         },
         "parenthesized_expression" => {
@@ -139,16 +131,18 @@ pub fn parse_value_node(
                     return parse_value_node(child, source_code);
                 }
             }
-            Ok(Some(BicepValue::String(get_node_text(node, source_code))))
+            Ok(Some(BicepValue::String(
+                node.utf8_text(source_code.as_bytes())?.to_string(),
+            )))
         },
-        "subscription_expression" => {
-            let text = get_node_text(node, source_code);
+        "subscript_expression" => {
+            let text = node.utf8_text(source_code.as_bytes())?.to_string();
             Ok(Some(BicepValue::String(text)))
         },
         "null" => Ok(Some(BicepValue::String("null".to_string()))),
         _ => {
             // For unknown node types, just get the text
-            let text = get_node_text(node, source_code);
+            let text = node.utf8_text(source_code.as_bytes())?.to_string();
             Ok(Some(BicepValue::String(text)))
         },
     }
@@ -187,8 +181,7 @@ pub fn parse_object_properties_for_value(
                 match prop_child.kind() {
                     "identifier" | "string" => {
                         if key.is_none() {
-                            let key_text = get_node_text(prop_child, source_code);
-                            key = Some(get_primitive_value_from_text(&key_text));
+                            key = Some(prop_child.utf8_text(source_code.as_bytes())?.to_string());
                         } else if value.is_none() {
                             value = parse_value_node(prop_child, source_code)?;
                         }

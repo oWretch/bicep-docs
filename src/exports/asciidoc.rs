@@ -8,7 +8,7 @@ use std::{fs, path::Path};
 use crate::{
     exports::utils::{
         common::{format_yes_no, generate_metadata_display_asciidoc},
-        formatting::{escape_asciidoc, format_bicep_type, format_bicep_value},
+        formatting::escape_asciidoc,
     },
     parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType, ModuleSource},
 };
@@ -280,10 +280,7 @@ fn generate_types_section(
         // Basic information table with properties label
         asciidoc.push_str(".Properties\n");
         let items = vec![
-            (
-                "Type",
-                format!("m| {}", format_bicep_type(&custom_type.definition)),
-            ),
+            ("Type", format!("m| {}", custom_type.definition)),
             (
                 "Exported",
                 format_yes_no(custom_type.is_exported, use_emoji),
@@ -311,10 +308,7 @@ fn generate_types_section(
 
                     asciidoc.push_str(".Properties\n");
                     let prop_items = vec![
-                        (
-                            "Type",
-                            format!("m| {}", format_bicep_type(&prop_param.parameter_type)),
-                        ),
+                        ("Type", format!("m| {}", prop_param.parameter_type)),
                         (
                             "Nullable",
                             if prop_param.is_nullable {
@@ -353,7 +347,7 @@ fn generate_types_section(
                         if !allowed_values.is_empty() {
                             let values = allowed_values
                                 .iter()
-                                .map(format_bicep_value)
+                                .map(|v| v.to_string())
                                 .collect::<Vec<_>>()
                                 .join(", ");
                             constraints.push(("Allowed Values", values));
@@ -376,7 +370,7 @@ fn generate_types_section(
                         asciidoc.push_str("\n.Default Value\n");
                         asciidoc.push_str("[source]\n");
                         asciidoc.push_str("----\n");
-                        asciidoc.push_str(&format_bicep_value(default_value));
+                        asciidoc.push_str(&default_value.to_string());
                         asciidoc.push_str("\n----\n");
                     }
 
@@ -421,10 +415,7 @@ fn generate_functions_section(
         // Basic information table
         asciidoc.push_str(".Properties\n");
         let items = vec![
-            (
-                "Return Type",
-                format!("m| {}", format_bicep_type(&function.return_type)),
-            ),
+            ("Return Type", format!("m| {}", function.return_type)),
             ("Exported", format_yes_no(function.is_exported, use_emoji)),
         ];
         generate_key_value_display(asciidoc, &items, "h,1");
@@ -476,7 +467,7 @@ fn generate_parameters_section(
                 if parameter.description.is_none() {
                     asciidoc.push_str(&format!(
                         "{}\n\n",
-                        escape_asciidoc(&format_bicep_value(metadata_desc))
+                        escape_asciidoc(&metadata_desc.to_string())
                     ));
                 }
             }
@@ -495,10 +486,7 @@ fn generate_parameters_section(
         // Basic information table
         asciidoc.push_str(".Properties\n");
         let items = vec![
-            (
-                "Type",
-                format!("m| {}", format_bicep_type(&parameter.parameter_type)),
-            ),
+            ("Type", format!("m| {}", parameter.parameter_type)),
             ("Nullable", format_yes_no(parameter.is_nullable, use_emoji)),
             ("Secure", format_yes_no(parameter.is_secure, use_emoji)),
             ("Sealed", format_yes_no(parameter.is_sealed, use_emoji)),
@@ -524,7 +512,7 @@ fn generate_parameters_section(
             if !allowed_values.is_empty() {
                 let values = allowed_values
                     .iter()
-                    .map(|v| format!("`{}`", format_bicep_value(v)))
+                    .map(|v| format!("`{}`", v.to_string()))
                     .collect::<Vec<_>>()
                     .join(" +\n   ");
                 constraints.push(("Allowed Values", format!("<| {}", values)));
@@ -541,7 +529,7 @@ fn generate_parameters_section(
             asciidoc.push_str("\n.Default Value\n");
             asciidoc.push_str("[source]\n");
             asciidoc.push_str("----\n");
-            asciidoc.push_str(&format_bicep_value(default_value));
+            asciidoc.push_str(&default_value.to_string());
             asciidoc.push_str("\n----\n");
         }
 
@@ -559,10 +547,7 @@ fn generate_parameters_section(
 
                     asciidoc.push_str(".Properties\n");
                     let prop_items = vec![
-                        (
-                            "Type",
-                            format!("m| {}", format_bicep_type(&prop_param.parameter_type)),
-                        ),
+                        ("Type", format!("m| {}", prop_param.parameter_type)),
                         ("Nullable", format_yes_no(prop_param.is_nullable, use_emoji)),
                         ("Secure", format_yes_no(prop_param.is_secure, use_emoji)),
                     ];
@@ -639,10 +624,7 @@ fn generate_nested_object_properties(
 
         asciidoc.push_str(".Properties\n");
         let prop_items = vec![
-            (
-                "Type",
-                format!("m| {}", format_bicep_type(&prop_param.parameter_type)),
-            ),
+            ("Type", format!("m| {}", prop_param.parameter_type)),
             ("Nullable", format_yes_no(prop_param.is_nullable, use_emoji)),
             ("Secure", format_yes_no(prop_param.is_secure, use_emoji)),
         ];
@@ -720,7 +702,7 @@ fn generate_variables_section(
         asciidoc.push_str("\n.Value\n");
         asciidoc.push_str("[source]\n");
         asciidoc.push_str("----\n");
-        asciidoc.push_str(&format_bicep_value(&variable.value));
+        asciidoc.push_str(&variable.value.to_string());
         asciidoc.push_str("\n----\n");
 
         asciidoc.push('\n');
@@ -759,7 +741,7 @@ fn generate_resources_section(
         ];
 
         if let Some(scope) = &resource.scope {
-            let scope_str = format_bicep_value(scope);
+            let scope_str = scope.to_string();
             items.push(("Scope", scope_str));
         }
 
@@ -899,10 +881,7 @@ fn generate_outputs_section(
         // Basic information table
         asciidoc.push_str(".Properties\n");
         let mut items = vec![
-            (
-                "Type",
-                format!("m| {}", format_bicep_type(&output.output_type)),
-            ),
+            ("Type", format!("m| {}", output.output_type)),
             ("Secure", format_yes_no(output.secure, use_emoji)),
         ];
 
@@ -939,7 +918,7 @@ fn generate_outputs_section(
         asciidoc.push_str("\n.Value\n");
         asciidoc.push_str("[source]\n");
         asciidoc.push_str("----\n");
-        asciidoc.push_str(&format_bicep_value(&output.value));
+        asciidoc.push_str(&output.value.to_string());
         asciidoc.push_str("\n----\n");
 
         // Additional metadata if present
@@ -1002,7 +981,7 @@ fn generate_function_arguments_display(
         asciidoc.push_str(&format!(
             "| {}\n| {}\n| {}\n\n",
             escape_asciidoc(&arg.name),
-            escape_asciidoc(&format_bicep_type(&arg.argument_type)),
+            escape_asciidoc(&arg.argument_type.to_string()),
             format_yes_no(!arg.is_nullable, use_emoji)
         ));
     }
@@ -1012,10 +991,7 @@ fn generate_function_arguments_display(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        exports::utils::formatting::{format_bicep_type, format_bicep_value},
-        parsing::{BicepDocument, BicepParameter, BicepType, BicepValue},
-    };
+    use crate::parsing::{BicepDocument, BicepParameter, BicepType, BicepValue};
 
     #[test]
     fn test_export_to_string_basic() {
@@ -1117,47 +1093,30 @@ mod tests {
     }
 
     #[test]
-    fn test_format_bicep_value() {
-        assert_eq!(
-            format_bicep_value(&BicepValue::String("test".to_string())),
-            "test"
-        );
-        assert_eq!(format_bicep_value(&BicepValue::Int(42)), "42");
-        assert_eq!(format_bicep_value(&BicepValue::Bool(true)), "true");
-        assert_eq!(
-            format_bicep_value(&BicepValue::Identifier("myVar".to_string())),
-            "${myVar}"
-        );
-    }
-
-    #[test]
     fn test_format_bicep_type() {
-        assert_eq!(format_bicep_type(&BicepType::String), "string");
-        assert_eq!(format_bicep_type(&BicepType::Int), "int");
-        assert_eq!(format_bicep_type(&BicepType::Bool), "bool");
+        assert_eq!(BicepType::String.to_string(), "string");
+        assert_eq!(BicepType::Int.to_string(), "int");
+        assert_eq!(BicepType::Bool.to_string(), "bool");
         assert_eq!(
-            format_bicep_type(&BicepType::Array(Box::new(BicepType::String))),
+            BicepType::Array(Box::new(BicepType::String)).to_string(),
             "string[]"
         );
         assert_eq!(
-            format_bicep_type(&BicepType::CustomType("MyType".to_string())),
+            BicepType::CustomType("MyType".to_string()).to_string(),
             "MyType"
         );
         assert_eq!(
-            format_bicep_type(&BicepType::Union(vec!["A".to_string(), "B".to_string()])),
+            BicepType::Union(vec!["A".to_string(), "B".to_string()]).to_string(),
             "A | B"
         );
 
         // Test Object types
-        assert_eq!(format_bicep_type(&BicepType::Object(None)), "object");
+        assert_eq!(BicepType::Object(None).to_string(), "object");
 
         // Test empty object with properties
         use indexmap::IndexMap;
         let empty_props = IndexMap::new();
-        assert_eq!(
-            format_bicep_type(&BicepType::Object(Some(empty_props))),
-            "object"
-        );
+        assert_eq!(BicepType::Object(Some(empty_props)).to_string(), "object");
     }
 
     #[test]
@@ -1167,7 +1126,7 @@ mod tests {
         obj.insert("key1".to_string(), BicepValue::String("value1".to_string()));
         obj.insert("key2".to_string(), BicepValue::Int(42));
 
-        let result = format_bicep_value(&BicepValue::Object(obj));
+        let result = BicepValue::Object(obj).to_string();
         assert!(result.contains("key1: value1"));
         assert!(result.contains("key2: 42"));
     }
@@ -1177,14 +1136,17 @@ mod tests {
         let union_type = BicepType::Union(vec!["A".to_string(), "B".to_string()]);
 
         // Test format (now uses unified format same as Markdown)
-        assert_eq!(format_bicep_type(&union_type), "A | B");
+        assert_eq!(
+            crate::exports::utils::formatting::format_bicep_type_asciidoc(&union_type),
+            "A \\| B"
+        );
     }
 
     #[test]
     fn test_format_bicep_value_with_multiline_string() {
         // Test multiline string
         let multiline = BicepValue::String("line1\nline2\nline3".to_string());
-        let result = format_bicep_value(&multiline);
+        let result = multiline.to_string();
         assert_eq!(result, "line1\nline2\nline3");
     }
 }

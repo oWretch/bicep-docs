@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use tree_sitter::Node;
 
-use super::{get_node_text, utils::values::parse_value_node, BicepDecorator, BicepValue};
+use super::{utils::values::parse_value_node, BicepDecorator, BicepValue};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types
@@ -188,7 +188,7 @@ pub fn parse_resource_declaration(
         }
     }
 
-    let full_source_text = get_node_text(node, source_code);
+    let full_source_text = crate::parsing::utils::get_node_text(&node, source_code)?;
 
     // Walk through children to extract resource information
     let mut cursor = node.walk();
@@ -202,11 +202,13 @@ pub fn parse_resource_declaration(
                 if i + 2 < children.len() {
                     // Next should be identifier and string (type)
                     if children[i + 1].kind() == "identifier" {
-                        identifier = get_node_text(children[i + 1], source_code);
+                        identifier =
+                            crate::parsing::utils::get_node_text(&children[i + 1], source_code)?;
                     }
 
                     if children[i + 2].kind() == "string" {
-                        let resource_type_with_api = get_node_text(children[i + 2], source_code);
+                        let resource_type_with_api =
+                            crate::parsing::utils::get_node_text(&children[i + 2], source_code)?;
                         // Strip quotes
                         let resource_type_str = resource_type_with_api.trim_matches('\'');
 
@@ -328,7 +330,7 @@ pub fn parse_resource_declaration(
                 // This might be a resource loop
 
                 // Look for direct loop array specification in the node text
-                let node_text = get_node_text(children[i], source_code);
+                let node_text = crate::parsing::utils::get_node_text(&children[i], source_code)?;
 
                 // For arrays with string literals like ['alice', 'bob', 'charlie']
                 if node_text.contains("[") && node_text.contains("]") {
@@ -450,7 +452,8 @@ pub fn parse_resource_declaration(
                 // Parent property found
                 if i + 1 < children.len() {
                     let parent_node = children[i + 1];
-                    let parent_text = get_node_text(parent_node, source_code);
+                    let parent_text =
+                        crate::parsing::utils::get_node_text(&parent_node, source_code)?;
 
                     // Handle the parent::child syntax
                     if parent_text.contains("::") {
@@ -466,7 +469,7 @@ pub fn parse_resource_declaration(
             },
             "if_statement" => {
                 // Conditional resource - extract the condition and nested object
-                let node_text = get_node_text(children[i], source_code);
+                let node_text = crate::parsing::utils::get_node_text(&children[i], source_code)?;
 
                 // Extract condition from the if statement
                 if let Some(if_start) = node_text.find("if ") {
@@ -485,7 +488,7 @@ pub fn parse_resource_declaration(
             },
             "for_statement" => {
                 // Loop resource - extract the loop details and nested object
-                let node_text = get_node_text(children[i], source_code);
+                let node_text = crate::parsing::utils::get_node_text(&children[i], source_code)?;
 
                 // Extract loop details from the for statement
                 if let Some(for_start) = node_text.find("for ") {

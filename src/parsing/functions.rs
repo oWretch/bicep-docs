@@ -13,9 +13,9 @@ use tracing::{debug, warn};
 use tree_sitter::Node;
 
 use super::{
-    get_node_text,
     utils::{
         decorators::extract_description_from_decorators,
+        get_node_text,
         types::{parse_property_type, parse_type_node},
     },
     BicepDecorator, BicepParserError, BicepType, BicepValue,
@@ -129,7 +129,7 @@ pub(crate) fn parse_function_declaration(
         )));
     }
 
-    let name = get_node_text(children[1], source_code);
+    let name = get_node_text(&children[1], source_code)?;
     if name.is_empty() {
         return Err(Box::new(BicepParserError::ParseError(
             "Function declaration missing name".to_string(),
@@ -140,7 +140,7 @@ pub(crate) fn parse_function_declaration(
 
     let arguments = parse_function_parameters(children[2], source_code)?;
     let return_type = parse_property_type(children[3], source_code)?;
-    let expression = get_node_text(children[5], source_code);
+    let expression = get_node_text(&children[5], source_code)?;
     let description = extract_description_from_decorators(&decorators);
 
     // Process decorators for metadata and export status
@@ -252,7 +252,7 @@ fn parse_function_argument(
     for child in node.children(&mut cursor) {
         match child.kind() {
             "identifier" => {
-                name = get_node_text(child, source_code);
+                name = get_node_text(&child, source_code)?;
             },
             "type" => {
                 (argument_type, is_nullable) = parse_type_node(child, source_code)?;

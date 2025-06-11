@@ -5,31 +5,6 @@
 
 use tree_sitter::Node;
 
-/// Extract text content from a tree-sitter node
-///
-/// This is a fundamental utility function that extracts the source code text
-/// corresponding to a specific node in the syntax tree.
-///
-/// # Arguments
-///
-/// * `node` - The tree-sitter Node to extract text from
-/// * `source_code` - The complete source code string
-///
-/// # Returns
-///
-/// The text content as a String
-pub fn get_node_text(node: Node, source_code: &str) -> String {
-    let start_byte = node.start_byte();
-    let end_byte = node.end_byte();
-
-    // Ensure we don't go out of bounds
-    if start_byte <= source_code.len() && end_byte <= source_code.len() && start_byte <= end_byte {
-        source_code[start_byte..end_byte].to_string()
-    } else {
-        String::new()
-    }
-}
-
 /// Process escape sequences in a string
 ///
 /// Handles common escape sequences found in Bicep strings,
@@ -127,34 +102,6 @@ pub fn process_escape_sequences(text: &str) -> String {
     result
 }
 
-/// Extract primitive value from text, removing quotes and processing escapes
-///
-/// This function handles the conversion of quoted string literals to their
-/// actual string values, including escape sequence processing.
-///
-/// # Arguments
-///
-/// * `text` - The raw text that may contain quotes and escape sequences
-///
-/// # Returns
-///
-/// The processed primitive value as a String
-pub fn get_primitive_value_from_text(text: &str) -> String {
-    let trimmed = text.trim();
-
-    // Handle quoted strings (single, double, and triple quotes)
-    if (trimmed.starts_with('"') && trimmed.ends_with('"') && trimmed.len() >= 2)
-        || (trimmed.starts_with('\'') && trimmed.ends_with('\'') && trimmed.len() >= 2)
-        || (trimmed.starts_with("'''") && trimmed.ends_with("'''") && trimmed.len() >= 6)
-    {
-        // Use process_escape_sequences which handles all quote types including triple quotes
-        process_escape_sequences(trimmed)
-    } else {
-        // Not a quoted string, return as-is
-        trimmed.to_string()
-    }
-}
-
 /// Extract a primitive Bicep value from a node
 ///
 /// This function extracts primitive values (strings, numbers, booleans) from
@@ -172,40 +119,11 @@ pub fn get_primitive_value(
     node: Node,
     source_code: &str,
 ) -> Result<crate::BicepValue, Box<dyn std::error::Error>> {
-    let node_text = get_node_text(node, source_code);
+    let node_text = node.utf8_text(source_code.as_bytes())?.to_string();
     match node.kind() {
-        "string" => {
-            // Remove the surrounding quotes for string values
-            let text = if node_text.len() >= 2 {
-                let first_char = node_text.chars().next().unwrap();
-                let last_char = node_text.chars().last().unwrap();
-
-                if (first_char == '\'' && last_char == '\'')
-                    || (first_char == '"' && last_char == '"')
-                {
-                    node_text[1..node_text.len() - 1].to_string()
-                } else {
-                    node_text
-                }
-            } else {
-                node_text
-            };
-            Ok(crate::BicepValue::String(process_escape_sequences(&text)))
-        },
-        "integer" => {
-            let value = node_text.parse::<i64>();
-            match value {
-                Ok(num) => Ok(crate::BicepValue::Int(num)),
-                Err(_) => Ok(crate::BicepValue::String(node_text)),
-            }
-        },
-        "boolean" => {
-            let value = node_text.parse::<bool>();
-            match value {
-                Ok(b) => Ok(crate::BicepValue::Bool(b)),
-                Err(_) => Ok(crate::BicepValue::String(node_text)),
-            }
-        },
-        _ => Ok(crate::BicepValue::String(node_text)),
+        "string" => Ok(crate::BicepValue::String(node_text)),
+        "integer" => Ok(crate::BicepValue::Int(node_text.parse::<i64>()?)),
+        "boolean" => Ok(crate::BicepValue::Bool(node_text.parse::<bool>()?)),
+        _ => Err(format!("Invalid primitive value {}", node.kind()).into()),
     }
 }

@@ -19,7 +19,6 @@ use tracing::debug;
 use tree_sitter::Node;
 
 use super::{
-    get_node_text,
     utils::{
         decorators::extract_description_from_decorators,
         types::parse_array_type,
@@ -234,7 +233,7 @@ pub fn parse_output_declaration(
         if children[i].kind() == "output" && i + 1 < children.len() {
             // After 'output' keyword, the next node should be the output name
             if children[i + 1].kind() == "identifier" {
-                name = get_node_text(children[i + 1], source_code);
+                name = crate::parsing::utils::get_node_text(&children[i + 1], source_code)?;
 
                 // After name, the next is typically the type
                 if i + 2 < children.len() {
@@ -242,7 +241,8 @@ pub fn parse_output_declaration(
                         || children[i + 2].kind() == "identifier"
                         || children[i + 2].kind() == "array"
                     {
-                        let type_text = get_node_text(children[i + 2], source_code);
+                        let type_text =
+                            crate::parsing::utils::get_node_text(&children[i + 2], source_code)?;
 
                         // Handle different output types
                         match type_text.as_str() {
@@ -284,7 +284,7 @@ pub fn parse_output_declaration(
 
                 // Special handling for certain types
                 if value_node.kind() == "boolean" {
-                    let text = get_node_text(value_node, source_code);
+                    let text = crate::parsing::utils::get_node_text(&value_node, source_code)?;
                     if text == "true" {
                         value = BicepValue::Bool(true);
                     } else if text == "false" {
@@ -375,7 +375,7 @@ pub fn parse_output_declaration(
                     }
 
                     // The full expression text becomes the value
-                    let expr_text = get_node_text(value_node, source_code);
+                    let expr_text = crate::parsing::utils::get_node_text(&value_node, source_code)?;
                     value = BicepValue::String(expr_text);
                 }
             }

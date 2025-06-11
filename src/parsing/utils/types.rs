@@ -7,7 +7,6 @@ use std::error::Error;
 
 use tree_sitter::Node;
 
-use super::text::get_node_text;
 use crate::BicepType;
 
 /// Parse a property type from a type node
@@ -31,7 +30,7 @@ pub fn parse_property_type(node: Node, source_code: &str) -> Result<BicepType, B
     for child in children {
         match child.kind() {
             "primitive_type" => {
-                let type_text = get_node_text(child, source_code);
+                let type_text = super::get_node_text(&child, source_code)?;
                 type_value = Some(match type_text.as_str() {
                     "string" => BicepType::String,
                     "int" => BicepType::Int,
@@ -47,12 +46,12 @@ pub fn parse_property_type(node: Node, source_code: &str) -> Result<BicepType, B
                 type_value = Some(parse_union_type(child, source_code)?);
             },
             "ambient_type_reference" | "type_reference" | "identifier" => {
-                let type_name = get_node_text(child, source_code);
+                let type_name = super::get_node_text(&child, source_code)?;
                 type_value = Some(BicepType::CustomType(type_name));
             },
             "member_expression" => {
                 // Handle qualified type references like types.environmentCodes
-                let type_name = get_node_text(child, source_code);
+                let type_name = super::get_node_text(&child, source_code)?;
                 type_value = Some(BicepType::CustomType(type_name));
             },
             _ => {
@@ -65,7 +64,7 @@ pub fn parse_property_type(node: Node, source_code: &str) -> Result<BicepType, B
         Ok(tv)
     } else {
         // If no specific type found, try to parse the node text directly
-        let node_text = get_node_text(node, source_code);
+        let node_text = super::get_node_text(&node, source_code)?;
         match node_text.as_str() {
             "string" => Ok(BicepType::String),
             "int" => Ok(BicepType::Int),
@@ -108,7 +107,7 @@ pub fn parse_union_type(node: Node, source_code: &str) -> Result<BicepType, Box<
     for child in children {
         match child.kind() {
             "string" => {
-                let text = get_node_text(child, source_code);
+                let text = super::get_node_text(&child, source_code)?;
                 // Remove surrounding quotes
                 let clean_text = if (text.starts_with('"') && text.ends_with('"'))
                     || (text.starts_with('\'') && text.ends_with('\''))
@@ -120,7 +119,7 @@ pub fn parse_union_type(node: Node, source_code: &str) -> Result<BicepType, Box<
                 values.push(clean_text);
             },
             "primitive_type" | "identifier" | "type_reference" => {
-                values.push(get_node_text(child, source_code));
+                values.push(super::get_node_text(&child, source_code)?);
             },
             "|" => {
                 // Skip the union operator
@@ -128,7 +127,7 @@ pub fn parse_union_type(node: Node, source_code: &str) -> Result<BicepType, Box<
             },
             _ => {
                 // Handle other potential union members
-                let text = get_node_text(child, source_code);
+                let text = super::get_node_text(&child, source_code)?;
                 if !text.trim().is_empty() && text != "|" {
                     values.push(text);
                 }
@@ -138,7 +137,7 @@ pub fn parse_union_type(node: Node, source_code: &str) -> Result<BicepType, Box<
 
     // If we didn't find values through tree structure, try parsing the text directly
     if values.is_empty() {
-        let full_text = get_node_text(node, source_code);
+        let full_text = super::get_node_text(&node, source_code)?;
         if full_text.contains('|') {
             values = full_text
                 .split('|')
@@ -183,7 +182,7 @@ pub fn parse_array_type(node: Node, source_code: &str) -> Result<BicepType, Box<
     for child in &children {
         match child.kind() {
             "primitive_type" => {
-                let type_text = get_node_text(*child, source_code);
+                let type_text = super::get_node_text(&child, source_code)?;
                 inner_type = match type_text.as_str() {
                     "string" => BicepType::String,
                     "int" => BicepType::Int,
@@ -203,7 +202,7 @@ pub fn parse_array_type(node: Node, source_code: &str) -> Result<BicepType, Box<
                 break;
             },
             "identifier" | "type_reference" => {
-                let type_name = get_node_text(*child, source_code);
+                let type_name = super::get_node_text(&child, source_code)?;
                 inner_type = BicepType::CustomType(type_name);
                 break;
             },
@@ -213,7 +212,7 @@ pub fn parse_array_type(node: Node, source_code: &str) -> Result<BicepType, Box<
 
     // If no child provided the type, try parsing from node text
     if matches!(inner_type, BicepType::String) && children.is_empty() {
-        let node_text = get_node_text(node, source_code);
+        let node_text = super::get_node_text(&node, source_code)?;
         if node_text.ends_with("[]") {
             let element_text = &node_text[..node_text.len() - 2];
             inner_type = match element_text {
@@ -249,7 +248,7 @@ pub fn parse_type_node(node: Node, source_code: &str) -> Result<(BicepType, bool
     for child in &children {
         match child.kind() {
             "primitive_type" => {
-                let type_text = get_node_text(*child, source_code);
+                let type_text = super::get_node_text(&child, source_code)?;
                 bicep_type = match type_text.as_str() {
                     "string" => BicepType::String,
                     "int" => BicepType::Int,
@@ -272,7 +271,7 @@ pub fn parse_type_node(node: Node, source_code: &str) -> Result<(BicepType, bool
                 }
             },
             "identifier" | "type_reference" => {
-                let type_name = get_node_text(*child, source_code);
+                let type_name = super::get_node_text(&child, source_code)?;
                 bicep_type = BicepType::CustomType(type_name);
             },
             "?" => {
@@ -284,7 +283,7 @@ pub fn parse_type_node(node: Node, source_code: &str) -> Result<(BicepType, bool
 
     // If no specific type was found, try parsing the node text directly
     if matches!(bicep_type, BicepType::String) && children.is_empty() {
-        let node_text = get_node_text(node, source_code);
+        let node_text = super::get_node_text(&node, source_code)?;
         if node_text.contains('|') {
             bicep_type = parse_union_type(node, source_code)?;
         } else if node_text.ends_with("[]") {

@@ -10,7 +10,7 @@ use indexmap::IndexMap;
 use tracing::{debug, warn};
 use tree_sitter::Node;
 
-use super::super::{get_node_text, BicepDecorator, BicepValue};
+use super::super::{BicepDecorator, BicepValue};
 
 /// Type alias for the return type of `process_common_decorators` function.
 ///
@@ -138,7 +138,7 @@ pub fn parse_decorator(node: Node, source_code: &str) -> Result<BicepDecorator, 
     let mut argument = BicepValue::String(String::new());
 
     // Get the full text of the decorator for better parsing
-    let full_text = get_node_text(node, source_code);
+    let full_text = node.utf8_text(source_code.as_bytes())?.to_string();
 
     // If it starts with @ and contains a parenthesis, try direct parsing
     if (full_text.starts_with('@') && full_text.contains('('))
@@ -266,7 +266,7 @@ fn parse_decorator_with_tree_sitter(
     for child in children {
         match child.kind() {
             "identifier" => {
-                let text = get_node_text(child, source_code);
+                let text = super::get_node_text(&child, source_code)?;
                 if name.is_empty() {
                     name = text;
                 }
@@ -282,7 +282,7 @@ fn parse_decorator_with_tree_sitter(
     }
 
     if name.is_empty() {
-        name = get_node_text(node, source_code);
+        name = super::get_node_text(&node, source_code)?;
         if name.starts_with('@') {
             name = name[1..].to_string();
         }
@@ -305,7 +305,7 @@ fn parse_call_expression(
         match child.kind() {
             "identifier" => {
                 if function_name.is_empty() {
-                    function_name = get_node_text(child, source_code);
+                    function_name = super::get_node_text(&child, source_code)?;
                 }
             },
             "arguments" => {

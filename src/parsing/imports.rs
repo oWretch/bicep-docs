@@ -11,7 +11,8 @@ use serde_with::skip_serializing_none;
 use tracing::debug;
 use tree_sitter::Node;
 
-use super::{get_node_text, BicepParserError, ModuleSource};
+use super::utils::get_node_text;
+use super::{BicepParserError, ModuleSource};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types
@@ -113,7 +114,7 @@ pub fn parse_namespace_import(
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         if child.kind() == "string" {
-            let import_text = get_node_text(child, source_code);
+            let import_text = get_node_text(&child, source_code)?;
             let clean_text = import_text.trim_matches('\'').trim_matches('"');
 
             if clean_text.is_empty() {
@@ -225,7 +226,7 @@ fn extract_import_source_path(
 ) -> Result<String, Box<dyn Error>> {
     for (i, child) in children.iter().enumerate() {
         if child.kind() == "from" && i + 1 < children.len() && children[i + 1].kind() == "string" {
-            let path = get_node_text(children[i + 1], source_code);
+            let path = get_node_text(&children[i + 1], source_code)?;
             let clean_path = path.trim_matches('\'').trim_matches('"');
 
             if clean_path.is_empty() {
@@ -282,7 +283,7 @@ fn extract_wildcard_alias(
         && children[wildcard_index + 1].kind() == "as"
         && children[wildcard_index + 2].kind() == "identifier"
     {
-        Some(get_node_text(children[wildcard_index + 2], source_code))
+        get_node_text(&children[wildcard_index + 2], source_code).ok()
     } else {
         None
     }
@@ -316,14 +317,14 @@ fn parse_import_symbol(
     source_code: &str,
     current_index: &mut usize,
 ) -> Result<BicepImportSymbol, Box<dyn Error>> {
-    let symbol_name = get_node_text(children[start_index], source_code);
+    let symbol_name = get_node_text(&children[start_index], source_code)?;
 
     // Check for alias: symbol as alias
     if start_index + 2 < children.len()
         && children[start_index + 1].kind() == "as"
         && children[start_index + 2].kind() == "identifier"
     {
-        let alias_name = get_node_text(children[start_index + 2], source_code);
+        let alias_name = get_node_text(&children[start_index + 2], source_code)?;
         *current_index = start_index + 3;
 
         debug!(

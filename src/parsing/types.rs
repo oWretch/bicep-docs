@@ -13,7 +13,6 @@ use tracing::{debug, warn};
 use tree_sitter::Node;
 
 use super::{
-    get_node_text,
     utils::{
         decorators::{extract_description_from_decorators, parse_decorator, parse_decorators},
         types::{parse_array_type, parse_property_type, parse_union_type},
@@ -79,7 +78,7 @@ pub fn parse_type_declaration(
     let children = node.children(&mut cursor).collect::<Vec<_>>();
     for child in &children {
         if child.kind() == "identifier" {
-            name = get_node_text(*child, source_code);
+            name = crate::parsing::utils::get_node_text(child, source_code)?;
             debug!("Parsing type declaration for: {}", name);
             break;
         }
@@ -127,7 +126,8 @@ pub fn parse_type_declaration(
                 for type_child in &type_children {
                     match type_child.kind() {
                         "string" | "identifier" => {
-                            let type_name = get_node_text(*type_child, source_code);
+                            let type_name =
+                                crate::parsing::utils::get_node_text(type_child, source_code)?;
                             definition = match type_name.as_str() {
                                 "string" => BicepType::String,
                                 "int" => BicepType::Int,
@@ -171,7 +171,7 @@ pub fn parse_type_declaration(
             },
             "string" | "identifier" => {
                 // This is a simple type reference
-                let type_name = get_node_text(*child, source_code);
+                let type_name = crate::parsing::utils::get_node_text(child, source_code)?;
                 definition = match type_name.as_str() {
                     "string" => BicepType::String,
                     "int" => BicepType::Int,
@@ -306,7 +306,7 @@ pub fn parse_object_property(
     // Find the property name (identifier)
     for child in &children {
         if child.kind() == "identifier" {
-            name = get_node_text(*child, source_code);
+            name = crate::parsing::utils::get_node_text(child, source_code)?;
             debug!("Parsing object property with name: {}", name);
             break;
         }
@@ -321,7 +321,7 @@ pub fn parse_object_property(
             property_type = parse_property_type(*child, source_code)?;
         } else if child.kind() == "primitive_type" {
             // Handle direct primitive type
-            let type_text = get_node_text(*child, source_code);
+            let type_text = crate::parsing::utils::get_node_text(child, source_code)?;
             property_type = match type_text.as_str() {
                 "string" => BicepType::String,
                 "int" => BicepType::Int,
@@ -337,7 +337,8 @@ pub fn parse_object_property(
             let nullable_children = child.children(&mut nullable_cursor).collect::<Vec<_>>();
             for nullable_child in nullable_children {
                 if nullable_child.kind() == "primitive_type" {
-                    let type_text = get_node_text(nullable_child, source_code);
+                    let type_text =
+                        crate::parsing::utils::get_node_text(&nullable_child, source_code)?;
                     property_type = match type_text.as_str() {
                         "string" => BicepType::String,
                         "int" => BicepType::Int,
@@ -346,13 +347,14 @@ pub fn parse_object_property(
                         _ => BicepType::CustomType(type_text),
                     };
                 } else if nullable_child.kind() == "identifier" {
-                    let type_text = get_node_text(nullable_child, source_code);
+                    let type_text =
+                        crate::parsing::utils::get_node_text(&nullable_child, source_code)?;
                     property_type = BicepType::CustomType(type_text);
                 }
             }
         } else if child.kind() == "identifier" && found_colon {
             // This is an identifier that comes after the colon, so it's the type name
-            let type_text = get_node_text(*child, source_code);
+            let type_text = crate::parsing::utils::get_node_text(child, source_code)?;
             property_type = BicepType::CustomType(type_text);
         } else if child.kind() == "object" {
             // Handle direct object definition
@@ -428,7 +430,7 @@ pub fn parse_object_property(
     }
 
     // Check if type is nullable (optional)
-    let node_text = get_node_text(node, source_code);
+    let node_text = crate::parsing::utils::get_node_text(&node, source_code)?;
     if node_text.contains("?") {
         is_nullable = true;
         debug!("Property {} is nullable", name);

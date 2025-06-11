@@ -7,7 +7,6 @@ use tracing::{debug, warn};
 use tree_sitter::Node;
 
 use super::{
-    get_node_text,
     utils::{
         decorators::extract_description_from_decorators, types::parse_type_node,
         values::parse_value_node,
@@ -143,7 +142,7 @@ pub(crate) fn parse_parameter_declaration(
     let children = node.children(&mut cursor).collect::<Vec<_>>();
 
     // Extract parameter name
-    let name = get_node_text(children[1], source_code);
+    let name = crate::parsing::utils::get_node_text(&children[1], source_code)?;
     debug!("Parsing parameter: {}", name);
 
     // Parse parameter type

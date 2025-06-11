@@ -12,7 +12,6 @@ use tracing::{debug, warn};
 use tree_sitter::Node;
 
 use super::{
-    get_node_text,
     utils::{decorators::extract_description_from_decorators, values::parse_value_node},
     BicepDecorator, BicepParserError, BicepValue,
 };
@@ -101,7 +100,7 @@ pub fn parse_variable_declaration(
     }
 
     // Extract variable name (should be at index 1: var NAME = value)
-    let name = get_node_text(children[1], source_code);
+    let name = children[1].utf8_text(source_code.as_bytes())?.to_string();
     if name.is_empty() {
         return Err(Box::new(BicepParserError::ParseError(
             "Variable declaration missing name".to_string(),

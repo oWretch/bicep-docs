@@ -40,7 +40,7 @@ pub use outputs::{parse_output_declaration, BicepOutput};
 pub use parameters::BicepParameter;
 pub use resources::BicepResource;
 pub use types::BicepCustomType;
-pub use utils::{decorators::extract_description_from_decorators, get_node_text};
+pub use utils::decorators::extract_description_from_decorators;
 pub use variables::BicepVariable;
 
 // Import commonly used utilities from utils module using direct paths
@@ -350,14 +350,18 @@ impl std::fmt::Display for BicepValue {
                 write!(f, "]")
             },
             BicepValue::Object(map) => {
-                write!(f, "{{")?;
-                for (i, (key, value)) in map.iter().enumerate() {
-                    if i > 0 {
-                        write!(f, ", ")?;
+                if map.is_empty() {
+                    write!(f, "{{}}")
+                } else {
+                    write!(f, "{{ ")?;
+                    for (i, (key, value)) in map.iter().enumerate() {
+                        if i > 0 {
+                            write!(f, ", ")?;
+                        }
+                        write!(f, "{}: {}", key, value)?;
                     }
-                    write!(f, "{}: {}", key, value)?;
+                    write!(f, " }}")
                 }
-                write!(f, "}}")
             },
             BicepValue::Identifier(id) => write!(f, "${{{}}}", id),
         }
@@ -680,12 +684,14 @@ pub fn parse_bicep_document(
 /// Parse metadata nodes
 fn parse_metadata(node: Node, source_code: &str) -> (String, Option<BicepValue>) {
     let mut name = String::new();
-    let mut value = None;
+    let mut value: Option<BicepValue> = None;
 
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         match child.kind() {
-            "identifier" => name = get_node_text(child, source_code),
+            "identifier" => {
+                name = utils::get_node_text(&child, source_code).unwrap_or_else(|_| "".to_string())
+            },
             "string" | "number" | "boolean" => {
                 let result = get_primitive_value(child, source_code);
                 match result {
@@ -738,13 +744,13 @@ fn get_primitive_value(node: Node, source_code: &str) -> Result<BicepValue, Box<
             let mut cursor = node.walk();
             for child in node.children(&mut cursor) {
                 if child.kind() == "string_content" {
-                    let content = get_node_text(child, source_code);
+                    let content = utils::get_node_text(&child, source_code)?;
                     return Ok(BicepValue::String(content));
                 }
             }
 
             // Fallback to the old method if no string_content is found
-            let node_text = get_node_text(node, source_code);
+            let node_text = utils::get_node_text(&node, source_code)?;
             let text = if node_text.len() >= 2 {
                 let first_char = node_text.chars().next().unwrap();
                 let last_char = node_text.chars().last().unwrap();
@@ -762,7 +768,7 @@ fn get_primitive_value(node: Node, source_code: &str) -> Result<BicepValue, Box<
             Ok(BicepValue::String(text))
         },
         "number" => {
-            let node_text = get_node_text(node, source_code);
+            let node_text = utils::get_node_text(&node, source_code)?;
             match node_text.parse::<i64>() {
                 Ok(n) => Ok(BicepValue::Int(n)),
                 Err(_) => Err(Box::new(BicepParserError::InvalidValue {
@@ -772,7 +778,7 @@ fn get_primitive_value(node: Node, source_code: &str) -> Result<BicepValue, Box<
             }
         },
         "boolean" => {
-            let node_text = get_node_text(node, source_code);
+            let node_text = utils::get_node_text(&node, source_code)?;
             match node_text.parse::<bool>() {
                 Ok(b) => Ok(BicepValue::Bool(b)),
                 Err(_) => Err(Box::new(BicepParserError::InvalidValue {
@@ -794,10 +800,12 @@ fn extract_target_scope(node: Node, source_code: &str) -> String {
 
     let mut cursor = node.walk();
     let children = node.children(&mut cursor).collect::<Vec<_>>();
+
     for child in children {
         // For target_scope_assignment, the value is in a string node
         if child.kind() == "string" {
-            scope_text = get_node_text(child, source_code);
+            scope_text =
+                utils::get_node_text(&child, source_code).unwrap_or_else(|_| "".to_string());
             // Remove quotes if present
             if (scope_text.starts_with('\'') && scope_text.ends_with('\''))
                 || (scope_text.starts_with('"') && scope_text.ends_with('"'))

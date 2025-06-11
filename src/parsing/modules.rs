@@ -20,8 +20,9 @@ use tracing::debug;
 use tree_sitter::Node;
 
 use super::{
-    get_node_text,
-    utils::{decorators::extract_description_from_decorators, values::parse_value_node},
+    utils::{
+        decorators::extract_description_from_decorators, get_node_text, values::parse_value_node,
+    },
     BicepDecorator, BicepParserError, BicepValue,
 };
 
@@ -489,7 +490,7 @@ pub fn parse_module_declaration(
         }
     }
 
-    let full_source_text = get_node_text(node, source_code);
+    let full_source_text = get_node_text(&node, source_code)?;
 
     // Walk through children to extract module information
     let mut cursor = node.walk();
@@ -502,11 +503,11 @@ pub fn parse_module_declaration(
                 if i + 2 < children.len() {
                     // Next should be identifier and string (source)
                     if children[i + 1].kind() == "identifier" {
-                        name = get_node_text(children[i + 1], source_code);
+                        name = get_node_text(&children[i + 1], source_code)?;
                     }
 
                     if children[i + 2].kind() == "string" {
-                        let source_str = get_node_text(children[i + 2], source_code);
+                        let source_str = get_node_text(&children[i + 2], source_code)?;
                         // Strip quotes if present
                         let source_without_quotes = source_str.trim_matches('\'').trim_matches('"');
 
@@ -567,7 +568,7 @@ pub fn parse_module_declaration(
             },
             "if_statement" => {
                 // Conditional module - extract the condition and nested object
-                let node_text = get_node_text(children[i], source_code);
+                let node_text = get_node_text(&children[i], source_code)?;
 
                 // Extract condition from the if statement
                 if let Some(if_start) = node_text.find("if ") {
@@ -582,7 +583,7 @@ pub fn parse_module_declaration(
             },
             "for_statement" => {
                 // Loop module - extract the loop details and nested object
-                let node_text = get_node_text(children[i], source_code);
+                let node_text = get_node_text(&children[i], source_code)?;
 
                 // Extract loop details from the for statement
                 if let Some(for_start) = node_text.find("for ") {
@@ -607,7 +608,7 @@ pub fn parse_module_declaration(
             },
             "array" => {
                 // This might be a module loop with array literal
-                let node_text = get_node_text(children[i], source_code);
+                let node_text = get_node_text(&children[i], source_code)?;
 
                 // For arrays with string literals like ['alice', 'bob', 'charlie']
                 if node_text.contains("[") && node_text.contains("]") {
