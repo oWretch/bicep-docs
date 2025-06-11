@@ -31,6 +31,28 @@ pub fn format_bicep_value_with_backticks(value: &BicepValue) -> String {
     format!("`{}`", value)
 }
 
+/// Formats a Bicep array value as a newline-separated list
+///
+/// Converts an array of `BicepValue`s into a single `String` where each element
+/// is separated by a newline character. This is useful for rendering array values
+/// in documentation or export formats that expect plain lists.
+///
+/// # Arguments
+///
+/// * `array` - Reference to an array of `BicepValue`
+///
+/// # Returns
+///
+/// * `String` containing the newline-separated list
+pub fn format_bicep_array_as_list(array: &Vec<BicepValue>) -> String {
+    let mut formatted = String::new();
+    for item in array {
+        formatted.push_str(&item.to_string());
+        formatted.push('\n');
+    }
+    formatted
+}
+
 /// Escape special characters for Markdown
 ///
 /// # Arguments
@@ -42,24 +64,8 @@ pub fn format_bicep_value_with_backticks(value: &BicepValue) -> String {
 /// Escaped text safe for Markdown
 pub fn escape_markdown(text: &str) -> String {
     text.replace('\\', "\\\\")
-        .replace('*', "\\*")
-        .replace('_', "\\_")
-        .replace('[', "\\[")
-        .replace(']', "\\]")
-        .replace('(', "\\(")
-        .replace(')', "\\)")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('&', "&amp;")
         .replace('|', "\\|")
-        .replace('`', "\\`")
-        .replace('#', "\\#")
-        .replace('+', "\\+")
-        .replace('-', "\\-")
-        .replace('.', "\\.")
-        .replace('!', "\\!")
-        .replace('{', "\\{")
-        .replace('}', "\\}")
+        .replace('\n', "  \n")
 }
 
 /// Escape special characters for AsciiDoc
@@ -74,17 +80,7 @@ pub fn escape_markdown(text: &str) -> String {
 pub fn escape_asciidoc(text: &str) -> String {
     text.replace('\\', "\\\\") // Must be first to avoid double-escaping
         .replace('|', "\\|")
-        .replace('[', "\\[")
-        .replace(']', "\\]")
-        .replace('{', "\\{")
-        .replace('}', "\\}")
-        .replace('*', "\\*")
-        .replace('#', "\\#")
-        .replace('_', "\\_")
-        .replace('^', "\\^")
-        .replace('~', "\\~")
-        .replace('`', "\\`")
-        .replace('+', "\\+")
+        .replace('\n', " +\n")
 }
 
 #[cfg(test)]
@@ -158,12 +154,14 @@ mod tests {
     #[test]
     fn test_escape_markdown() {
         assert_eq!(escape_markdown("simple text"), "simple text");
-        assert_eq!(escape_markdown("text with *bold*"), "text with \\*bold\\*");
-        assert_eq!(escape_markdown("text with [link]"), "text with \\[link\\]");
+        assert_eq!(escape_markdown("text with *bold*"), "text with *bold*");
+        assert_eq!(escape_markdown("text with [link]"), "text with [link]");
         assert_eq!(
             escape_markdown("text | with | pipes"),
             "text \\| with \\| pipes"
         );
+        assert_eq!(escape_markdown("line1\nline2"), "line1  \nline2");
+        assert_eq!(escape_markdown("back\\slash"), "back\\\\slash");
     }
 
     #[test]
@@ -173,10 +171,5 @@ mod tests {
             escape_asciidoc("text with |pipes|"),
             "text with \\|pipes\\|"
         );
-        assert_eq!(
-            escape_asciidoc("text with [brackets]"),
-            "text with \\[brackets\\]"
-        );
-        assert_eq!(escape_asciidoc("text with *bold*"), "text with \\*bold\\*");
     }
 }

@@ -220,6 +220,76 @@ pub enum BicepValue {
     Identifier(String),
 }
 
+impl BicepValue {
+    /// Returns the type name of the BicepValue variant as a string.
+    pub fn type_name(&self) -> &'static str {
+        match self {
+            BicepValue::Array(_) => "array",
+            BicepValue::String(_) => "string",
+            BicepValue::Int(_) => "int",
+            BicepValue::Bool(_) => "bool",
+            BicepValue::Object(_) => "object",
+            BicepValue::Identifier(_) => "identifier",
+        }
+    }
+
+    /// Pretty-formats the BicepValue as a string, using custom formatting for objects, arrays, and strings.
+    ///
+    /// - Objects: `{ key: value }` with nested indentation, no quotes on keys, single quotes for strings.
+    /// - Arrays: `[ ... ]` with nested indentation.
+    /// - Strings: single quotes.
+    /// - Numbers, booleans: as-is.
+    /// - Identifiers: as-is.
+    pub fn pretty_format(&self) -> String {
+        fn format_value(val: &BicepValue, indent: usize) -> String {
+            let indent_str = "  ".repeat(indent);
+            match val {
+                BicepValue::Object(obj) => {
+                    if obj.is_empty() {
+                        "{}".to_string()
+                    } else {
+                        let mut s = String::new();
+                        s.push_str("{\n");
+                        for (_i, (k, v)) in obj.iter().enumerate() {
+                            s.push_str(&indent_str);
+                            s.push_str("  ");
+                            s.push_str(k);
+                            s.push_str(": ");
+                            s.push_str(&format_value(v, indent + 1));
+                            s.push('\n');
+                        }
+                        s.push_str(&indent_str);
+                        s.push('}');
+                        s
+                    }
+                },
+                BicepValue::Array(arr) => {
+                    if arr.is_empty() {
+                        "[]".to_string()
+                    } else {
+                        let mut s = String::new();
+                        s.push_str("[\n");
+                        for item in arr {
+                            s.push_str(&indent_str);
+                            s.push_str("  ");
+                            s.push_str(&format_value(item, indent + 1));
+                            s.push('\n');
+                        }
+                        s.push_str(&indent_str);
+                        s.push(']');
+                        s
+                    }
+                },
+                BicepValue::String(st) => format!("'{}'", st),
+                BicepValue::Int(n) => n.to_string(),
+                BicepValue::Bool(b) => b.to_string(),
+                BicepValue::Identifier(id) => id.clone(),
+            }
+        }
+        format_value(self, 0)
+    }
+}
+
 // Implement a custom serializer for BicepValue to avoid YAML tags
 impl Serialize for BicepValue {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

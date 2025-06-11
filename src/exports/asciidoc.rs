@@ -8,7 +8,7 @@ use std::{fs, path::Path};
 use crate::{
     exports::utils::{
         common::{format_yes_no, generate_metadata_display_asciidoc},
-        formatting::escape_asciidoc,
+        formatting::{escape_asciidoc, format_bicep_array_as_list},
     },
     parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType, ModuleSource},
 };
@@ -271,10 +271,10 @@ fn generate_types_section(
     }
 
     for (name, custom_type) in &document.types {
-        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &custom_type.description {
-            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+            asciidoc.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table with properties label
@@ -300,10 +300,10 @@ fn generate_types_section(
                 asciidoc.push_str("\n*Object Definition*\n\n");
 
                 for (prop_name, prop_param) in properties {
-                    asciidoc.push_str(&format!("==== `{}`\n\n", escape_asciidoc(prop_name)));
+                    asciidoc.push_str(&format!("==== `{}`\n\n", prop_name));
 
                     if let Some(description) = &prop_param.description {
-                        asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+                        asciidoc.push_str(&format!("{}\n\n", description));
                     }
 
                     asciidoc.push_str(".Properties\n");
@@ -345,12 +345,10 @@ fn generate_types_section(
                     }
                     if let Some(allowed_values) = &prop_param.allowed_values {
                         if !allowed_values.is_empty() {
-                            let values = allowed_values
-                                .iter()
-                                .map(|v| v.to_string())
-                                .collect::<Vec<_>>()
-                                .join(", ");
-                            constraints.push(("Allowed Values", values));
+                            constraints.push((
+                                "Allowed Values",
+                                format_bicep_array_as_list(allowed_values),
+                            ));
                         }
                     }
 
@@ -370,7 +368,7 @@ fn generate_types_section(
                         asciidoc.push_str("\n.Default Value\n");
                         asciidoc.push_str("[source]\n");
                         asciidoc.push_str("----\n");
-                        asciidoc.push_str(&default_value.to_string());
+                        asciidoc.push_str(&default_value.pretty_format());
                         asciidoc.push_str("\n----\n");
                     }
 
@@ -406,10 +404,10 @@ fn generate_functions_section(
     }
 
     for (name, function) in &document.functions {
-        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &function.description {
-            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+            asciidoc.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table
@@ -430,7 +428,7 @@ fn generate_functions_section(
         asciidoc.push_str("\n.Definition\n");
         asciidoc.push_str("[source]\n");
         asciidoc.push_str("----\n");
-        asciidoc.push_str(&escape_asciidoc(&function.expression));
+        asciidoc.push_str(&function.expression);
         asciidoc.push_str("\n----\n");
 
         asciidoc.push('\n');
@@ -454,10 +452,10 @@ fn generate_parameters_section(
     }
 
     for (name, parameter) in &document.parameters {
-        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &parameter.description {
-            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+            asciidoc.push_str(&format!("{}\n\n", description));
         }
 
         // Handle metadata at the top if it contains description
@@ -465,10 +463,7 @@ fn generate_parameters_section(
             // Check if metadata has description that should be shown as the main description
             if let Some(metadata_desc) = parameter.metadata.get("description") {
                 if parameter.description.is_none() {
-                    asciidoc.push_str(&format!(
-                        "{}\n\n",
-                        escape_asciidoc(&metadata_desc.to_string())
-                    ));
+                    asciidoc.push_str(&format!("{}\n\n", &metadata_desc.to_string()));
                 }
             }
 
@@ -510,12 +505,7 @@ fn generate_parameters_section(
         }
         if let Some(allowed_values) = &parameter.allowed_values {
             if !allowed_values.is_empty() {
-                let values = allowed_values
-                    .iter()
-                    .map(|v| format!("`{}`", v.to_string()))
-                    .collect::<Vec<_>>()
-                    .join(" +\n   ");
-                constraints.push(("Allowed Values", format!("<| {}", values)));
+                constraints.push(("Allowed Values", format_bicep_array_as_list(allowed_values)));
             }
         }
 
@@ -529,7 +519,7 @@ fn generate_parameters_section(
             asciidoc.push_str("\n.Default Value\n");
             asciidoc.push_str("[source]\n");
             asciidoc.push_str("----\n");
-            asciidoc.push_str(&default_value.to_string());
+            asciidoc.push_str(&default_value.pretty_format());
             asciidoc.push_str("\n----\n");
         }
 
@@ -539,10 +529,10 @@ fn generate_parameters_section(
                 asciidoc.push_str("\n*Object Definition*\n\n");
 
                 for (prop_name, prop_param) in properties {
-                    asciidoc.push_str(&format!("==== `{}`\n\n", escape_asciidoc(prop_name)));
+                    asciidoc.push_str(&format!("==== `{}`\n\n", prop_name));
 
                     if let Some(description) = &prop_param.description {
-                        asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+                        asciidoc.push_str(&format!("{}\n\n", description));
                     }
 
                     asciidoc.push_str(".Properties\n");
@@ -612,14 +602,10 @@ fn generate_nested_object_properties(
     let header_prefix = "=".repeat(header_level);
 
     for (prop_name, prop_param) in properties {
-        asciidoc.push_str(&format!(
-            "{} `{}`\n\n",
-            header_prefix,
-            escape_asciidoc(prop_name)
-        ));
+        asciidoc.push_str(&format!("{} `{}`\n\n", header_prefix, prop_name));
 
         if let Some(description) = &prop_param.description {
-            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+            asciidoc.push_str(&format!("{}\n\n", description));
         }
 
         asciidoc.push_str(".Properties\n");
@@ -687,10 +673,10 @@ fn generate_variables_section(
     }
 
     for (name, variable) in &document.variables {
-        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &variable.description {
-            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+            asciidoc.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table
@@ -702,7 +688,7 @@ fn generate_variables_section(
         asciidoc.push_str("\n.Value\n");
         asciidoc.push_str("[source]\n");
         asciidoc.push_str("----\n");
-        asciidoc.push_str(&variable.value.to_string());
+        asciidoc.push_str(&variable.value.pretty_format());
         asciidoc.push_str("\n----\n");
 
         asciidoc.push('\n');
@@ -726,23 +712,22 @@ fn generate_resources_section(
     }
 
     for (name, resource) in &document.resources {
-        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &resource.description {
-            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+            asciidoc.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table
         asciidoc.push_str(".Properties\n");
-        let mut items = vec![
-            ("Name", escape_asciidoc(&resource.name)),
+        let mut items: Vec<(&str, String)> = vec![
+            ("Name", resource.name.clone()),
             ("Type", resource.resource_type.clone()),
             ("API Version", resource.api_version.clone()),
         ];
 
         if let Some(scope) = &resource.scope {
-            let scope_str = scope.to_string();
-            items.push(("Scope", scope_str));
+            items.push(("Scope", scope.to_string()));
         }
 
         if resource.existing {
@@ -800,10 +785,10 @@ fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, exc
     }
 
     for (name, module) in &document.modules {
-        asciidoc.push_str(&format!("=== {}\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== {}\n\n", name));
 
         if let Some(description) = &module.description {
-            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+            asciidoc.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table
@@ -872,10 +857,10 @@ fn generate_outputs_section(
     }
 
     for (name, output) in &document.outputs {
-        asciidoc.push_str(&format!("=== `{}`\n\n", escape_asciidoc(name)));
+        asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &output.description {
-            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
+            asciidoc.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table
@@ -918,7 +903,7 @@ fn generate_outputs_section(
         asciidoc.push_str("\n.Value\n");
         asciidoc.push_str("[source]\n");
         asciidoc.push_str("----\n");
-        asciidoc.push_str(&output.value.to_string());
+        asciidoc.push_str(&output.value.pretty_format());
         asciidoc.push_str("\n----\n");
 
         // Additional metadata if present
@@ -946,7 +931,7 @@ fn generate_key_value_display(asciidoc: &mut String, items: &[(&str, String)], c
                 asciidoc.push_str(&format!(
                     "| {}\n{}| {}\n\n",
                     escape_asciidoc(key),
-                    attr,
+                    escape_asciidoc(attr),
                     escape_asciidoc(split_value.trim())
                 ));
             },
@@ -1088,7 +1073,7 @@ mod tests {
         let escaped = escape_asciidoc(text);
         assert_eq!(
             escaped,
-            "test \\| with \\* special \\_ characters \\[and\\] \\`code\\` \\#heading"
+            "test \\| with * special _ characters [and] `code` #heading"
         );
     }
 

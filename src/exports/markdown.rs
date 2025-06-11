@@ -9,7 +9,8 @@ use crate::{
     exports::utils::{
         common::{format_yes_no, generate_metadata_display_markdown},
         formatting::{
-            escape_markdown, format_bicep_type_with_backticks, format_bicep_value_with_backticks,
+            escape_markdown, format_bicep_array_as_list, format_bicep_type_with_backticks,
+            format_bicep_value_with_backticks,
         },
     },
     parsing::{
@@ -79,10 +80,7 @@ pub fn export_to_string(
     }
 
     if let Some(target_scope) = &document.target_scope {
-        markdown.push_str(&format!(
-            "**Target Scope:** `{}`\n\n",
-            escape_markdown(target_scope)
-        ));
+        markdown.push_str(&format!("**Target Scope:** `{}`\n\n", target_scope));
     }
 
     // Additional metadata
@@ -262,10 +260,10 @@ fn generate_types_section(
     }
 
     for (name, custom_type) in &document.types {
-        markdown.push_str(&format!("### `{}`\n\n", escape_markdown(name)));
+        markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &custom_type.description {
-            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
+            markdown.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table
@@ -289,10 +287,10 @@ fn generate_types_section(
                 markdown.push_str("\n**Object Definition**\n\n");
 
                 for (prop_name, prop_param) in properties {
-                    markdown.push_str(&format!("#### `{}`\n\n", escape_markdown(prop_name)));
+                    markdown.push_str(&format!("#### `{}`\n\n", prop_name));
 
                     if let Some(description) = &prop_param.description {
-                        markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
+                        markdown.push_str(&format!("{}\n\n", description));
                     }
 
                     let mut prop_items = vec![("Type", format!("`{}`", prop_param.parameter_type))];
@@ -335,12 +333,10 @@ fn generate_types_section(
 
                     if let Some(allowed_values) = &prop_param.allowed_values {
                         if !allowed_values.is_empty() {
-                            let values = allowed_values
-                                .iter()
-                                .map(|v| v.to_string())
-                                .collect::<Vec<_>>()
-                                .join("  \n");
-                            constraints.push(("Allowed Values", format!("\n{}", values)));
+                            constraints.push((
+                                "Allowed Values",
+                                format_bicep_array_as_list(allowed_values),
+                            ));
                         }
                     }
 
@@ -350,10 +346,9 @@ fn generate_types_section(
                     }
 
                     if let Some(default_value) = &prop_param.default_value {
-                        let value_str = default_value.to_string();
                         markdown.push_str("\n**Default Value**\n\n");
                         markdown.push_str("```bicep\n");
-                        markdown.push_str(&value_str);
+                        markdown.push_str(&default_value.pretty_format());
                         markdown.push_str("\n```\n");
                     }
 
@@ -396,10 +391,10 @@ fn generate_functions_section(
     }
 
     for (name, function) in &document.functions {
-        markdown.push_str(&format!("### `{}`\n\n", escape_markdown(name)));
+        markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &function.description {
-            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
+            markdown.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table
@@ -449,10 +444,10 @@ fn generate_parameters_section(
     }
 
     for (name, parameter) in &document.parameters {
-        markdown.push_str(&format!("### `{}`\n\n", escape_markdown(name)));
+        markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &parameter.description {
-            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
+            markdown.push_str(&format!("{}\n\n", description));
         }
 
         // Metadata comes first if present
@@ -508,12 +503,7 @@ fn generate_parameters_section(
 
         if let Some(allowed_values) = &parameter.allowed_values {
             if !allowed_values.is_empty() {
-                let values = allowed_values
-                    .iter()
-                    .map(|v| format!("`{}`", v.to_string()))
-                    .collect::<Vec<_>>()
-                    .join("  \n");
-                constraints.push(("Allowed Values", format!("\n{}", values)));
+                constraints.push(("Allowed Values", format_bicep_array_as_list(allowed_values)));
             }
         }
 
@@ -523,10 +513,9 @@ fn generate_parameters_section(
         }
 
         if let Some(default_value) = &parameter.default_value {
-            let value_str = default_value.to_string();
             markdown.push_str("\n**Default Value**\n\n");
             markdown.push_str("```bicep\n");
-            markdown.push_str(&value_str);
+            markdown.push_str(&default_value.pretty_format());
             markdown.push_str("\n```\n");
         }
 
@@ -558,14 +547,10 @@ fn generate_nested_object_properties(
     let header_prefix = "#".repeat(header_level);
 
     for (prop_name, prop_param) in properties {
-        markdown.push_str(&format!(
-            "{} `{}`\n\n",
-            header_prefix,
-            escape_markdown(prop_name)
-        ));
+        markdown.push_str(&format!("{} `{}`\n\n", header_prefix, prop_name));
 
         if let Some(description) = &prop_param.description {
-            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
+            markdown.push_str(&format!("{}\n\n", description));
         }
 
         let mut prop_items = vec![(
@@ -615,12 +600,7 @@ fn generate_nested_object_properties(
         }
         if let Some(allowed_values) = &prop_param.allowed_values {
             if !allowed_values.is_empty() {
-                let values = allowed_values
-                    .iter()
-                    .map(|v| v.to_string())
-                    .collect::<Vec<_>>()
-                    .join("  \n");
-                prop_items.push(("Allowed Values", format!("\n{}", values)));
+                prop_items.push(("Allowed Values", format_bicep_array_as_list(allowed_values)));
             }
         }
 
@@ -630,10 +610,9 @@ fn generate_nested_object_properties(
         }
 
         if let Some(default_value) = &prop_param.default_value {
-            let value_str = default_value.to_string();
             markdown.push_str("\n**Default Value**\n\n");
             markdown.push_str("```bicep\n");
-            markdown.push_str(&value_str);
+            markdown.push_str(&default_value.pretty_format());
             markdown.push_str("\n```\n");
         }
 
@@ -673,10 +652,10 @@ fn generate_variables_section(
     }
 
     for (name, variable) in &document.variables {
-        markdown.push_str(&format!("### `{}`\n\n", escape_markdown(name)));
+        markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &variable.description {
-            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
+            markdown.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table
@@ -684,10 +663,9 @@ fn generate_variables_section(
         generate_key_value_display(markdown, &items);
 
         // Value
-        let value_str = variable.value.to_string();
         markdown.push_str("\n**Value**\n\n");
         markdown.push_str("```bicep\n");
-        markdown.push_str(&value_str);
+        markdown.push_str(&variable.value.pretty_format());
         markdown.push_str("\n```\n");
 
         markdown.push('\n');
@@ -711,10 +689,10 @@ fn generate_resources_section(
     }
 
     for (name, resource) in &document.resources {
-        markdown.push_str(&format!("### `{}`\n\n", escape_markdown(name)));
+        markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &resource.description {
-            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
+            markdown.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table
@@ -795,10 +773,10 @@ fn generate_modules_section(
     }
 
     for (name, module) in &document.modules {
-        markdown.push_str(&format!("### {}\n\n", escape_markdown(name)));
+        markdown.push_str(&format!("### {}\n\n", name));
 
         if let Some(description) = &module.description {
-            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
+            markdown.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table
@@ -898,10 +876,10 @@ fn generate_outputs_section(
     }
 
     for (name, output) in &document.outputs {
-        markdown.push_str(&format!("### `{}`\n\n", escape_markdown(name)));
+        markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &output.description {
-            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
+            markdown.push_str(&format!("{}\n\n", description));
         }
 
         // Basic information table
@@ -961,10 +939,9 @@ fn generate_outputs_section(
         }
 
         // Value in code block
-        let value_str = output.value.to_string();
         markdown.push_str("\n**Value**\n\n");
         markdown.push_str("```bicep\n");
-        markdown.push_str(&value_str);
+        markdown.push_str(&output.value.pretty_format());
         markdown.push_str("\n```\n");
 
         if let Some(metadata) = &output.metadata {
@@ -986,24 +963,7 @@ fn format_constraint_value(value: &str) -> String {
 /// Generate key-value property display
 fn generate_key_value_display(markdown: &mut String, items: &[(&str, String)]) {
     for (key, value) in items {
-        // Don't escape pipes in values that are wrapped in backticks (type values)
-        let escaped_value = if value.starts_with('`') && value.ends_with('`') {
-            // For type values in backticks, only escape certain characters but not pipes
-            value
-                .replace('*', "\\*")
-                .replace('_', "\\_")
-                .replace('#', "\\#")
-                .replace('\\', "\\\\")
-                .replace('\n', "  \n")
-        } else {
-            escape_markdown(value)
-        };
-
-        markdown.push_str(&format!(
-            "**{}:** {}  \n",
-            escape_markdown(key),
-            escaped_value
-        ));
+        markdown.push_str(&format!("**{}:** {}  \n", key, value));
     }
 }
 
@@ -1018,7 +978,7 @@ fn generate_function_arguments_display(markdown: &mut String, arguments: &[Bicep
         let optional_text = if arg.is_nullable { " (Optional)" } else { "" };
         markdown.push_str(&format!(
             "**{}:** {}{}\n",
-            escape_markdown(&arg.name),
+            &arg.name,
             format_bicep_type_with_backticks(&arg.argument_type),
             optional_text
         ));
