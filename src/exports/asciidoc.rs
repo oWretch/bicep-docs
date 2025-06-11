@@ -77,7 +77,7 @@ pub fn export_to_string(
 
     // Description
     if let Some(description) = &document.description {
-        asciidoc.push_str(&format!("{}\n\n", description));
+        asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
     }
 
     // Target scope in table format
@@ -274,7 +274,7 @@ fn generate_types_section(
         asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &custom_type.description {
-            asciidoc.push_str(&format!("{}\n\n", description));
+            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         // Basic information table with properties label
@@ -303,7 +303,7 @@ fn generate_types_section(
                     asciidoc.push_str(&format!("==== `{}`\n\n", prop_name));
 
                     if let Some(description) = &prop_param.description {
-                        asciidoc.push_str(&format!("{}\n\n", description));
+                        asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
                     }
 
                     asciidoc.push_str(".Properties\n");
@@ -407,7 +407,7 @@ fn generate_functions_section(
         asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &function.description {
-            asciidoc.push_str(&format!("{}\n\n", description));
+            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         // Basic information table
@@ -455,7 +455,7 @@ fn generate_parameters_section(
         asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &parameter.description {
-            asciidoc.push_str(&format!("{}\n\n", description));
+            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         // Handle metadata at the top if it contains description
@@ -532,7 +532,7 @@ fn generate_parameters_section(
                     asciidoc.push_str(&format!("==== `{}`\n\n", prop_name));
 
                     if let Some(description) = &prop_param.description {
-                        asciidoc.push_str(&format!("{}\n\n", description));
+                        asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
                     }
 
                     asciidoc.push_str(".Properties\n");
@@ -605,7 +605,7 @@ fn generate_nested_object_properties(
         asciidoc.push_str(&format!("{} `{}`\n\n", header_prefix, prop_name));
 
         if let Some(description) = &prop_param.description {
-            asciidoc.push_str(&format!("{}\n\n", description));
+            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         asciidoc.push_str(".Properties\n");
@@ -676,7 +676,7 @@ fn generate_variables_section(
         asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &variable.description {
-            asciidoc.push_str(&format!("{}\n\n", description));
+            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         // Basic information table
@@ -715,7 +715,7 @@ fn generate_resources_section(
         asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &resource.description {
-            asciidoc.push_str(&format!("{}\n\n", description));
+            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         // Basic information table
@@ -788,7 +788,7 @@ fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, exc
         asciidoc.push_str(&format!("=== {}\n\n", name));
 
         if let Some(description) = &module.description {
-            asciidoc.push_str(&format!("{}\n\n", description));
+            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         // Basic information table
@@ -860,7 +860,7 @@ fn generate_outputs_section(
         asciidoc.push_str(&format!("=== `{}`\n\n", name));
 
         if let Some(description) = &output.description {
-            asciidoc.push_str(&format!("{}\n\n", description));
+            asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
         }
 
         // Basic information table

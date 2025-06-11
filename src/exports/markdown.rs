@@ -76,7 +76,7 @@ pub fn export_to_string(
 
     // Description
     if let Some(description) = &document.description {
-        markdown.push_str(&format!("{}\n\n", description));
+        markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
     }
 
     if let Some(target_scope) = &document.target_scope {
@@ -263,7 +263,7 @@ fn generate_types_section(
         markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &custom_type.description {
-            markdown.push_str(&format!("{}\n\n", description));
+            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
         }
 
         // Basic information table
@@ -290,7 +290,7 @@ fn generate_types_section(
                     markdown.push_str(&format!("#### `{}`\n\n", prop_name));
 
                     if let Some(description) = &prop_param.description {
-                        markdown.push_str(&format!("{}\n\n", description));
+                        markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
                     }
 
                     let mut prop_items = vec![("Type", format!("`{}`", prop_param.parameter_type))];
@@ -394,7 +394,7 @@ fn generate_functions_section(
         markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &function.description {
-            markdown.push_str(&format!("{}\n\n", description));
+            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
         }
 
         // Basic information table
@@ -447,7 +447,7 @@ fn generate_parameters_section(
         markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &parameter.description {
-            markdown.push_str(&format!("{}\n\n", description));
+            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
         }
 
         // Metadata comes first if present
@@ -550,7 +550,7 @@ fn generate_nested_object_properties(
         markdown.push_str(&format!("{} `{}`\n\n", header_prefix, prop_name));
 
         if let Some(description) = &prop_param.description {
-            markdown.push_str(&format!("{}\n\n", description));
+            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
         }
 
         let mut prop_items = vec![(
@@ -558,17 +558,8 @@ fn generate_nested_object_properties(
             format_bicep_type_with_backticks(&prop_param.parameter_type),
         )];
 
-        if prop_param.is_nullable {
-            prop_items.push(("Nullable", format_yes_no(true, use_emoji)));
-        } else {
-            prop_items.push(("Nullable", format_yes_no(false, use_emoji)));
-        }
-
-        if prop_param.is_secure {
-            prop_items.push(("Secure", format_yes_no(true, use_emoji)));
-        } else {
-            prop_items.push(("Secure", format_yes_no(false, use_emoji)));
-        }
+        prop_items.push(("Nullable", format_yes_no(prop_param.is_nullable, use_emoji)));
+        prop_items.push(("Secure", format_yes_no(prop_param.is_secure, use_emoji)));
 
         generate_key_value_display(markdown, &prop_items);
 
@@ -655,7 +646,7 @@ fn generate_variables_section(
         markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &variable.description {
-            markdown.push_str(&format!("{}\n\n", description));
+            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
         }
 
         // Basic information table
@@ -692,7 +683,7 @@ fn generate_resources_section(
         markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &resource.description {
-            markdown.push_str(&format!("{}\n\n", description));
+            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
         }
 
         // Basic information table
@@ -776,7 +767,7 @@ fn generate_modules_section(
         markdown.push_str(&format!("### {}\n\n", name));
 
         if let Some(description) = &module.description {
-            markdown.push_str(&format!("{}\n\n", description));
+            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
         }
 
         // Basic information table
@@ -879,7 +870,7 @@ fn generate_outputs_section(
         markdown.push_str(&format!("### `{}`\n\n", name));
 
         if let Some(description) = &output.description {
-            markdown.push_str(&format!("{}\n\n", description));
+            markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
         }
 
         // Basic information table
@@ -892,17 +883,8 @@ fn generate_outputs_section(
             items.push(("Discriminator", discriminator.clone()));
         }
 
-        if output.sealed {
-            items.push(("Sealed", format_yes_no(true, use_emoji)));
-        } else {
-            items.push(("Sealed", format_yes_no(false, use_emoji)));
-        }
-
-        if output.secure {
-            items.push(("Secure", format_yes_no(true, use_emoji)));
-        } else {
-            items.push(("Secure", format_yes_no(false, use_emoji)));
-        }
+        items.push(("Sealed", format_yes_no(output.sealed, use_emoji)));
+        items.push(("Secure", format_yes_no(output.secure, use_emoji)));
 
         generate_key_value_display(markdown, &items);
 
