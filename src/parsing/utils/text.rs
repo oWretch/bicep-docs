@@ -142,12 +142,13 @@ pub fn process_escape_sequences(text: &str) -> String {
 pub fn get_primitive_value_from_text(text: &str) -> String {
     let trimmed = text.trim();
 
-    // Handle quoted strings (both single and double quotes)
+    // Handle quoted strings (single, double, and triple quotes)
     if (trimmed.starts_with('"') && trimmed.ends_with('"') && trimmed.len() >= 2)
         || (trimmed.starts_with('\'') && trimmed.ends_with('\'') && trimmed.len() >= 2)
+        || (trimmed.starts_with("'''") && trimmed.ends_with("'''") && trimmed.len() >= 6)
     {
-        let inner = &trimmed[1..trimmed.len() - 1];
-        process_escape_sequences(inner)
+        // Use process_escape_sequences which handles all quote types including triple quotes
+        process_escape_sequences(trimmed)
     } else {
         // Not a quoted string, return as-is
         trimmed.to_string()

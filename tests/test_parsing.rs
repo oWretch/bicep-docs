@@ -271,8 +271,7 @@ mod parsing {
         // from a Bicep file, including:
         // - Metadata keys and values
         // - Different value types (string, number, boolean, object, array)
-        // The test adapts to whatever metadata is present in the file by checking
-        // for common metadata keys and validating their types.
+        // - Multi-line strings (should not include triple quotes in content)
         let doc = parse_test_bicep_file("metadata.bicep");
 
         // Verify metadata count
@@ -297,6 +296,41 @@ mod parsing {
                 },
                 _ => panic!("Expected name metadata to be a string value"),
             }
+        }
+
+        // Debug: Print all metadata keys and values
+        println!("DEBUG: All metadata keys and values:");
+        for (key, value) in &doc.metadata {
+            println!("  {}: {:?}", key, value);
+        }
+
+        // Test multi-line string parsing (description metadata)
+        if let Some(value) = doc.metadata.get("description") {
+            match value {
+                BicepValue::String(content) => {
+                    println!("DEBUG: Multi-line string content: '{}'", content);
+                    // Verify that triple quotes are not included in the content
+                    assert!(
+                        !content.starts_with("'''") && !content.ends_with("'''"),
+                        "Multi-line string content should not include triple quotes: {}",
+                        content
+                    );
+                    // Verify that the content is not empty
+                    assert!(
+                        !content.trim().is_empty(),
+                        "Multi-line string content should not be empty"
+                    );
+                    // Verify content contains expected text
+                    assert!(
+                        content.contains("This file tests various metadata declarations"),
+                        "Multi-line string should contain expected content: {}",
+                        content
+                    );
+                },
+                _ => panic!("Expected description metadata to be a string value"),
+            }
+        } else {
+            println!("DEBUG: No 'description' metadata found!");
         }
 
         if let Some(value) = doc.metadata.get("count") {

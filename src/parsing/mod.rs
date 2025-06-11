@@ -732,10 +732,19 @@ fn parse_metadata(node: Node, source_code: &str) -> (String, Option<BicepValue>)
 
 /// Extract a primitive Bicep value from a node
 fn get_primitive_value(node: Node, source_code: &str) -> Result<BicepValue, Box<dyn Error>> {
-    let node_text = get_node_text(node, source_code);
     match node.kind() {
         "string" => {
-            // Remove the surrounding quotes for string values
+            // For string nodes, look for string_content child nodes instead of using the entire text
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor) {
+                if child.kind() == "string_content" {
+                    let content = get_node_text(child, source_code);
+                    return Ok(BicepValue::String(content));
+                }
+            }
+
+            // Fallback to the old method if no string_content is found
+            let node_text = get_node_text(node, source_code);
             let text = if node_text.len() >= 2 {
                 let first_char = node_text.chars().next().unwrap();
                 let last_char = node_text.chars().last().unwrap();
@@ -752,19 +761,25 @@ fn get_primitive_value(node: Node, source_code: &str) -> Result<BicepValue, Box<
             };
             Ok(BicepValue::String(text))
         },
-        "number" => match node_text.parse::<i64>() {
-            Ok(n) => Ok(BicepValue::Int(n)),
-            Err(_) => Err(Box::new(BicepParserError::InvalidValue {
-                kind: "number".to_string(),
-                reason: format!("Could not parse '{}' as integer", node_text),
-            })),
+        "number" => {
+            let node_text = get_node_text(node, source_code);
+            match node_text.parse::<i64>() {
+                Ok(n) => Ok(BicepValue::Int(n)),
+                Err(_) => Err(Box::new(BicepParserError::InvalidValue {
+                    kind: "number".to_string(),
+                    reason: format!("Could not parse '{}' as integer", node_text),
+                })),
+            }
         },
-        "boolean" => match node_text.parse::<bool>() {
-            Ok(b) => Ok(BicepValue::Bool(b)),
-            Err(_) => Err(Box::new(BicepParserError::InvalidValue {
-                kind: "boolean".to_string(),
-                reason: format!("Could not parse '{}' as boolean", node_text),
-            })),
+        "boolean" => {
+            let node_text = get_node_text(node, source_code);
+            match node_text.parse::<bool>() {
+                Ok(b) => Ok(BicepValue::Bool(b)),
+                Err(_) => Err(Box::new(BicepParserError::InvalidValue {
+                    kind: "boolean".to_string(),
+                    reason: format!("Could not parse '{}' as boolean", node_text),
+                })),
+            }
         },
         _ => Err(Box::new(BicepParserError::UnknownKind(format!(
             "Unknown primitive value type: {}",

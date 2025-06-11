@@ -3,7 +3,10 @@
 
 // Simple metadata declarations
 metadata name = 'Metadata Test File'
-metadata description = 'This file tests various metadata declarations in Bicep'
+metadata description = '''
+This file tests various metadata declarations in Bicep.
+This description is longer and includes more information.
+'''
 metadata version = '1.0.0'
 
 // Metadata with string value

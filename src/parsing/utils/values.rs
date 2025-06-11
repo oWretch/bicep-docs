@@ -63,6 +63,16 @@ pub fn parse_value_node(
 ) -> Result<Option<BicepValue>, Box<dyn Error>> {
     match node.kind() {
         "string" => {
+            // For string nodes, look for string_content child nodes instead of using the entire text
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor) {
+                if child.kind() == "string_content" {
+                    let content = get_node_text(child, source_code);
+                    return Ok(Some(BicepValue::String(content)));
+                }
+            }
+
+            // Fallback to the old method if no string_content is found
             let text = get_node_text(node, source_code);
             Ok(Some(BicepValue::String(get_primitive_value_from_text(
                 &text,
