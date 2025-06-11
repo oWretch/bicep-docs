@@ -5,8 +5,13 @@
 
 use std::error::Error;
 
+use indexmap::IndexMap;
 use tree_sitter::Node;
 
+use super::super::BicepParameter;
+use super::decorators::{
+    extract_description_from_decorators, parse_decorators, process_common_decorators,
+};
 use crate::BicepType;
 
 /// Parse a property type from a type node
@@ -181,6 +186,13 @@ pub fn parse_array_type(node: Node, source_code: &str) -> Result<BicepType, Box<
     // Find the element type (the type before the [])
     for child in &children {
         match child.kind() {
+            "type" => {
+                // The array type contains a nested type node
+                if let Ok((parsed_type, _)) = parse_type_node(*child, source_code) {
+                    inner_type = parsed_type;
+                    break;
+                }
+            },
             "primitive_type" => {
                 let type_text = super::get_node_text(&child, source_code)?;
                 inner_type = match type_text.as_str() {
@@ -228,6 +240,154 @@ pub fn parse_array_type(node: Node, source_code: &str) -> Result<BicepType, Box<
     Ok(BicepType::Array(Box::new(inner_type)))
 }
 
+/// Parse an inline object type definition with properties
+///
+/// Handles object type definitions that include property specifications,
+/// such as those found in parameter declarations with inline types.
+///
+/// # Arguments
+///
+/// * `object_node` - The tree-sitter Node representing the object
+/// * `source_code` - The source code text
+///
+/// # Returns
+///
+/// A Result containing an IndexMap of property names to BicepParameter definitions
+pub fn parse_inline_object_type(
+    object_node: Node,
+    source_code: &str,
+) -> Result<IndexMap<String, BicepParameter>, Box<dyn Error>> {
+    let mut properties = IndexMap::new();
+    let mut cursor = object_node.walk();
+    let all_children = object_node.children(&mut cursor).collect::<Vec<_>>();
+
+    // Group decorators with their following properties
+    let mut i = 0;
+    let mut pending_decorators = Vec::new();
+
+    while i < all_children.len() {
+        let child = all_children[i];
+        match child.kind() {
+            "decorators" => {
+                // Parse decorators and add them to pending list
+                if let Ok(decorators) = parse_decorators(child, source_code) {
+                    pending_decorators.extend(decorators);
+                }
+            },
+            "object_property" => {
+                // Parse the property and apply any pending decorators
+                if let Ok((prop_name, mut prop_param)) = parse_object_property(child, source_code) {
+                    // Apply pending decorators to this property
+                    if !pending_decorators.is_empty() {
+                        // Extract description from decorators
+                        if prop_param.description.is_none() {
+                            prop_param.description =
+                                extract_description_from_decorators(&pending_decorators);
+                        }
+
+                        // Process common decorators
+                        let (
+                            _,
+                            metadata,
+                            min_length,
+                            max_length,
+                            min_value,
+                            max_value,
+                            is_secure,
+                            is_sealed,
+                        ) = process_common_decorators(&pending_decorators);
+
+                        if let Some(meta) = metadata {
+                            prop_param.metadata = meta;
+                        }
+                        if let Some(min_len) = min_length {
+                            prop_param.min_length = Some(min_len);
+                        }
+                        if let Some(max_len) = max_length {
+                            prop_param.max_length = Some(max_len);
+                        }
+                        if let Some(min_val) = min_value {
+                            prop_param.min_value = Some(min_val);
+                        }
+                        if let Some(max_val) = max_value {
+                            prop_param.max_value = Some(max_val);
+                        }
+                        prop_param.is_secure = is_secure;
+                        prop_param.is_sealed = is_sealed;
+
+                        // Clear pending decorators
+                        pending_decorators.clear();
+                    }
+
+                    properties.insert(prop_name, prop_param);
+                }
+            },
+            "{" | "}" => {
+                // Skip braces
+            },
+            _ => {
+                // Skip other nodes
+            },
+        }
+        i += 1;
+    }
+
+    Ok(properties)
+}
+
+/// Parse a single object property definition
+///
+/// Extracts the property name and type from object property nodes.
+/// Handles both primitive types and nested object types recursively.
+///
+/// # Arguments
+///
+/// * `property_node` - The tree-sitter Node representing an object property
+/// * `source_code` - The source code text
+///
+/// # Returns
+///
+/// A Result containing a tuple of (property_name, BicepParameter)
+fn parse_object_property(
+    property_node: Node,
+    source_code: &str,
+) -> Result<(String, BicepParameter), Box<dyn Error>> {
+    let mut cursor = property_node.walk();
+    let children = property_node.children(&mut cursor).collect::<Vec<_>>();
+
+    if children.len() < 3 {
+        return Err("Invalid object property structure".into());
+    }
+
+    // First child should be the property name (identifier)
+    let prop_name = super::get_node_text(&children[0], source_code)?;
+
+    // Third child should be the type (after the colon)
+    let type_node = children[2];
+
+    let mut param = BicepParameter::default();
+
+    // Check if this is a nested object
+    if type_node.kind() == "object" {
+        // This is a nested object, parse it recursively
+        if let Ok(nested_properties) = parse_inline_object_type(type_node, source_code) {
+            param.parameter_type = BicepType::Object(Some(nested_properties));
+            param.is_nullable = false;
+        } else {
+            // Fallback to generic object type
+            param.parameter_type = BicepType::Object(None);
+            param.is_nullable = false;
+        }
+    } else {
+        // This is a primitive or other type
+        let (prop_type, is_nullable) = parse_type_node(type_node, source_code)?;
+        param.parameter_type = prop_type;
+        param.is_nullable = is_nullable;
+    }
+
+    Ok((prop_name, param))
+}
+
 /// Parse a type node and return both the type and whether it's nullable
 ///
 /// # Arguments
@@ -241,6 +401,35 @@ pub fn parse_array_type(node: Node, source_code: &str) -> Result<BicepType, Box<
 pub fn parse_type_node(node: Node, source_code: &str) -> Result<(BicepType, bool), Box<dyn Error>> {
     let mut nullable = false;
     let mut bicep_type = BicepType::String; // Default
+
+    // Handle the case where the node itself is a primitive_type
+    if node.kind() == "primitive_type" {
+        let type_text = super::get_node_text(&node, source_code)?;
+        bicep_type = match type_text.as_str() {
+            "string" => BicepType::String,
+            "int" => BicepType::Int,
+            "bool" => BicepType::Bool,
+            "object" => BicepType::Object(None),
+            _ => BicepType::String,
+        };
+        return Ok((bicep_type, nullable));
+    }
+
+    // Handle the case where the node itself is a nullable_type
+    if node.kind() == "nullable_type" {
+        nullable = true;
+        let mut cursor = node.walk();
+        let children = node.children(&mut cursor).collect::<Vec<_>>();
+        for child in &children {
+            if child.kind() != "?" {
+                if let Ok((inner_type, _)) = parse_type_node(*child, source_code) {
+                    bicep_type = inner_type;
+                    break;
+                }
+            }
+        }
+        return Ok((bicep_type, nullable));
+    }
 
     let mut cursor = node.walk();
     let children = node.children(&mut cursor).collect::<Vec<_>>();
@@ -256,6 +445,14 @@ pub fn parse_type_node(node: Node, source_code: &str) -> Result<(BicepType, bool
                     "object" => BicepType::Object(None),
                     _ => BicepType::String,
                 };
+            },
+            "object" => {
+                // This is an inline object type definition with properties
+                if let Ok(properties) = parse_inline_object_type(*child, source_code) {
+                    bicep_type = BicepType::Object(Some(properties));
+                } else {
+                    bicep_type = BicepType::Object(None);
+                }
             },
             "array_type" => {
                 bicep_type = parse_array_type(*child, source_code)?;

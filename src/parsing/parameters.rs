@@ -226,19 +226,37 @@ fn infer_type_from_default_value(parameter: &mut BicepParameter, value: &BicepVa
             }
         },
         BicepValue::Array(array_items) => {
-            // Infer array element type from first item
-            debug!("Processing array type for parameter: {}", name);
-            let element_type = array_items
-                .first()
-                .map_or(BicepType::String, |item| match item {
-                    BicepValue::String(_) => BicepType::String,
-                    BicepValue::Int(_) => BicepType::Int,
-                    BicepValue::Bool(_) => BicepType::Bool,
-                    BicepValue::Object(_) => BicepType::Object(None),
-                    BicepValue::Array(_) => BicepType::Array(Box::new(BicepType::String)),
-                    BicepValue::Identifier(_) => BicepType::String,
-                });
-            parameter.parameter_type = BicepType::Array(Box::new(element_type));
+            // Only infer array type if the current type is not already an array
+            match &parameter.parameter_type {
+                BicepType::Array(_) => {
+                    // Preserve explicitly declared array type
+                    debug!(
+                        "Preserving explicitly declared array type for parameter: {}",
+                        name
+                    );
+                },
+                _ => {
+                    // Infer array element type from first item
+                    debug!(
+                        "Inferring array type from default value for parameter: {}",
+                        name
+                    );
+                    let element_type =
+                        array_items
+                            .first()
+                            .map_or(BicepType::String, |item| match item {
+                                BicepValue::String(_) => BicepType::String,
+                                BicepValue::Int(_) => BicepType::Int,
+                                BicepValue::Bool(_) => BicepType::Bool,
+                                BicepValue::Object(_) => BicepType::Object(None),
+                                BicepValue::Array(_) => {
+                                    BicepType::Array(Box::new(BicepType::String))
+                                },
+                                BicepValue::Identifier(_) => BicepType::String,
+                            });
+                    parameter.parameter_type = BicepType::Array(Box::new(element_type));
+                },
+            }
         },
         _ => {
             // Other types don't need special handling

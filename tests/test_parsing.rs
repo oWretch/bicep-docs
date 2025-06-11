@@ -38,6 +38,7 @@ mod parsing {
         // - Secure parameters
         // - Parameter decorators (minLength, maxLength, etc.)
         // - Parameter nullability
+        // - Object definitions, including nested objects
         let doc = parse_test_bicep_file("parameters.bicep");
 
         // Verify parameters count
@@ -85,6 +86,88 @@ mod parsing {
                 param.default_value.is_some(),
                 "stringWithDefault should have a default value"
             );
+        }
+
+        // --- Object Definition Tests ---
+
+        // Check typedObject is an object with expected properties
+        if let Some(param) = doc.parameters.get("typedObject") {
+            match &param.parameter_type {
+                crate::parsing::BicepType::Object(Some(props)) => {
+                    assert!(
+                        props.contains_key("name"),
+                        "typedObject missing 'name' property"
+                    );
+                    assert!(
+                        props.contains_key("age"),
+                        "typedObject missing 'age' property"
+                    );
+                    assert!(
+                        props.contains_key("email"),
+                        "typedObject missing 'email' property"
+                    );
+                    assert!(
+                        props.contains_key("address"),
+                        "typedObject missing 'address' property"
+                    );
+
+                    // Check nested object for address
+                    let address_param = &props["address"];
+                    match &address_param.parameter_type {
+                        crate::parsing::BicepType::Object(Some(address_props)) => {
+                            assert!(
+                                address_props.contains_key("street"),
+                                "address missing 'street'"
+                            );
+                            assert!(address_props.contains_key("city"), "address missing 'city'");
+                            assert!(
+                                address_props.contains_key("zipCode"),
+                                "address missing 'zipCode'"
+                            );
+                        },
+                        _ => panic!("typedObject.address should be an object with properties"),
+                    }
+                },
+                _ => panic!("typedObject should be an object with properties"),
+            }
+        } else {
+            panic!("Missing typedObject parameter");
+        }
+
+        // Check configParam is an object with expected properties and constraints
+        if let Some(param) = doc.parameters.get("configParam") {
+            match &param.parameter_type {
+                crate::parsing::BicepType::Object(Some(props)) => {
+                    assert!(
+                        props.contains_key("prefix"),
+                        "configParam missing 'prefix' property"
+                    );
+                    assert!(
+                        props.contains_key("instances"),
+                        "configParam missing 'instances' property"
+                    );
+                    let prefix_param = &props["prefix"];
+                    assert_eq!(
+                        prefix_param.min_length,
+                        Some(5),
+                        "configParam.prefix minLength"
+                    );
+                    let instances_param = &props["instances"];
+                    assert_eq!(
+                        instances_param.min_value,
+                        Some(1),
+                        "configParam.instances minValue"
+                    );
+                    assert_eq!(
+                        instances_param.max_value,
+                        Some(100),
+                        "configParam.instances maxValue"
+                    );
+                },
+                _ => panic!("configParam should be an object with properties"),
+            }
+        } else {
+            panic!("Missing configParam parameter");
         }
     }
 
