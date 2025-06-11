@@ -9,7 +9,7 @@ use crate::{
     exports::utils::{
         common::{format_yes_no, generate_metadata_display_markdown},
         formatting::{
-            escape_markdown, format_bicep_type_with_backticks, format_bicep_value_as_code,
+            escape_markdown, format_bicep_type_with_backticks, format_bicep_value_with_backticks,
         },
     },
     parsing::{
@@ -757,7 +757,7 @@ fn generate_resources_section(
                 "Condition",
                 format!(
                     "\n\n{}",
-                    format_bicep_value_as_code(&BicepValue::String(condition.clone()))
+                    format_bicep_value_with_backticks(&BicepValue::String(condition.clone()))
                 ),
             ));
         }
@@ -767,7 +767,7 @@ fn generate_resources_section(
                 "Loop",
                 format!(
                     "\n{}",
-                    format_bicep_value_as_code(&BicepValue::String(loop_statement.clone()))
+                    format_bicep_value_with_backticks(&BicepValue::String(loop_statement.clone()))
                 ),
             ));
         }
@@ -860,7 +860,7 @@ fn generate_modules_section(
                 "Condition",
                 format!(
                     "\n\n{}",
-                    format_bicep_value_as_code(&BicepValue::String(condition.clone()))
+                    format_bicep_value_with_backticks(&BicepValue::String(condition.clone()))
                 ),
             ));
         }
@@ -870,7 +870,7 @@ fn generate_modules_section(
                 "Loop",
                 format!(
                     "\n{}",
-                    format_bicep_value_as_code(&BicepValue::String(loop_statement.clone()))
+                    format_bicep_value_with_backticks(&BicepValue::String(loop_statement.clone()))
                 ),
             ));
         }

@@ -10,5 +10,6 @@ pub use common::{
     format_yes_no, generate_metadata_display_asciidoc, generate_metadata_display_markdown,
 };
 pub use formatting::{
-    escape_asciidoc, escape_markdown, format_bicep_type_with_backticks, format_bicep_value_as_code,
+    escape_asciidoc, escape_markdown, format_bicep_type_with_backticks,
+    format_bicep_value_with_backticks,
 };

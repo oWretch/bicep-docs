@@ -18,7 +18,7 @@ pub fn format_bicep_type_with_backticks(bicep_type: &BicepType) -> String {
     format!("`{}`", bicep_type)
 }
 
-/// Format a Bicep value as code with backticks for Markdown
+/// Format a Bicep value as code with backticks
 ///
 /// # Arguments
 ///
@@ -27,7 +27,7 @@ pub fn format_bicep_type_with_backticks(bicep_type: &BicepType) -> String {
 /// # Returns
 ///
 /// String representation of the value wrapped in backticks
-pub fn format_bicep_value_as_code(value: &BicepValue) -> String {
+pub fn format_bicep_value_with_backticks(value: &BicepValue) -> String {
     format!("`{}`", value)
 }
 
