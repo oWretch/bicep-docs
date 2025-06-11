@@ -10,12 +10,9 @@ use crate::{
         common::{format_yes_no, generate_metadata_display_markdown},
         formatting::{
             escape_markdown, format_bicep_array_as_list, format_bicep_type_with_backticks,
-            format_bicep_value_with_backticks,
         },
     },
-    parsing::{
-        BicepDocument, BicepFunctionArgument, BicepImport, BicepType, BicepValue, ModuleSource,
-    },
+    parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType},
 };
 
 /// Export a Bicep document to a Markdown file
@@ -722,23 +719,11 @@ fn generate_resources_section(
         }
 
         if let Some(condition) = &resource.condition {
-            items.push((
-                "Condition",
-                format!(
-                    "\n\n{}",
-                    format_bicep_value_with_backticks(&BicepValue::String(condition.clone()))
-                ),
-            ));
+            items.push(("Condition", format!("  \n```bicep\n{}\n```\n", condition)));
         }
 
         if let Some(loop_statement) = &resource.loop_statement {
-            items.push((
-                "Loop",
-                format!(
-                    "\n{}",
-                    format_bicep_value_with_backticks(&BicepValue::String(loop_statement.clone()))
-                ),
-            ));
+            items.push(("Loop", format!("  \n```bicep\n{}\n```\n", loop_statement)));
         }
 
         generate_key_value_display(markdown, &items);
@@ -771,47 +756,10 @@ fn generate_modules_section(
         }
 
         // Basic information table
-        let source_str = match &module.source {
-            ModuleSource::LocalPath(path) => format!("File: {}", path),
-            ModuleSource::Registry {
-                alias,
-                registry_fqdn,
-                path,
-                version,
-            } => {
-                if let Some(alias) = alias {
-                    format!("Registry: `{}:{} ({})`", alias, path, version)
-                } else if let Some(fqdn) = registry_fqdn {
-                    format!("Registry: `{}{}:{}`", fqdn, path, version)
-                } else {
-                    format!("Registry: `{}:{}`", path, version)
-                }
-            },
-            ModuleSource::TypeSpec {
-                alias: _,
-                subscription_id,
-                resource_group_name,
-                template_spec_name,
-                version,
-            } => {
-                if let Some(sub_id) = subscription_id {
-                    if let Some(rg) = resource_group_name {
-                        format!(
-                            "Template Spec: {} in {}/{} ({})",
-                            template_spec_name, sub_id, rg, version
-                        )
-                    } else {
-                        format!(
-                            "Template Spec: {} in {} ({})",
-                            template_spec_name, sub_id, version
-                        )
-                    }
-                } else {
-                    format!("Template Spec: {} ({})", template_spec_name, version)
-                }
-            },
-        };
-        let mut items = vec![("Source", source_str), ("Name", module.name.clone())];
+        let mut items = vec![
+            ("Source", format!(" `{}`", module.source)),
+            ("Name", module.name.clone()),
+        ];
 
         if let Some(depends_on) = &module.depends_on {
             if !depends_on.is_empty() {
@@ -825,23 +773,11 @@ fn generate_modules_section(
         }
 
         if let Some(condition) = &module.condition {
-            items.push((
-                "Condition",
-                format!(
-                    "\n\n{}",
-                    format_bicep_value_with_backticks(&BicepValue::String(condition.clone()))
-                ),
-            ));
+            items.push(("Condition", format!("  \n```bicep\n{}\n```\n", condition)));
         }
 
         if let Some(loop_statement) = &module.loop_statement {
-            items.push((
-                "Loop",
-                format!(
-                    "\n{}",
-                    format_bicep_value_with_backticks(&BicepValue::String(loop_statement.clone()))
-                ),
-            ));
+            items.push(("Loop", format!("  \n```bicep\n{}\n```\n", loop_statement)));
         }
 
         generate_key_value_display(markdown, &items);

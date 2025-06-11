@@ -10,7 +10,7 @@ use crate::{
         common::{format_yes_no, generate_metadata_display_asciidoc},
         formatting::{escape_asciidoc, format_bicep_array_as_list},
     },
-    parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType, ModuleSource},
+    parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType},
 };
 
 /// Export a Bicep document to an AsciiDoc file
@@ -792,48 +792,38 @@ fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, exc
         }
 
         // Basic information table
-        let source_str = match &module.source {
-            ModuleSource::LocalPath(path) => format!("File: {}", path),
-            ModuleSource::Registry {
-                alias,
-                registry_fqdn,
-                path,
-                version,
-            } => {
-                if let Some(alias) = alias {
-                    format!("Registry: {}:{} ({})", alias, path, version)
-                } else if let Some(fqdn) = registry_fqdn {
-                    format!("Registry: {}{}:{}", fqdn, path, version)
-                } else {
-                    format!("Registry: {}:{}", path, version)
-                }
-            },
-            ModuleSource::TypeSpec {
-                alias: _,
-                subscription_id,
-                resource_group_name,
-                template_spec_name,
-                version,
-            } => {
-                if let Some(sub_id) = subscription_id {
-                    if let Some(rg) = resource_group_name {
-                        format!(
-                            "Template Spec: {} in {}/{} ({})",
-                            template_spec_name, sub_id, rg, version
-                        )
-                    } else {
-                        format!(
-                            "Template Spec: {} in {} ({})",
-                            template_spec_name, sub_id, version
-                        )
-                    }
-                } else {
-                    format!("Template Spec: {} ({})", template_spec_name, version)
-                }
-            },
-        };
+        let mut items = vec![
+            ("Source", format!(" `{}`", module.source)),
+            ("Name", module.name.clone()),
+        ];
 
-        let items = vec![("Source", source_str)];
+        if let Some(depends_on) = &module.depends_on {
+            if !depends_on.is_empty() {
+                let deps = depends_on.join(", ");
+                items.push(("Depends On", deps));
+            }
+        }
+
+        if let Some(batch_size) = module.batch_size {
+            items.push(("Batch Size", format!("`{}`", batch_size)));
+        }
+
+        if let Some(condition) = &module.condition {
+            asciidoc.push_str("\n.Condition\n");
+            asciidoc.push_str("[source]\n");
+            asciidoc.push_str("----\n");
+            asciidoc.push_str(condition);
+            asciidoc.push_str("\n----\n");
+        }
+
+        if let Some(loop_statement) = &module.loop_statement {
+            asciidoc.push_str("\n.Loop\n");
+            asciidoc.push_str("[source]\n");
+            asciidoc.push_str("----\n");
+            asciidoc.push_str(loop_statement);
+            asciidoc.push_str("\n----\n");
+        }
+
         generate_key_value_display(asciidoc, &items, "h,1");
 
         asciidoc.push('\n');
