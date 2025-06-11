@@ -366,10 +366,7 @@ fn generate_types_section(
 
                     if let Some(default_value) = &prop_param.default_value {
                         asciidoc.push_str("\n.Default Value\n");
-                        asciidoc.push_str("[source]\n");
-                        asciidoc.push_str("----\n");
-                        asciidoc.push_str(&default_value.pretty_format());
-                        asciidoc.push_str("\n----\n");
+                        asciidoc.push_str(&format_code_block(&default_value.pretty_format()));
                     }
 
                     if !prop_param.metadata.is_empty() {
@@ -426,10 +423,7 @@ fn generate_functions_section(
 
         // Function definition
         asciidoc.push_str("\n.Definition\n");
-        asciidoc.push_str("[source]\n");
-        asciidoc.push_str("----\n");
-        asciidoc.push_str(&function.expression);
-        asciidoc.push_str("\n----\n");
+        asciidoc.push_str(&format_code_block(&function.expression));
 
         asciidoc.push('\n');
     }
@@ -517,10 +511,7 @@ fn generate_parameters_section(
         // Default value
         if let Some(default_value) = &parameter.default_value {
             asciidoc.push_str("\n.Default Value\n");
-            asciidoc.push_str("[source]\n");
-            asciidoc.push_str("----\n");
-            asciidoc.push_str(&default_value.pretty_format());
-            asciidoc.push_str("\n----\n");
+            asciidoc.push_str(&format_code_block(&default_value.pretty_format()));
         }
 
         // Object definition for object types
@@ -686,10 +677,7 @@ fn generate_variables_section(
 
         // Value section
         asciidoc.push_str("\n.Value\n");
-        asciidoc.push_str("[source]\n");
-        asciidoc.push_str("----\n");
-        asciidoc.push_str(&variable.value.pretty_format());
-        asciidoc.push_str("\n----\n");
+        asciidoc.push_str(&format_code_block(&variable.value.pretty_format()));
 
         asciidoc.push('\n');
     }
@@ -754,19 +742,13 @@ fn generate_resources_section(
         // Condition section
         if let Some(condition) = &resource.condition {
             asciidoc.push_str("\n.Condition\n");
-            asciidoc.push_str("[source]\n");
-            asciidoc.push_str("----\n");
-            asciidoc.push_str(condition);
-            asciidoc.push_str("\n----\n");
+            asciidoc.push_str(&format_code_block(condition));
         }
 
         // Loop section
         if let Some(loop_statement) = &resource.loop_statement {
             asciidoc.push_str("\n.Loop\n");
-            asciidoc.push_str("[source]\n");
-            asciidoc.push_str("----\n");
-            asciidoc.push_str(loop_statement);
-            asciidoc.push_str("\n----\n");
+            asciidoc.push_str(&format_code_block(loop_statement));
         }
 
         asciidoc.push('\n');
@@ -810,18 +792,12 @@ fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, exc
 
         if let Some(condition) = &module.condition {
             asciidoc.push_str("\n.Condition\n");
-            asciidoc.push_str("[source]\n");
-            asciidoc.push_str("----\n");
-            asciidoc.push_str(condition);
-            asciidoc.push_str("\n----\n");
+            asciidoc.push_str(&format_code_block(condition));
         }
 
         if let Some(loop_statement) = &module.loop_statement {
             asciidoc.push_str("\n.Loop\n");
-            asciidoc.push_str("[source]\n");
-            asciidoc.push_str("----\n");
-            asciidoc.push_str(loop_statement);
-            asciidoc.push_str("\n----\n");
+            asciidoc.push_str(&format_code_block(loop_statement));
         }
 
         generate_key_value_display(asciidoc, &items, "h,1");
@@ -891,10 +867,7 @@ fn generate_outputs_section(
 
         // Value section
         asciidoc.push_str("\n.Value\n");
-        asciidoc.push_str("[source]\n");
-        asciidoc.push_str("----\n");
-        asciidoc.push_str(&output.value.pretty_format());
-        asciidoc.push_str("\n----\n");
+        asciidoc.push_str(&format_code_block(&output.value.pretty_format()));
 
         // Additional metadata if present
         if let Some(metadata) = &output.metadata {
@@ -961,6 +934,11 @@ fn generate_function_arguments_display(
         ));
     }
     asciidoc.push_str("|===\n");
+}
+
+/// Format a value as a code block for display in AsciiDoc
+fn format_code_block(value: &str) -> String {
+    format!("[source]\n----\n{}\n----\n", value)
 }
 
 #[cfg(test)]

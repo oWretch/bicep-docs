@@ -344,9 +344,7 @@ fn generate_types_section(
 
                     if let Some(default_value) = &prop_param.default_value {
                         markdown.push_str("\n**Default Value**\n\n");
-                        markdown.push_str("```bicep\n");
-                        markdown.push_str(&default_value.pretty_format());
-                        markdown.push_str("\n```\n");
+                        markdown.push_str(&format_code_block(&default_value.pretty_format()));
                     }
 
                     // Handle nested object properties recursively
@@ -410,9 +408,7 @@ fn generate_functions_section(
         // Definition
         if !function.expression.is_empty() {
             markdown.push_str("\n**Definition**\n\n");
-            markdown.push_str("```bicep\n");
-            markdown.push_str(&function.expression);
-            markdown.push_str("\n```\n");
+            markdown.push_str(&format_code_block(&function.expression));
         }
 
         if !function.metadata.is_empty() {
@@ -511,9 +507,7 @@ fn generate_parameters_section(
 
         if let Some(default_value) = &parameter.default_value {
             markdown.push_str("\n**Default Value**\n\n");
-            markdown.push_str("```bicep\n");
-            markdown.push_str(&default_value.pretty_format());
-            markdown.push_str("\n```\n");
+            markdown.push_str(&format_code_block(&default_value.pretty_format()));
         }
 
         // Object properties for object types
@@ -599,9 +593,7 @@ fn generate_nested_object_properties(
 
         if let Some(default_value) = &prop_param.default_value {
             markdown.push_str("\n**Default Value**\n\n");
-            markdown.push_str("```bicep\n");
-            markdown.push_str(&default_value.pretty_format());
-            markdown.push_str("\n```\n");
+            markdown.push_str(&format_code_block(&default_value.pretty_format()));
         }
 
         // Recursively handle nested object properties (limit depth to avoid infinite recursion)
@@ -652,9 +644,7 @@ fn generate_variables_section(
 
         // Value
         markdown.push_str("\n**Value**\n\n");
-        markdown.push_str("```bicep\n");
-        markdown.push_str(&variable.value.pretty_format());
-        markdown.push_str("\n```\n");
+        markdown.push_str(&format_code_block(&variable.value.pretty_format()));
 
         markdown.push('\n');
     }
@@ -719,11 +709,11 @@ fn generate_resources_section(
         }
 
         if let Some(condition) = &resource.condition {
-            items.push(("Condition", format!("  \n```bicep\n{}\n```\n", condition)));
+            items.push(("Condition", format!("  \n{}", format_code_block(condition))));
         }
 
         if let Some(loop_statement) = &resource.loop_statement {
-            items.push(("Loop", format!("  \n```bicep\n{}\n```\n", loop_statement)));
+            items.push(("Loop", format!("  \n{}", format_code_block(loop_statement))));
         }
 
         generate_key_value_display(markdown, &items);
@@ -773,11 +763,11 @@ fn generate_modules_section(
         }
 
         if let Some(condition) = &module.condition {
-            items.push(("Condition", format!("  \n```bicep\n{}\n```\n", condition)));
+            items.push(("Condition", format!("  \n{}", format_code_block(condition))));
         }
 
         if let Some(loop_statement) = &module.loop_statement {
-            items.push(("Loop", format!("  \n```bicep\n{}\n```\n", loop_statement)));
+            items.push(("Loop", format!("  \n{}", format_code_block(loop_statement))));
         }
 
         generate_key_value_display(markdown, &items);
@@ -858,9 +848,7 @@ fn generate_outputs_section(
 
         // Value in code block
         markdown.push_str("\n**Value**\n\n");
-        markdown.push_str("```bicep\n");
-        markdown.push_str(&output.value.pretty_format());
-        markdown.push_str("\n```\n");
+        markdown.push_str(&format_code_block(&output.value.pretty_format()));
 
         if let Some(metadata) = &output.metadata {
             if !metadata.is_empty() {
@@ -876,6 +864,11 @@ fn generate_outputs_section(
 /// Format a constraint value with backticks for display in markdown
 fn format_constraint_value(value: &str) -> String {
     format!("`{}`", value)
+}
+
+/// Format a value as acode block for display in Markdown
+fn format_code_block(value: &str) -> String {
+    format!("```bicep\n{}\n```\n", value)
 }
 
 /// Generate key-value property display
