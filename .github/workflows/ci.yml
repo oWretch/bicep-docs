@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install commitlint
         run: |
@@ -36,7 +36,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    dependencies: validate-commits
+    needs: validate-commits
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
