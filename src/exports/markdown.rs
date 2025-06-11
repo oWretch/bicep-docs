@@ -3,16 +3,19 @@
 /// This module provides functions to export parsed Bicep documents
 /// to Markdown format with structured documentation layout.
 use std::error::Error as StdError;
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path};
 
-use crate::exports::utils::common::{format_yes_no, generate_metadata_display_markdown};
-use crate::exports::utils::formatting::{
-    escape_markdown, format_bicep_type_with_backticks, format_bicep_value,
-    format_bicep_value_as_code,
-};
-use crate::parsing::{
-    BicepDocument, BicepFunctionArgument, BicepImport, BicepType, BicepValue, ModuleSource,
+use crate::{
+    exports::utils::{
+        common::{format_yes_no, generate_metadata_display_markdown},
+        formatting::{
+            escape_markdown, format_bicep_type_with_backticks, format_bicep_value,
+            format_bicep_value_as_code,
+        },
+    },
+    parsing::{
+        BicepDocument, BicepFunctionArgument, BicepImport, BicepType, BicepValue, ModuleSource,
+    },
 };
 
 /// Export a Bicep document to a Markdown file
@@ -1035,8 +1038,10 @@ fn generate_function_arguments_display(markdown: &mut String, arguments: &[Bicep
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::exports::utils::formatting::format_bicep_type;
-    use crate::parsing::{BicepDocument, BicepParameter, BicepType, BicepValue};
+    use crate::{
+        exports::utils::formatting::format_bicep_type,
+        parsing::{BicepDocument, BicepParameter, BicepType, BicepValue},
+    };
 
     #[test]
     fn test_export_to_string_basic() {

@@ -1,7 +1,8 @@
+use std::fs;
+
 use bicep_docs::{
     export_bicep_document_to_markdown_string, parse_and_export_to_markdown, parse_bicep_document,
 };
-use std::fs;
 
 #[cfg(test)]
 mod markdown {

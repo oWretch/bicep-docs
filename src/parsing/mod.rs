@@ -15,10 +15,11 @@
 //! - `outputs.rs` - Output declaration parsing
 //! - `imports.rs` - Import statement parsing
 
+use std::{error::Error, fmt};
+
 use indexmap::IndexMap;
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use serde_with::skip_serializing_none;
-use std::{error::Error, fmt};
 use tracing::warn;
 use tree_sitter::{Node, Tree};
 
@@ -39,8 +40,7 @@ pub use outputs::{parse_output_declaration, BicepOutput};
 pub use parameters::BicepParameter;
 pub use resources::BicepResource;
 pub use types::BicepCustomType;
-pub use utils::decorators::extract_description_from_decorators;
-pub use utils::get_node_text;
+pub use utils::{decorators::extract_description_from_decorators, get_node_text};
 pub use variables::BicepVariable;
 
 // Import commonly used utilities from utils module using direct paths
@@ -246,8 +246,9 @@ impl<'de> Deserialize<'de> for BicepValue {
     where
         D: serde::Deserializer<'de>,
     {
-        use serde::de::{self, MapAccess, SeqAccess, Visitor};
         use std::fmt;
+
+        use serde::de::{self, MapAccess, SeqAccess, Visitor};
 
         struct BicepValueVisitor;
 

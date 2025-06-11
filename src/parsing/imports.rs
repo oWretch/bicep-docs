@@ -4,9 +4,10 @@
 //! Imports allow templates to reference external modules, namespaces, and symbols,
 //! enabling code reuse and modular template design.
 
+use std::error::Error;
+
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::error::Error;
 use tracing::debug;
 use tree_sitter::Node;
 

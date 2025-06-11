@@ -4,6 +4,7 @@
 //! including union types, array types, and property types.
 
 use std::error::Error;
+
 use tree_sitter::Node;
 
 use super::text::get_node_text;

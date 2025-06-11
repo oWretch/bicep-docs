@@ -12,14 +12,18 @@
 //! - **Registry**: Azure Container Registry or other OCI registries with aliases or FQDNs
 //! - **TypeSpec**: Template specifications with subscription and resource group references
 
-use super::utils::decorators::extract_description_from_decorators;
-use super::utils::values::parse_value_node;
-use super::{get_node_text, BicepDecorator, BicepParserError, BicepValue};
+use std::error::Error;
+
 use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use serde_with::skip_serializing_none;
-use std::error::Error;
 use tracing::debug;
 use tree_sitter::Node;
+
+use super::{
+    get_node_text,
+    utils::{decorators::extract_description_from_decorators, values::parse_value_node},
+    BicepDecorator, BicepParserError, BicepValue,
+};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types

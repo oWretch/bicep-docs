@@ -4,14 +4,14 @@
 //! including resource properties, dependencies, conditions, loops, and scope configuration.
 //! Resources represent Azure services and their configuration in Infrastructure as Code.
 
+use std::error::Error;
+
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::error::Error;
 use tree_sitter::Node;
 
-use super::utils::values::parse_value_node;
-use super::{get_node_text, BicepDecorator, BicepValue};
+use super::{get_node_text, utils::values::parse_value_node, BicepDecorator, BicepValue};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types

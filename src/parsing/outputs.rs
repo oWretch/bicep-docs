@@ -10,17 +10,23 @@
 //! - Length and value constraints
 //! - Complex object and array outputs
 
+use std::error::Error;
+
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::error::Error;
 use tracing::debug;
 use tree_sitter::Node;
 
-use super::utils::decorators::extract_description_from_decorators;
-use super::utils::types::parse_array_type;
-use super::utils::values::{parse_array_items, parse_value_node};
-use super::{get_node_text, BicepDecorator, BicepParameter, BicepType, BicepValue};
+use super::{
+    get_node_text,
+    utils::{
+        decorators::extract_description_from_decorators,
+        types::parse_array_type,
+        values::{parse_array_items, parse_value_node},
+    },
+    BicepDecorator, BicepParameter, BicepType, BicepValue,
+};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types

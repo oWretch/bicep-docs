@@ -4,15 +4,18 @@
 //! Variables are used to store computed values and constants for reuse throughout
 //! the template, improving maintainability and reducing duplication.
 
+use std::error::Error;
+
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::error::Error;
 use tracing::{debug, warn};
 use tree_sitter::Node;
 
-use super::utils::decorators::extract_description_from_decorators;
-use super::utils::values::parse_value_node;
-use super::{get_node_text, BicepDecorator, BicepParserError, BicepValue};
+use super::{
+    get_node_text,
+    utils::{decorators::extract_description_from_decorators, values::parse_value_node},
+    BicepDecorator, BicepParserError, BicepValue,
+};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types

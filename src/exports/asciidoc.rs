@@ -3,12 +3,15 @@
 /// This module provides functions to export parsed Bicep documents
 /// to AsciiDoc format with structured documentation layout.
 use std::error::Error as StdError;
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path};
 
-use crate::exports::utils::common::{format_yes_no, generate_metadata_display_asciidoc};
-use crate::exports::utils::formatting::{escape_asciidoc, format_bicep_type, format_bicep_value};
-use crate::parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType, ModuleSource};
+use crate::{
+    exports::utils::{
+        common::{format_yes_no, generate_metadata_display_asciidoc},
+        formatting::{escape_asciidoc, format_bicep_type, format_bicep_value},
+    },
+    parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType, ModuleSource},
+};
 
 /// Export a Bicep document to an AsciiDoc file
 ///
@@ -1009,8 +1012,10 @@ fn generate_function_arguments_display(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::exports::utils::formatting::{format_bicep_type, format_bicep_value};
-    use crate::parsing::{BicepDocument, BicepParameter, BicepType, BicepValue};
+    use crate::{
+        exports::utils::formatting::{format_bicep_type, format_bicep_value},
+        parsing::{BicepDocument, BicepParameter, BicepType, BicepValue},
+    };
 
     #[test]
     fn test_export_to_string_basic() {

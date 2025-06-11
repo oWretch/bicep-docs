@@ -4,8 +4,9 @@
 //! across all Bicep declaration types. It handles common decorator patterns like
 //! description extraction, metadata processing, and constraint validation.
 
-use indexmap::IndexMap;
 use std::error::Error;
+
+use indexmap::IndexMap;
 use tracing::{debug, warn};
 use tree_sitter::Node;
 

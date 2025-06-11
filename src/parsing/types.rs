@@ -4,17 +4,22 @@
 //! including object types, union types, and array types with their decorators
 //! and validation constraints.
 
+use std::error::Error;
+
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::error::Error;
 use tracing::{debug, warn};
 use tree_sitter::Node;
 
-use super::utils::decorators::parse_decorator;
-use super::utils::decorators::{extract_description_from_decorators, parse_decorators};
-use super::utils::types::{parse_array_type, parse_property_type, parse_union_type};
-use super::{get_node_text, BicepParameter, BicepParserError, BicepType, BicepValue};
+use super::{
+    get_node_text,
+    utils::{
+        decorators::{extract_description_from_decorators, parse_decorator, parse_decorators},
+        types::{parse_array_type, parse_property_type, parse_union_type},
+    },
+    BicepParameter, BicepParserError, BicepType, BicepValue,
+};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types

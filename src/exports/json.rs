@@ -3,9 +3,7 @@
 /// This module provides functions to export parsed Bicep documents
 /// to JSON format with support for both compact and pretty-printed output.
 use std::error::Error;
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
+use std::{fs::File, io::Write, path::Path};
 
 use crate::parsing::BicepDocument;
 
@@ -93,9 +91,10 @@ pub fn parse_and_export<P: AsRef<Path>>(
 
 #[cfg(test)]
 mod tests {
+    use indexmap::IndexMap;
+
     use super::*;
     use crate::parsing::{BicepDocument, BicepParameter, BicepType, BicepValue};
-    use indexmap::IndexMap;
 
     #[test]
     fn test_export_to_string_pretty() {

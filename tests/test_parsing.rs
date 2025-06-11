@@ -5,10 +5,11 @@
 // Each test focuses on a specific aspect of the Bicep language and
 // validates that its structure is correctly parsed and represented
 // in the resulting BicepDocument.
-use bicep_docs::parsing::ModuleSource;
-use bicep_docs::{parse_bicep_document, BicepDocument, BicepType, BicepValue};
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path};
+
+use bicep_docs::{
+    parse_bicep_document, parsing::ModuleSource, BicepDocument, BicepType, BicepValue,
+};
 
 #[cfg(test)]
 mod parsing {

@@ -1,11 +1,14 @@
+use std::{
+    error::Error,
+    fs::{self, File},
+    path::{Path, PathBuf},
+};
+
 use bicep_docs::{
     export_bicep_document_to_asciidoc, export_bicep_document_to_json,
     export_bicep_document_to_markdown, export_bicep_document_to_yaml,
 };
 use clap::{self, Args, Parser, Subcommand, ValueEnum};
-use std::error::Error;
-use std::fs::{self, File};
-use std::path::{Path, PathBuf};
 use tracing::{debug, debug_span, error, trace, Level};
 use tracing_subscriber::{
     filter::EnvFilter,
@@ -322,8 +325,9 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use clap::Parser;
+
+    use super::*;
 
     #[test]
     fn test_exclude_empty_flag_parsing() {

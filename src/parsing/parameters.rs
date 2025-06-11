@@ -1,14 +1,19 @@
+use std::error::Error;
+
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::error::Error;
 use tracing::{debug, warn};
 use tree_sitter::Node;
 
-use super::utils::decorators::extract_description_from_decorators;
-use super::utils::types::parse_type_node;
-use super::utils::values::parse_value_node;
-use super::{get_node_text, BicepDecorator, BicepType, BicepValue};
+use super::{
+    get_node_text,
+    utils::{
+        decorators::extract_description_from_decorators, types::parse_type_node,
+        values::parse_value_node,
+    },
+    BicepDecorator, BicepType, BicepValue,
+};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types

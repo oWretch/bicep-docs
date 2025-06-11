@@ -4,16 +4,22 @@
 //! Functions allow developers to create reusable logic that can be called throughout
 //! the template, improving code organization and reducing duplication.
 
+use std::error::Error;
+
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::error::Error;
 use tracing::{debug, warn};
 use tree_sitter::Node;
 
-use super::utils::decorators::extract_description_from_decorators;
-use super::utils::types::{parse_property_type, parse_type_node};
-use super::{get_node_text, BicepDecorator, BicepParserError, BicepType, BicepValue};
+use super::{
+    get_node_text,
+    utils::{
+        decorators::extract_description_from_decorators,
+        types::{parse_property_type, parse_type_node},
+    },
+    BicepDecorator, BicepParserError, BicepType, BicepValue,
+};
 
 // ---------------------------------------------------------------
 // Structs, Enums & Types

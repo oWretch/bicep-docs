@@ -1,9 +1,10 @@
-use crate::parsing::BicepValue;
 /// Common utility functions shared across export formats
 ///
 /// This module contains utility functions that are used by multiple
 /// export formats to avoid code duplication and ensure consistency.
 use indexmap::IndexMap;
+
+use crate::parsing::BicepValue;
 
 /// Helper function to format Yes/No values with or without emoji
 ///

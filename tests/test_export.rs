@@ -1,8 +1,9 @@
+use std::fs;
+
 use bicep_docs::{
     export_bicep_document_to_json_string, export_bicep_document_to_yaml_string,
     parse_bicep_document,
 };
-use std::fs;
 
 #[cfg(test)]
 mod exports {

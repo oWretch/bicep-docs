@@ -3,8 +3,9 @@
 //! This module contains utilities for parsing various value expressions in Bicep,
 //! including arrays, objects, and literal values.
 
-use indexmap::IndexMap;
 use std::error::Error;
+
+use indexmap::IndexMap;
 use tree_sitter::Node;
 
 use super::text::{get_node_text, get_primitive_value_from_text};

@@ -1,14 +1,10 @@
 // AST exporter for Bicep files using tree-sitter
 // Uses clap for command line argument parsing
+use std::{collections::HashMap, error::Error, fs, fs::File, io::Write, path::PathBuf};
+
 use bicep_docs::parse_bicep_file;
 use clap::{Parser, ValueEnum};
 use serde::Serialize;
-use std::collections::HashMap;
-use std::error::Error;
-use std::fs;
-use std::fs::File;
-use std::io::Write;
-use std::path::PathBuf;
 use tracing::{debug, error, info, trace, warn, Level};
 use tracing_subscriber::{
     filter::EnvFilter,

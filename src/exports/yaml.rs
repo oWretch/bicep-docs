@@ -3,9 +3,7 @@
 /// This module provides functions to export parsed Bicep documents
 /// to YAML format with improved multiline string representation.
 use std::error::Error;
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
+use std::{fs::File, io::Write, path::Path};
 
 use crate::parsing::BicepDocument;
 

@@ -237,8 +237,9 @@ pub fn escape_asciidoc(text: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use indexmap::IndexMap;
+
+    use super::*;
 
     #[test]
     fn test_format_bicep_type() {
