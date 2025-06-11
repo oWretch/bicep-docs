@@ -1135,11 +1135,7 @@ mod tests {
     fn test_format_bicep_type_union_formats() {
         let union_type = BicepType::Union(vec!["A".to_string(), "B".to_string()]);
 
-        // Test format (now uses unified format same as Markdown)
-        assert_eq!(
-            crate::exports::utils::formatting::format_bicep_type_asciidoc(&union_type),
-            "A \\| B"
-        );
+        assert_eq!(&union_type.to_string(), "A | B");
     }
 
     #[test]
