@@ -10,7 +10,11 @@ use indexmap::IndexMap;
 use tracing::{debug, warn};
 use tree_sitter::Node;
 
-use super::super::{BicepDecorator, BicepValue};
+use super::{
+    super::{BicepDecorator, BicepValue},
+    get_node_text,
+    values::parse_value_node,
+};
 
 /// Type alias for the return type of `process_common_decorators` function.
 ///
@@ -137,203 +141,40 @@ pub fn parse_decorator(node: Node, source_code: &str) -> Result<BicepDecorator, 
     let mut name = String::new();
     let mut argument = BicepValue::String(String::new());
 
-    // Get the full text of the decorator for better parsing
-    let full_text = node.utf8_text(source_code.as_bytes())?.to_string();
-
-    // If it starts with @ and contains a parenthesis, try direct parsing
-    if (full_text.starts_with('@') && full_text.contains('('))
-        || (full_text.starts_with('@') && full_text.contains('{'))
-    {
-        let text_without_at = &full_text[1..];
-
-        if let Some(open_paren) = text_without_at.find('(') {
-            // Extract the name part (everything before the first parenthesis)
-            name = text_without_at[0..open_paren].trim().to_string();
-
-            // Try to extract the content inside parentheses
-            if let Some(close_paren) = text_without_at.rfind(')') {
-                if open_paren < close_paren {
-                    let arg_content = text_without_at[open_paren + 1..close_paren].trim();
-
-                    // Handle string arguments - check for triple quotes first
-                    if arg_content.starts_with("'''") && arg_content.ends_with("'''") {
-                        if arg_content.len() >= 6 {
-                            argument = BicepValue::String(
-                                arg_content[3..arg_content.len() - 3].to_string(),
-                            );
-                        }
-                    } else if (arg_content.starts_with('\'') && arg_content.ends_with('\''))
-                        || (arg_content.starts_with('"') && arg_content.ends_with('"'))
-                    {
-                        if arg_content.len() >= 2 {
-                            argument = BicepValue::String(
-                                arg_content[1..arg_content.len() - 1].to_string(),
-                            );
-                        }
-                    } else if arg_content == "true" || arg_content == "false" {
-                        // Handle boolean arguments
-                        if let Ok(b) = arg_content.parse::<bool>() {
-                            argument = BicepValue::Bool(b);
-                        }
-                    } else if let Ok(n) = arg_content.parse::<i64>() {
-                        // Handle number arguments
-                        argument = BicepValue::Int(n);
-                    } else if arg_content.starts_with('{') && arg_content.ends_with('}') {
-                        // Handle object arguments (especially metadata objects)
-                        argument = parse_object_argument(arg_content)?;
-                    } else {
-                        // Default to string if we can't parse it
-                        argument = BicepValue::String(arg_content.to_string());
-                    }
-                }
-            }
-        }
-    } else if let Some(stripped) = full_text.strip_prefix('@') {
-        // Simple decorator without arguments
-        name = stripped.trim().to_string();
-        argument = BicepValue::String(String::new());
-    } else {
-        // Try tree-sitter based parsing as fallback
-        return parse_decorator_with_tree_sitter(node, source_code);
-    }
-
-    Ok(BicepDecorator { name, argument })
-}
-
-// ---------------------------------------------------------------
-// Helper Functions
-// ---------------------------------------------------------------
-
-/// Parse object argument from string content.
-fn parse_object_argument(arg_content: &str) -> Result<BicepValue, Box<dyn Error>> {
-    let mut obj_map = IndexMap::new();
-    let inner_content = arg_content[1..arg_content.len() - 1].trim();
-
-    // Split by new lines or by commas for single-line objects
-    let lines = if inner_content.contains('\n') {
-        inner_content.split('\n').collect::<Vec<_>>()
-    } else {
-        inner_content.split(',').collect::<Vec<_>>()
-    };
-
-    // Process each line/property
-    for line in lines {
-        let trimmed = line.trim();
-        if trimmed.is_empty() {
-            continue;
-        }
-
-        // Split by colon to get key and value
-        if let Some(colon_pos) = trimmed.find(':') {
-            let key = trimmed[0..colon_pos].trim().to_string();
-            let value_part = trimmed[colon_pos + 1..].trim();
-
-            // Process the value based on its format
-            if (value_part.starts_with('\'') && value_part.ends_with('\''))
-                || (value_part.starts_with('"') && value_part.ends_with('"'))
-            {
-                // String value
-                let str_value = value_part[1..value_part.len() - 1].to_string();
-                obj_map.insert(key, BicepValue::String(str_value));
-            } else if value_part == "true" || value_part == "false" {
-                // Boolean value
-                if let Ok(b) = value_part.parse::<bool>() {
-                    obj_map.insert(key, BicepValue::Bool(b));
-                }
-            } else if let Ok(n) = value_part.parse::<i64>() {
-                // Number value
-                obj_map.insert(key, BicepValue::Int(n));
-            } else {
-                // Default to string
-                obj_map.insert(key, BicepValue::String(value_part.to_string()));
-            }
-        }
-    }
-
-    Ok(BicepValue::Object(obj_map))
-}
-
-/// Fallback decorator parsing using tree-sitter traversal.
-fn parse_decorator_with_tree_sitter(
-    node: Node,
-    source_code: &str,
-) -> Result<BicepDecorator, Box<dyn Error>> {
-    let mut name = String::new();
-    let mut argument = BicepValue::String(String::new());
+    //  Get the call_expression
     let mut cursor = node.walk();
+    let call_expression = node.children(&mut cursor).collect::<Vec<_>>()[1];
 
-    let children = node.children(&mut cursor).collect::<Vec<_>>();
-    for child in children {
+    // Parse the call_expression
+    for child in call_expression.children(&mut cursor) {
         match child.kind() {
-            "identifier" => {
-                let text = super::get_node_text(&child, source_code)?;
-                if name.is_empty() {
-                    name = text;
-                }
-            },
-            "call_expression" => {
-                if let Ok(call_result) = parse_call_expression(child, source_code) {
-                    name = call_result.0;
-                    argument = call_result.1;
-                }
-            },
-            _ => {},
-        }
-    }
-
-    if name.is_empty() {
-        name = super::get_node_text(&node, source_code)?;
-        if name.starts_with('@') {
-            name = name[1..].to_string();
-        }
-    }
-
-    Ok(BicepDecorator { name, argument })
-}
-
-/// Parse a call expression for decorator arguments.
-fn parse_call_expression(
-    node: Node,
-    source_code: &str,
-) -> Result<(String, BicepValue), Box<dyn Error>> {
-    let mut function_name = String::new();
-    let mut argument = BicepValue::String(String::new());
-    let mut cursor = node.walk();
-
-    let children = node.children(&mut cursor).collect::<Vec<_>>();
-    for child in children {
-        match child.kind() {
-            "identifier" => {
-                if function_name.is_empty() {
-                    function_name = super::get_node_text(&child, source_code)?;
-                }
+            "identifier" => name = get_node_text(&child, source_code)?,
+            "member_expression" => {
+                // Handle sys.description, sys.metadata, etc.
+                name = get_node_text(&child, source_code)?;
             },
             "arguments" => {
-                if let Ok(args) = parse_call_arguments(child, source_code) {
-                    argument = args;
+                let mut gc_cursor = child.walk();
+                for grandchild in child.children(&mut gc_cursor) {
+                    match grandchild.kind() {
+                        "(" | ")" | "," => {},
+                        _ => {
+                            if let Ok(Some(value)) = parse_value_node(grandchild, source_code) {
+                                argument = value;
+                            } else {
+                                return Err(
+                                    format!("Invalid decorator argument for {}", name).into()
+                                );
+                            }
+                        },
+                    }
                 }
             },
             _ => {},
         }
     }
 
-    Ok((function_name, argument))
-}
-
-/// Parse call arguments from an arguments node.
-fn parse_call_arguments(node: Node, source_code: &str) -> Result<BicepValue, Box<dyn Error>> {
-    let mut cursor = node.walk();
-    let children = node.children(&mut cursor).collect::<Vec<_>>();
-
-    // Find the first non-punctuation child and parse it as the argument
-    for child in children {
-        if child.kind() != "(" && child.kind() != ")" && child.kind() != "," {
-            return super::values::parse_value_node(child, source_code)?
-                .ok_or_else(|| Box::<dyn Error>::from("Failed to parse argument value"));
-        }
-    }
-
-    Ok(BicepValue::String(String::new()))
+    Ok(BicepDecorator { name, argument })
 }
 
 // ---------------------------------------------------------------
@@ -371,14 +212,7 @@ pub fn extract_numeric_constraint(decorator: &BicepDecorator) -> Option<i64> {
 pub fn is_boolean_flag_decorator(decorator_name: &str) -> bool {
     matches!(
         decorator_name,
-        "secure"
-            | "sys.secure"
-            | "export"
-            | "sys.export"
-            | "sealed"
-            | "sys.sealed"
-            | "batchSize"
-            | "sys.batchSize"
+        "secure" | "sys.secure" | "export" | "sys.export" | "sealed" | "sys.sealed"
     )
 }
 

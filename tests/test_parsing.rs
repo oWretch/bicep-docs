@@ -413,21 +413,11 @@ mod parsing {
             .unwrap()
             .description
             .as_ref();
-        println!("Multiline description: {:?}", multiline_description);
-
-        if let Some(desc) = multiline_description {
-            let mut char_codes = String::new();
-            for c in desc.chars() {
-                char_codes.push_str(&format!("U+{:04X} ", c as u32));
-            }
-            println!("Character codes: {}", char_codes);
-        }
 
         assert_eq!(
             multiline_description,
             Some(
-                &"\nThis is a multi-line description.\nIt is enclosed in triple quotes.\n"
-                    .to_string()
+                &"This is a multi-line description.\nIt is enclosed in triple quotes.".to_string()
             ),
             "Multiline description does not match expected value"
         );

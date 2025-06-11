@@ -280,7 +280,13 @@ impl BicepValue {
                         s
                     }
                 },
-                BicepValue::String(st) => format!("'{}'", st),
+                BicepValue::String(st) => {
+                    if indent == 0 {
+                        format!("{}", st)
+                    } else {
+                        format!("'{}'", st)
+                    }
+                },
                 BicepValue::Int(n) => n.to_string(),
                 BicepValue::Bool(b) => b.to_string(),
                 BicepValue::Identifier(id) => id.clone(),

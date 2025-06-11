@@ -10,6 +10,8 @@ use tree_sitter::Node;
 
 use crate::BicepValue;
 
+use super::get_node_text;
+
 /// Parse an array value from array items
 ///
 /// Extracts individual elements from array expressions,
@@ -66,13 +68,13 @@ pub fn parse_value_node(
             let mut cursor = node.walk();
             for child in node.children(&mut cursor) {
                 if child.kind() == "string_content" {
-                    let content = child.utf8_text(source_code.as_bytes())?.to_string();
+                    let content = get_node_text(&child, source_code)?;
                     return Ok(Some(BicepValue::String(content)));
                 }
             }
             Err("No string_content child found".into())
         },
-        "integer" => Ok(Some(BicepValue::Int(
+        "integer" | "number" => Ok(Some(BicepValue::Int(
             node.utf8_text(source_code.as_bytes())?
                 .to_string()
                 .parse::<i64>()?,
