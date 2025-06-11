@@ -50,11 +50,6 @@ jobs:
         if: needs.get-next-version.outputs.new-release-published == 'true'
         run: semantic-release-cargo prepare ${{ needs.get-next-version.outputs.new-release-version }}
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@4305c38b25d97ef35a8ad1f985ccf2d2242004f2
-        with:
-          components: rustfmt, clippy
-
       - name: Cache Cargo
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
         with:
@@ -65,6 +60,11 @@ jobs:
             ~/.cargo/git/db/
             ~/.rustup/toolchains/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4305c38b25d97ef35a8ad1f985ccf2d2242004f2
+        with:
+          components: rustfmt, clippy
 
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -92,22 +92,25 @@ jobs:
     strategy:
       matrix:
         include:
-          # Linux
-          # - target: aarch64-unknown-linux-gnu
-          #   os: ubuntu-latest
-          # - target: aarch64-unknown-linux-musl
-          #   os: ubuntu-latest
+          # Linux GNU
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
+          # Linux MUSL
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
           # Windows
-          # - target: aarch64-pc-windows-msvc
-          #   os: ubuntu-latest
+          - target: aarch64-pc-windows-msvc
+            os: windows-latest
           - target: x86_64-pc-windows-msvc
             os: windows-latest
           # macOS
-          # - target: x86_64-apple-darwin
-          #   os: macos-latest
           - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-apple-darwin
             os: macos-latest
     runs-on: ${{ matrix.os }}
     steps:
@@ -115,17 +118,12 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
-      
+
       - name: Download updated Cargo.toml
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: Cargo.toml
           path: .
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@4305c38b25d97ef35a8ad1f985ccf2d2242004f2
-        with:
-          components: rustfmt, clippy
 
       - name: Cache Cargo
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
@@ -138,26 +136,25 @@ jobs:
             ~/.rustup/toolchains/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install tooling
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get install \
-            gcc-aarch64-linux-gnu \
-            musl-tools
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4305c38b25d97ef35a8ad1f985ccf2d2242004f2
+        with:
+          components: rustfmt, clippy
+          targets: ${{ matrix.target }}
 
-      - name: Add toolchain
-        run: rustup target add ${{ matrix.target }}
+      - name: Add cross-compilation toolchain
+        run: cargo install cross
 
       - name: Build release
-        run: cargo build --release --target ${{ matrix.target }}
-      
+        run: cross build --release --target ${{ matrix.target }}
+
       - name: Create release zip
-        if : matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-latest'
         run: zip -j bicep-docs-${{ matrix.target }}.zip bicep-docs
         working-directory: target/${{ matrix.target }}/release
 
       - name: Create release zip
-        if : matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest'
         run: 7z a bicep-docs-${{ matrix.target }}.zip bicep-docs.exe
         working-directory: target/${{ matrix.target }}/release
 
@@ -179,7 +176,7 @@ jobs:
     name: Release
     needs: build
     runs-on: ubuntu-latest
-    if: github.repository == 'oWretch/bicep-docs'
+    if: github.repository == 'oWretch/bicep-docs2'
     permissions:
       contents: write
       packages: write
@@ -195,10 +192,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@4305c38b25d97ef35a8ad1f985ccf2d2242004f2
+          node-version: "22"
 
       - name: Cache Cargo
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
@@ -210,6 +204,9 @@ jobs:
             ~/.cargo/git/db/
             ~/.rustup/toolchains/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4305c38b25d97ef35a8ad1f985ccf2d2242004f2
 
       - name: Download artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
