@@ -15,8 +15,24 @@
       {
         "assets": [
           {
+            "path": "dist/bicep-docs-aarch64-unknown-linux-gnu/bicep-docs-aarch64-unknown-linux-gnu.zip",
+            "label": "bicep-docs-linux-arm64.zip"
+          },
+          {
             "path": "dist/bicep-docs-x86_64-unknown-linux-gnu/bicep-docs-x86_64-unknown-linux-gnu.zip",
             "label": "bicep-docs-linux-amd64.zip"
+          },
+          {
+            "path": "dist/bicep-docs-aarch64-unknown-linux-musl/bicep-docs-aarch64-unknown-linux-musl.zip",
+            "label": "bicep-docs-linux-arm64-musl.zip"
+          },
+          {
+            "path": "dist/bicep-docs-x86_64-unknown-linux-musl/bicep-docs-x86_64-unknown-linux-musl.zip",
+            "label": "bicep-docs-linux-amd64-musl.zip"
+          },
+          {
+            "path": "dist/bicep-docs-aarch64-pc-windows-msvc/bicep-docs-aarch64-pc-windows-msvc.zip",
+            "label": "bicep-docs-windows-amd64.zip"
           },
           {
             "path": "dist/bicep-docs-x86_64-pc-windows-msvc/bicep-docs-x86_64-pc-windows-msvc.zip",
@@ -25,6 +41,10 @@
           {
             "path": "dist/bicep-docs-aarch64-apple-darwin/bicep-docs-aarch64-apple-darwin.zip",
             "label": "bicep-docs-macos-arm64.zip"
+          },
+          {
+            "path": "dist/bicep-docs-x86_64-apple-darwin/bicep-docs-x86_64-apple-darwin.zip",
+            "label": "bicep-docs-macos-amd64.zip"
           }
         ]
       }
