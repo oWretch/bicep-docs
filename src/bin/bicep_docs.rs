@@ -132,14 +132,11 @@ where
     debug!("Successfully parsed Bicep document");
 
     // Determine output path
-    let output_path = common.output.clone().unwrap_or_else(|| {
-        let file_stem = common
-            .input
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("output");
-        Path::new(file_stem).with_extension(extension)
-    });
+    let output_path = common
+        .output
+        .clone()
+        .unwrap_or_else(|| common.input.with_extension(extension));
+    debug!("Using output path: {}", output_path.display());
 
     // Export the document
     export_fn(&document, &output_path, common.emoji, common.exclude_empty)?;
