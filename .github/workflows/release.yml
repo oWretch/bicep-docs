@@ -221,7 +221,7 @@ jobs:
       - name: Build and push Docker image
         id: docker-build
         if: matrix.docker
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           file: ${{ matrix.dockerFile }}
           context: .
