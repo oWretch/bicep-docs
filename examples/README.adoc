@@ -1,114 +1,271 @@
-= Bicep AST Export Tool Examples
+= Bicep-Docs Examples
+:toc:
+:toc-placement: preamble
+:sectnums:
+:icons: font
 
-This directory contains examples of using the Bicep AST (Abstract Syntax Tree) export tool.
+This directory contains comprehensive examples demonstrating the bicep-docs tool's capabilities across various scenarios and use cases.
 
-== What is this tool?
+== Overview
 
-The Bicep AST export tool parses a Bicep file and exports its AST to a YAML or JSON file for analysis. The AST represents the structure of the Bicep code in a hierarchical format that's easier to analyze programmatically than the raw text.
+The examples are organized into subdirectories, each focusing on specific aspects of Bicep documentation generation. Each example directory contains:
 
-== Basic Usage
+* Source Bicep files showcasing different language features
+* Generated documentation in multiple formats (Markdown, AsciiDoc, YAML, JSON)
+* A local Makefile for building examples
+* A README.adoc explaining the specific examples
 
-Export a Bicep file's AST to a YAML file:
+== Quick Start
 
-[source,sh]
+To generate all examples across all directories:
+
+[source,bash]
 ----
-# Build and run the tool
-cargo run --bin export_ast -- path/to/your/file.bicep
-----
+# Generate all examples
+make all
 
-The tool will generate a file named `<filename>_tree.yaml` in the current directory.
+# Generate specific format across all directories
+make markdown
+make asciidoc
+make yaml
+make json
 
-== Output Formats
+# Clean all generated files
+make clean
 
-The tool supports multiple output formats:
-
-* *YAML* (default): `cargo run --bin export_ast -- -f yaml file.bicep`
-* *JSON*: `cargo run --bin export_ast -- -f json file.bicep`
-* *SimpleTree*: `cargo run --bin export_ast -- -f simpletree file.bicep`
-
-== Common Operations
-
-=== Show Statistics Only
-
-Just show statistics about the AST without exporting to a file:
-
-[source,sh]
-----
-cargo run --bin export_ast -- --stats file.bicep
-----
-
-=== Filter by Node Type
-
-Filter the AST to only include nodes of a specific type:
-
-[source,sh]
-----
-cargo run --bin export_ast -- --type-filter resource_declaration file.bicep
+# Test that everything builds correctly
+make test
 ----
 
-Common node types include: `resource_declaration`, `parameter_declaration`, `variable_declaration`, `output_declaration`.
+== Example Directories
 
-=== Filter by Line Number
+=== link:single-file/README.adoc[Single File Examples]
 
-Show only nodes that appear on a specific line:
+**Directory:** `single-file/`
 
-[source,sh]
+Demonstrates comprehensive documentation generation from a single, feature-rich Bicep file. This example showcases:
+
+* All Bicep language constructs (parameters, types, variables, functions, resources, outputs)
+* Different output formats and their options
+* Command-line flag variations (emoji, exclude-empty, pretty printing)
+* Comparison between different output styles
+
+**Key Features:**
+* Complex parameter definitions with various decorators
+* Custom type definitions including union types and object types
+* User-defined functions with different signatures
+* Nested resources and resource loops
+* Comprehensive outputs with constraints
+
+**Generated Examples:**
+* 4 Markdown variants (default, emoji, exclude-empty, all-options)
+* 4 AsciiDoc variants (default, emoji, exclude-empty, all-options)
+* 2 YAML variants (default, exclude-empty)
+* 4 JSON variants (default, pretty, exclude-empty, all-options)
+
+[source,bash]
 ----
-cargo run --bin export_ast -- --line 10 file.bicep
-----
+# Build all single-file examples
+make single-file
 
-=== Show Tree Structure
-
-Display a tree structure visualization of the AST:
-
-[source,sh]
-----
-cargo run --bin export_ast -- --structure file.bicep
-----
-
-=== Filter by Field Name
-
-Filter nodes by a specific field name:
-
-[source,sh]
-----
-cargo run --bin export_ast -- --field-filter name file.bicep
-----
-
-=== Show Help
-
-For more details about the tool usage:
-
-[source,sh]
-----
-# General help
-cargo run --bin export_ast -- --help
-
-# Show usage examples
-cargo run --bin export_ast -- --help-examples
-
-# Show common node types
-cargo run --bin export_ast -- --help-node-types
-
-# Show common field names
-cargo run --bin export_ast -- --help-field-names
+# Build specific formats
+make single-file-markdown
+make single-file-json
 ----
 
-== Example Files
+== Global Configuration
 
-The `single-file` directory contains:
+The examples directory includes a shared `bicepconfig.json` that enables experimental features and provides consistent formatting across all examples:
 
-* `example.bicep` - An example Bicep file
-* `example_tree.yaml` - The exported AST in YAML format
+* **Analyzers**: Core analyzers enabled with unused parameters/variables warnings disabled
+* **Experimental Features**: Assertions, extensibility, and test framework enabled
+* **Extensions**: Microsoft Graph v1 extension configured
+* **Formatting**: Consistent 2-space indentation, 80-character width, LF line endings
+* **Module Aliases**: AVM types and demo specifications configured
 
-== Analyzing the Output
+== Using the Build System
 
-When viewing the AST, each node has:
+=== Main Targets
 
-* `kind` - The type of node in the tree-sitter grammar
-* `field_name` - The field in the parent grammar rule (if any)
-* `named` - Whether this is a named node in the grammar
-* `text` - The actual text content of this node
-* `children` - Child nodes
+[cols="2,5"]
+|===
+|Target |Description
 
-This structure makes it easy to understand the relationships between different parts of your Bicep code.
+|`all`
+|Generate all examples in all directories
+
+|`clean`
+|Remove all generated output files
+
+|`test`
+|Clean, build all examples, and verify output files were created
+
+|`help`
+|Display comprehensive help information
+
+|`list`
+|List all available example directories
+
+|`status`
+|Show build status of all example directories
+|===
+
+=== Format-Specific Targets
+
+Generate specific output formats across all example directories:
+
+[source,bash]
+----
+make markdown    # All Markdown examples
+make asciidoc    # All AsciiDoc examples
+make yaml        # All YAML examples
+make json        # All JSON examples
+----
+
+=== Directory-Specific Targets
+
+Work with individual example directories:
+
+[source,bash]
+----
+make single-file           # All examples in single-file/
+make single-file-clean     # Clean single-file/ only
+make single-file-markdown  # Only Markdown examples in single-file/
+----
+
+=== Advanced Usage
+
+[source,bash]
+----
+# Check status of all examples
+make status
+
+# List available example directories
+make list
+
+# Build and verify everything works
+make test
+----
+
+== Output File Naming Convention
+
+All generated examples follow a consistent naming pattern:
+
+[source]
+----
+output-{format}-{options}.{extension}
+----
+
+**Examples:**
+* `output-markdown-default.md` - Default Markdown output
+* `output-markdown-emoji.md` - Markdown with emoji enabled
+* `output-asciidoc-exclude-empty.adoc` - AsciiDoc excluding empty sections
+* `output-json-pretty.json` - Pretty-printed JSON
+* `output-yaml-default.yaml` - Default YAML output
+
+== Understanding the Examples
+
+Each example directory demonstrates different aspects of the bicep-docs tool:
+
+=== What You'll Learn
+
+* **Format Differences**: How the same Bicep content appears in different output formats
+* **Option Effects**: How command-line flags change the output
+* **Best Practices**: Effective ways to document Bicep templates
+* **Integration Patterns**: How to incorporate bicep-docs into your workflows
+
+=== Comparing Outputs
+
+The examples make it easy to compare:
+
+* **Markdown vs AsciiDoc**: Human-readable formats with different markup styles
+* **YAML vs JSON**: Structured data formats for automation and integration
+* **Default vs Customized**: How options like `--emoji` and `--exclude-empty` affect output
+* **Compact vs Pretty**: Trade-offs between file size and readability
+
+== Adding New Examples
+
+To add a new example directory:
+
+1. **Create Directory Structure**:
+   [source,bash]
+   ----
+   mkdir new-example
+   cd new-example
+   ----
+
+2. **Add Source Files**: Create your Bicep files demonstrating specific features
+
+3. **Create Local Makefile**: Follow the pattern from `single-file/Makefile`
+
+4. **Add Documentation**: Create a `README.adoc` explaining your example
+
+5. **Update Parent Makefile**: Add your directory to `EXAMPLE_DIRS` in `examples/Makefile`
+
+6. **Update This README**: Add a section describing your new example
+
+=== Example Directory Template
+
+[source]
+----
+new-example/
+├── Makefile              # Local build targets
+├── README.adoc           # Example documentation
+├── source.bicep          # Source Bicep file(s)
+└── output-*.*            # Generated documentation (created by make)
+----
+
+== Troubleshooting
+
+=== Common Issues
+
+**Binary not found**: Ensure you've built the project first:
+[source,bash]
+----
+cd .. && cargo build
+----
+
+**Permission errors**: Ensure the Makefile has execute permissions and you're in the correct directory
+
+**Missing output files**: Run `make status` to check which examples are properly configured
+
+**Build failures**: Use `make test` to identify which examples are failing
+
+=== Getting Help
+
+* Run `make help` for command reference
+* Check individual `README.adoc` files in each example directory
+* Examine the source Bicep files to understand the demonstrated features
+* Review the generated outputs to see the documentation formats
+
+== Contributing
+
+When contributing new examples:
+
+1. **Focus on Specific Features**: Each example should demonstrate particular Bicep language features or bicep-docs capabilities
+2. **Provide Context**: Include comprehensive README documentation
+3. **Test Thoroughly**: Ensure all output formats generate correctly
+4. **Follow Conventions**: Use consistent naming and structure patterns
+5. **Update Documentation**: Keep this README current with new examples
+
+== Integration Examples
+
+The examples can serve as templates for integrating bicep-docs into various workflows:
+
+* **CI/CD Pipelines**: Automate documentation generation
+* **Documentation Sites**: Generate content for static site generators
+* **API Documentation**: Create structured data for documentation APIs
+* **Team Workflows**: Standardize template documentation practices
+
+By exploring these examples, you'll gain a comprehensive understanding of how to effectively use bicep-docs to document your Azure Bicep templates.
+
+== Future Examples
+
+This examples directory is designed to be expanded with additional scenarios as the bicep-docs tool evolves. Planned examples include:
+
+* **Multi-file Projects**: Bicep projects with modules and complex dependencies
+* **Enterprise Templates**: Large-scale, production-ready Bicep templates
+* **CI/CD Integration**: Examples of automated documentation generation in pipelines
+* **Custom Workflows**: Advanced usage patterns and integration scenarios
+
+Contributions of new example scenarios are welcome and encouraged!

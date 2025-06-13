@@ -1,0 +1,194 @@
+= Bicep-Docs Single File Examples
+:toc:
+:toc-placement: preamble
+:sectnums:
+:icons: font
+
+This directory contains a comprehensive example demonstrating all output formats and options available in the bicep-docs tool.
+
+== Overview
+
+The examples are based on a single Bicep file (`example.bicep`) that showcases various Bicep language features including:
+
+* Parameters with different types and decorators
+* Type definitions and custom types
+* Variables and functions
+* Resources with nested resources
+* Outputs with different configurations
+* Metadata and descriptions
+
+== Source File
+
+link:example.bicep[example.bicep] - The source Bicep file used for all examples
+
+== Generated Examples
+
+=== Markdown Format
+
+The Markdown format provides human-readable documentation suitable for GitHub, documentation sites, and general consumption.
+
+[cols="2,3,5"]
+|===
+|File |Command |Description
+
+|link:output-markdown-default.md[output-markdown-default.md]
+|`bicep-docs markdown example.bicep`
+|Default Markdown output with all sections
+
+|link:output-markdown-emoji.md[output-markdown-emoji.md]
+|`bicep-docs markdown example.bicep --emoji`
+|Markdown output with emoji icons for enhanced visual appeal
+
+|link:output-markdown-exclude-empty.md[output-markdown-exclude-empty.md]
+|`bicep-docs markdown example.bicep --exclude-empty`
+|Markdown output excluding empty sections
+
+|link:output-markdown-all-options.md[output-markdown-all-options.md]
+|`bicep-docs markdown example.bicep --emoji --exclude-empty`
+|Markdown with both emoji and empty section exclusion
+|===
+
+=== AsciiDoc Format
+
+The AsciiDoc format is ideal for technical documentation and can be processed by various documentation generators.
+
+[cols="2,3,5"]
+|===
+|File |Command |Description
+
+|link:output-asciidoc-default.adoc[output-asciidoc-default.adoc]
+|`bicep-docs asciidoc example.bicep`
+|Default AsciiDoc output with all sections
+
+|link:output-asciidoc-emoji.adoc[output-asciidoc-emoji.adoc]
+|`bicep-docs asciidoc example.bicep --emoji`
+|AsciiDoc output with emoji icons
+
+|link:output-asciidoc-exclude-empty.adoc[output-asciidoc-exclude-empty.adoc]
+|`bicep-docs asciidoc example.bicep --exclude-empty`
+|AsciiDoc output excluding empty sections
+
+|link:output-asciidoc-all-options.adoc[output-asciidoc-all-options.adoc]
+|`bicep-docs asciidoc example.bicep --emoji --exclude-empty`
+|AsciiDoc with both emoji and empty section exclusion
+|===
+
+=== YAML Format
+
+The YAML format provides structured data output suitable for further processing or integration with other tools.
+
+[cols="2,3,5"]
+|===
+|File |Command |Description
+
+|link:output-yaml-default.yaml[output-yaml-default.yaml]
+|`bicep-docs yaml example.bicep`
+|Default YAML output with all sections
+
+|link:output-yaml-exclude-empty.yaml[output-yaml-exclude-empty.yaml]
+|`bicep-docs yaml example.bicep --exclude-empty`
+|YAML output excluding empty sections
+|===
+
+NOTE: YAML format does not support emoji option as it's not relevant for structured data.
+
+=== JSON Format
+
+The JSON format provides structured data output with optional pretty-printing for readability.
+
+[cols="2,3,5"]
+|===
+|File |Command |Description
+
+|link:output-json-default.json[output-json-default.json]
+|`bicep-docs json example.bicep`
+|Compact JSON output with all sections
+
+|link:output-json-pretty.json[output-json-pretty.json]
+|`bicep-docs json example.bicep --pretty`
+|Pretty-printed JSON for better readability
+
+|link:output-json-exclude-empty.json[output-json-exclude-empty.json]
+|`bicep-docs json example.bicep --exclude-empty`
+|JSON output excluding empty sections
+
+|link:output-json-all-options.json[output-json-all-options.json]
+|`bicep-docs json example.bicep --pretty --exclude-empty`
+|Pretty-printed JSON excluding empty sections
+|===
+
+== Using the Makefile
+
+A `Makefile` is provided to easily generate all examples:
+
+[source,bash]
+----
+# Generate all examples
+make all
+
+# Generate specific format examples
+make markdown
+make asciidoc
+make yaml
+make json
+
+# Generate individual examples
+make markdown-emoji
+make json-pretty
+
+# Clean generated files
+make clean
+
+# Show help
+make help
+----
+
+== Common Options
+
+All formats support these common options:
+
+`--exclude-empty`:: Skip sections that contain no content, resulting in cleaner output
+`--emoji`:: Add emoji icons to section headers for visual enhancement (not available for YAML/JSON)
+`-o, --output <FILE>`:: Specify output file path (defaults to input filename with appropriate extension)
+
+== Additional CLI Options
+
+The bicep-docs tool also supports these global options:
+
+`-v, --verbose`:: Increase verbosity (use `-v` for debug, `-vv` for trace)
+`-q, --quiet`:: Suppress logging output
+`--log-format <FORMAT>`:: Set log format (text or json)
+`--log-file <FILE>`:: Write logs to specified file
+
+== Example Usage
+
+[source,bash]
+----
+# Basic usage
+bicep-docs markdown example.bicep
+
+# With options
+bicep-docs markdown example.bicep --emoji --exclude-empty -o my-docs.md
+
+# Different formats
+bicep-docs asciidoc example.bicep --emoji
+bicep-docs yaml example.bicep --exclude-empty
+bicep-docs json example.bicep --pretty
+
+# With logging
+bicep-docs markdown example.bicep -v --log-file debug.log
+----
+
+== Understanding the Output
+
+Each generated file contains documentation for:
+
+* **Metadata**: File-level metadata and description
+* **Parameters**: Input parameters with types, descriptions, and constraints
+* **Types**: Custom type definitions
+* **Variables**: Variable declarations and values
+* **Functions**: User-defined functions
+* **Resources**: Azure resources being deployed
+* **Outputs**: Template outputs with types and constraints
+
+The structured formats (YAML/JSON) provide the same information in a machine-readable format suitable for automation and integration scenarios.

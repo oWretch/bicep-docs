@@ -6,11 +6,9 @@ Description of the example Bicep file
 
 ## Additional Metadata
 
-**author:** File Author
-
-## Imports
-
-*No imports defined*
+| Key | Value |
+|-----|-------|
+| author | File Author |
 
 ## Types
 
@@ -18,24 +16,22 @@ Description of the example Bicep file
 
 Type description
 
-**Type:** `object`  
-**Exported:** No  
-**Nullable:** No  
-**Secure:** No  
+**Exported:** ❌ No  
+**Secure:** ❌ No  
 
 **Object Definition**
 
 #### `name`
 
 **Type:** `string`  
-**Nullable:** Yes  
-**Secure:** Yes  
+**Nullable:** ✅ Yes  
+**Secure:** ✅ Yes  
 
 #### `score`
 
 **Type:** `int`  
-**Nullable:** No  
-**Secure:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
 **Constraints**
 
@@ -45,43 +41,39 @@ Type description
 #### `grade`
 
 **Type:** `grade`  
-**Nullable:** No  
-**Secure:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
 
 ### `grade`
 
-**Type:** `'A' | 'B' | 'C' | 'D' | 'E'`  
-**Exported:** Yes  
-**Nullable:** No  
-**Secure:** No  
+**Exported:** ✅ Yes  
+**Secure:** ❌ No  
 
 ### `resourceType`
 
-**Type:** `object`  
-**Exported:** No  
-**Nullable:** No  
-**Secure:** No  
+**Exported:** ❌ No  
+**Secure:** ❌ No  
 
 **Object Definition**
 
 #### `id`
 
 **Type:** `string`  
-**Nullable:** No  
-**Secure:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
 #### `name`
 
 **Type:** `string`  
-**Nullable:** No  
-**Secure:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
 #### `resourceGroup`
 
 **Type:** `string`  
-**Nullable:** No  
-**Secure:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
 
 ## Functions
@@ -91,7 +83,7 @@ Type description
 Generate Name Function
 
 **Return Type:** `string`  
-**Exported:** Yes  
+**Exported:** ✅ Yes  
 
 **Parameters**
 
@@ -106,13 +98,15 @@ toLower('${argument1}-${argument2}')
 
 **Metadata**
 
-**description:** Generate Name Function
+| Key | Value |
+|-----|-------|
+| description | Generate Name Function |
 
 
 ### `somethingElse`
 
 **Return Type:** `bool`  
-**Exported:** No  
+**Exported:** ❌ No  
 
 **Definition**
 
@@ -127,9 +121,9 @@ true
 This is a required parameter
 
 **Type:** `string`  
-**Nullable:** No  
-**Secure:** Yes  
-**Sealed:** No  
+**Nullable:** ❌ No  
+**Secure:** ✅ Yes  
+**Sealed:** ❌ No  
 
 **Constraints**
 
@@ -141,16 +135,16 @@ This is a required parameter
 This is an optional parameter
 
 **Type:** `string`  
-**Nullable:** Yes  
-**Secure:** No  
-**Sealed:** No  
+**Nullable:** ✅ Yes  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
 
 ### `simpleParamWithDefault`
 
 **Type:** `int`  
-**Nullable:** No  
-**Secure:** No  
-**Sealed:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
 
 **Constraints**
 
@@ -169,28 +163,32 @@ I have a description in metadata
 
 **Metadata**
 
-**name:** A name in metadata
-
-**somethingElse:** Another metadata property
+| Key | Value |
+|-----|-------|
+| name | A name in metadata |
+| somethingElse | Another metadata property |
 
 
 **Type:** `object`  
-**Nullable:** No  
-**Secure:** No  
-**Sealed:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
 
 **Default Value**
 
 ```bicep
-{ name: value, number: 1000 }
+{
+  name: 'value'
+  number: 1000
+}
 ```
 
 ### `inlineSpecificObject`
 
 **Type:** `object`  
-**Nullable:** No  
-**Secure:** No  
-**Sealed:** Yes  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ✅ Yes  
 
 **Object Definition**
 
@@ -199,8 +197,8 @@ I have a description in metadata
 Description of the property
 
 **Type:** `string`  
-**Nullable:** No  
-**Secure:** Yes  
+**Nullable:** ❌ No  
+**Secure:** ✅ Yes  
 
 **Constraints**
 
@@ -209,8 +207,8 @@ Description of the property
 #### `otionalProperty`
 
 **Type:** `int`  
-**Nullable:** Yes  
-**Secure:** No  
+**Nullable:** ✅ Yes  
+**Secure:** ❌ No  
 
 **Constraints**
 
@@ -219,53 +217,45 @@ Description of the property
 #### `objectProperty`
 
 **Type:** `object`  
-**Nullable:** No  
-**Secure:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
 **Object Definition**
 
 ##### `key1`
 
 **Type:** `string`  
-**Nullable:** No  
-**Secure:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
 ##### `key2`
 
 **Type:** `int`  
-**Nullable:** No  
-**Secure:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
 
 
 
 ### `typedObjects`
 
 **Type:** `customObject[]`  
-**Nullable:** No  
-**Secure:** No  
-**Sealed:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
 
 ### `individualOptions`
 
-**Type:** `'one' | 'two' | 'three'`  
-**Nullable:** No  
-**Secure:** No  
-**Sealed:** No  
+**Type:** `one | two | three`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
 
 ### `greekLetter`
 
 **Type:** `string`  
-**Nullable:** No  
-**Secure:** No  
-**Sealed:** No  
-
-**Constraints**
-
-**Allowed Values:**   
-`alpha`    
-`beta`    
-`gamma`    
-`delta`  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
 
 **Default Value**
 
@@ -276,20 +266,18 @@ alpha
 ### `multiLine`
 
 **Type:** `string`  
-**Nullable:** No  
-**Secure:** No  
-**Sealed:** No  
+**Nullable:** ❌ No  
+**Secure:** ❌ No  
+**Sealed:** ❌ No  
 
 **Default Value**
 
 ```bicep
-
 This is a multi line string.
   It covers multiple lines, and has indentation.
   It also has a tab character (	).	And a new line.
   It also has a double backslash \\ and a single \
   And a single quote: '
-
 ```
 
 ## Variables
@@ -298,7 +286,7 @@ This is a multi line string.
 
 Variable description
 
-**Exported:** No  
+**Exported:** ❌ No  
 
 **Value**
 
@@ -310,7 +298,7 @@ someValue
 
 Exported variable description
 
-**Exported:** Yes  
+**Exported:** ✅ Yes  
 
 **Value**
 
@@ -322,7 +310,7 @@ exportedValue
 
 Boolean variable
 
-**Exported:** Yes  
+**Exported:** ✅ Yes  
 
 **Value**
 
@@ -334,7 +322,7 @@ true
 
 The answer to life, the universe, and everything
 
-**Exported:** No  
+**Exported:** ❌ No  
 
 **Value**
 
@@ -349,14 +337,14 @@ The answer to life, the universe, and everything
 **Name:** `mystorageaccount`  
 **Type:** `Microsoft.Storage/storageAccounts`  
 **API Version:** `2023-04-01`  
-**Existing:** Yes  
+**Existing:** ✅ Yes  
 
 ### `storageAccount::blobServices`
 
 **Name:** `default`  
 **Type:** `Microsoft.Storage/storageAccounts/blobServices`  
 **API Version:** `2023-04-01`  
-**Existing:** Yes  
+**Existing:** ✅ Yes  
 
 ### `storageAccount::blobServices::container`
 
@@ -366,10 +354,9 @@ The answer to life, the universe, and everything
 
 ### `vnet`
 
-**Name:** `${nameVar}`  
+**Name:** `nameVar`  
 **Type:** `Microsoft.Network/virtualNetworks`  
 **API Version:** `2021-05-01`  
-**Depends On:** `roleAssignStorage`  
 
 ### `vnet::defaultSubnet`
 
@@ -392,23 +379,22 @@ Resource Description
 **API Version:** `2023-11-01`  
 **Parent:** `vnet`  
 **Condition:**   
-  
-```bicep  
-(1 == 1)  
-```  
+```bicep
+(1 == 1)
+```
   
 
 ### `containerLoop`
 
-**Name:** `container${name}`  
+**Name:** `container`  
 **Type:** `Microsoft.Storage/storageAccounts/blobServices/containers`  
 **API Version:** `2024-01-01`  
 **Parent:** `storageAccount::blobServices`  
 **Batch Size:** `2`  
 **Loop:**   
-```bicep  
-for name in ['alice', 'bob', 'charlie']  
-```  
+```bicep
+for name in ['alice', 'bob', 'charlie']
+```
   
 
 ### `roleAssignStorage`
@@ -416,11 +402,7 @@ for name in ['alice', 'bob', 'charlie']
 **Name:** `guid(storageAccount.name)`  
 **Type:** `Microsoft.Authorization/roleAssignments`  
 **API Version:** `2022-04-01`  
-**Scope:** `${storageAccount}`  
-
-## Modules
-
-*No modules defined*
+**Scope:** `storageAccount`  
 
 ## Outputs
 
@@ -429,8 +411,8 @@ for name in ['alice', 'bob', 'charlie']
 Output Description
 
 **Type:** `string`  
-**Sealed:** No  
-**Secure:** Yes  
+**Sealed:** ❌ No  
+**Secure:** ✅ Yes  
 
 **Value**
 
@@ -441,20 +423,24 @@ one
 ### `storageAccountOutput`
 
 **Type:** `resourceType`  
-**Sealed:** No  
-**Secure:** No  
+**Sealed:** ❌ No  
+**Secure:** ❌ No  
 
 **Value**
 
 ```bicep
-{ id: storageAccount.id, name: storageAccount.name, resourceGroup: resourceGroup().name }
+{
+  id: 'storageAccount.id'
+  name: 'storageAccount.name'
+  resourceGroup: 'resourceGroup().name'
+}
 ```
 
 ### `percentage`
 
 **Type:** `int`  
-**Sealed:** No  
-**Secure:** No  
+**Sealed:** ❌ No  
+**Secure:** ❌ No  
 
 **Constraints**
 
@@ -470,8 +456,8 @@ true ? 50 : 100
 ### `fib`
 
 **Type:** `string[]`  
-**Sealed:** No  
-**Secure:** No  
+**Sealed:** ❌ No  
+**Secure:** ❌ No  
 
 **Constraints**
 
@@ -481,6 +467,15 @@ true ? 50 : 100
 **Value**
 
 ```bicep
-[1, 1, 2, 3, 5, 8]
+[
+  '['
+  1
+  1
+  2
+  3
+  5
+  8
+  ']'
+]
 ```
 
