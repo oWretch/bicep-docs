@@ -1,0 +1,453 @@
+= Bicep-Docs API Reference
+:toc:
+:toc-title: Table of Contents
+:sectnums:
+
+This document provides a comprehensive API reference for the Bicep-Docs library.
+
+== Overview
+
+The Bicep-Docs library provides both high-level convenience functions and low-level parsing capabilities for working with Azure Bicep files. The API is designed to be simple for common use cases while providing flexibility for advanced scenarios.
+
+== Core Functions
+
+=== Parsing Functions
+
+==== `parse_bicep_file(content: &str) -> Option<Tree>`
+
+Parse a Bicep file content and return the tree-sitter Tree.
+
+**Parameters:**
+* `content` - The content of the Bicep file to parse
+
+**Returns:**
+An `Option<Tree>` containing the parsed Tree if successful, `None` otherwise.
+
+**Example:**
+[source,rust]
+----
+use bicep_docs::parse_bicep_file;
+
+let bicep_content = r#"
+param storageAccountName string
+resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
+  name: storageAccountName
+  location: 'eastus'
+}
+"#;
+
+if let Some(tree) = parse_bicep_file(bicep_content) {
+    println!("Successfully parsed Bicep file");
+}
+----
+
+==== `parse_bicep_document(source_code: &str) -> Result<BicepDocument, Box<dyn Error>>`
+
+Parse a Bicep document from source code and return a structured representation.
+
+**Parameters:**
+* `source_code` - The source code of the Bicep file to parse
+
+**Returns:**
+A `Result<BicepDocument, Box<dyn Error>>` containing the parsed document or an error.
+
+**Example:**
+[source,rust]
+----
+use bicep_docs::parse_bicep_document;
+
+let source_code = std::fs::read_to_string("main.bicep")?;
+let document = parse_bicep_document(&source_code)?;
+
+println!("Target scope: {}", document.target_scope);
+println!("Parameters: {}", document.parameters.len());
+----
+
+== Export Functions
+
+=== YAML Export
+
+==== `export_bicep_document_to_yaml<P: AsRef<Path>>(document: &BicepDocument, output_path: P, exclude_empty: bool) -> Result<(), Box<dyn Error>>`
+
+Export a parsed Bicep document as YAML to a file.
+
+**Parameters:**
+* `document` - The BicepDocument to export
+* `output_path` - The path where the YAML file should be written
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+**Returns:**
+A `Result<(), Box<dyn Error>>` indicating success or an error.
+
+==== `export_bicep_document_to_yaml_string(document: &BicepDocument, exclude_empty: bool) -> Result<String, Box<dyn Error>>`
+
+Export a parsed Bicep document as YAML string.
+
+**Parameters:**
+* `document` - The BicepDocument to export
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+**Returns:**
+A `Result<String, Box<dyn Error>>` containing the YAML string or an error.
+
+=== JSON Export
+
+==== `export_bicep_document_to_json<P: AsRef<Path>>(document: &BicepDocument, output_path: P, pretty: bool, exclude_empty: bool) -> Result<(), Box<dyn Error>>`
+
+Export a parsed Bicep document as JSON to a file.
+
+**Parameters:**
+* `document` - The BicepDocument to export
+* `output_path` - The path where the JSON file should be written
+* `pretty` - Whether to format the JSON with indentation for readability
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+**Returns:**
+A `Result<(), Box<dyn Error>>` indicating success or an error.
+
+==== `export_bicep_document_to_json_string(document: &BicepDocument, pretty: bool, exclude_empty: bool) -> Result<String, Box<dyn Error>>`
+
+Export a parsed Bicep document as JSON string.
+
+**Parameters:**
+* `document` - The BicepDocument to export
+* `pretty` - Whether to format the JSON with indentation for readability
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+**Returns:**
+A `Result<String, Box<dyn Error>>` containing the JSON string or an error.
+
+=== Markdown Export
+
+==== `export_bicep_document_to_markdown<P: AsRef<Path>>(document: &BicepDocument, output_path: P, use_emoji: bool, exclude_empty: bool) -> Result<(), Box<dyn Error>>`
+
+Export a parsed Bicep document as Markdown to a file.
+
+**Parameters:**
+* `document` - The BicepDocument to export
+* `output_path` - The path where the Markdown file should be written
+* `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+**Returns:**
+A `Result<(), Box<dyn Error>>` indicating success or an error.
+
+==== `export_bicep_document_to_markdown_string(document: &BicepDocument, use_emoji: bool, exclude_empty: bool) -> Result<String, Box<dyn Error>>`
+
+Export a parsed Bicep document as Markdown string.
+
+**Parameters:**
+* `document` - The BicepDocument to export
+* `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+**Returns:**
+A `Result<String, Box<dyn Error>>` containing the Markdown string or an error.
+
+=== AsciiDoc Export
+
+==== `export_bicep_document_to_asciidoc<P: AsRef<Path>>(document: &BicepDocument, output_path: P, use_emoji: bool, exclude_empty: bool) -> Result<(), Box<dyn Error>>`
+
+Export a parsed Bicep document as AsciiDoc to a file.
+
+**Parameters:**
+* `document` - The BicepDocument to export
+* `output_path` - The path where the AsciiDoc file should be written
+* `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+**Returns:**
+A `Result<(), Box<dyn Error>>` indicating success or an error.
+
+==== `export_bicep_document_to_asciidoc_string(document: &BicepDocument, use_emoji: bool, exclude_empty: bool) -> Result<String, Box<dyn Error>>`
+
+Export a parsed Bicep document as AsciiDoc string.
+
+**Parameters:**
+* `document` - The BicepDocument to export
+* `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+**Returns:**
+A `Result<String, Box<dyn Error>>` containing the AsciiDoc string or an error.
+
+== Convenience Functions
+
+=== One-Step Export Functions
+
+These functions combine parsing and exporting in a single operation for convenience.
+
+==== `parse_and_export_to_yaml<P: AsRef<Path>>(source_code: &str, output_path: P, exclude_empty: bool) -> Result<(), Box<dyn Error>>`
+
+Parse a Bicep file and export it as YAML in one step.
+
+**Parameters:**
+* `source_code` - The source code of the Bicep file
+* `output_path` - The path where the YAML file should be written
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+==== `parse_and_export_to_json<P: AsRef<Path>>(source_code: &str, output_path: P, pretty: bool, exclude_empty: bool) -> Result<(), Box<dyn Error>>`
+
+Parse a Bicep file and export it as JSON in one step.
+
+**Parameters:**
+* `source_code` - The source code of the Bicep file
+* `output_path` - The path where the JSON file should be written
+* `pretty` - Whether to format the JSON with indentation for readability
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+==== `parse_and_export_to_markdown<P: AsRef<Path>, Q: AsRef<Path>>(file_path: P, output_path: Q, exclude_empty: bool) -> Result<(), Box<dyn Error>>`
+
+Parse a Bicep file and export it as Markdown in one step.
+
+**Parameters:**
+* `file_path` - The path to the Bicep file to parse
+* `output_path` - The path where the Markdown file should be written
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+==== `parse_and_export_to_asciidoc<P: AsRef<Path>, Q: AsRef<Path>>(file_path: P, output_path: Q, exclude_empty: bool) -> Result<(), Box<dyn Error>>`
+
+Parse a Bicep file and export it as AsciiDoc in one step.
+
+**Parameters:**
+* `file_path` - The path to the Bicep file to parse
+* `output_path` - The path where the AsciiDoc file should be written
+* `exclude_empty` - Whether to exclude empty sections from the output
+
+== Data Structures
+
+=== BicepDocument
+
+The main document structure containing all parsed elements.
+
+[source,rust]
+----
+pub struct BicepDocument {
+    pub metadata: BicepMetadata,
+    pub target_scope: String,
+    pub imports: IndexMap<String, BicepImport>,
+    pub types: IndexMap<String, BicepType>,
+    pub parameters: IndexMap<String, BicepParameter>,
+    pub variables: IndexMap<String, BicepVariable>,
+    pub functions: IndexMap<String, BicepFunction>,
+    pub resources: IndexMap<String, BicepResource>,
+    pub outputs: IndexMap<String, BicepOutput>,
+}
+----
+
+=== BicepMetadata
+
+Document-level metadata information.
+
+[source,rust]
+----
+pub struct BicepMetadata {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub author: Option<String>,
+    pub additional: IndexMap<String, BicepValue>,
+}
+----
+
+=== BicepParameter
+
+Represents a parameter declaration.
+
+[source,rust]
+----
+pub struct BicepParameter {
+    pub name: String,
+    pub param_type: BicepType,
+    pub description: Option<String>,
+    pub default_value: Option<BicepValue>,
+    pub metadata: IndexMap<String, BicepValue>,
+    pub decorators: Vec<BicepDecorator>,
+}
+----
+
+=== BicepResource
+
+Represents a resource declaration.
+
+[source,rust]
+----
+pub struct BicepResource {
+    pub name: String,
+    pub resource_type: String,
+    pub api_version: String,
+    pub description: Option<String>,
+    pub is_existing: bool,
+    pub parent: Option<String>,
+    pub children: Vec<String>,
+    pub properties: IndexMap<String, BicepValue>,
+    pub metadata: IndexMap<String, BicepValue>,
+    pub decorators: Vec<BicepDecorator>,
+}
+----
+
+=== BicepType
+
+Represents a type definition or type reference.
+
+[source,rust]
+----
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(tag = "kind", content = "value")]
+pub enum BicepType {
+    Primitive(String),
+    Array(Box<BicepType>),
+    Object(IndexMap<String, BicepObjectProperty>),
+    Union(Vec<BicepType>),
+    Reference(String),
+}
+----
+
+=== BicepValue
+
+Represents a value in Bicep (literals, expressions, etc.).
+
+[source,rust]
+----
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(tag = "type", content = "value")]
+pub enum BicepValue {
+    String(String),
+    Number(f64),
+    Boolean(bool),
+    Array(Vec<BicepValue>),
+    Object(IndexMap<String, BicepValue>),
+    Null,
+    Expression(String),
+}
+----
+
+=== BicepDecorator
+
+Represents a decorator applied to an element.
+
+[source,rust]
+----
+pub struct BicepDecorator {
+    pub name: String,
+    pub arguments: Vec<BicepValue>,
+}
+----
+
+== Error Handling
+
+=== BicepParserError
+
+The main error type for parsing operations.
+
+[source,rust]
+----
+#[derive(Debug)]
+pub enum BicepParserError {
+    ParseError(String),
+    InvalidSyntax(String),
+    UnsupportedFeature(String),
+    IoError(std::io::Error),
+}
+----
+
+== Usage Patterns
+
+=== Basic Usage Pattern
+
+[source,rust]
+----
+use bicep_docs::*;
+use std::error::Error;
+
+fn main() -> Result<(), Box<dyn Error>> {
+    // Read Bicep file
+    let source_code = std::fs::read_to_string("main.bicep")?;
+
+    // Parse document
+    let document = parse_bicep_document(&source_code)?;
+
+    // Export to multiple formats
+    export_bicep_document_to_markdown(&document, "docs.md", true, false)?;
+    export_bicep_document_to_yaml(&document, "docs.yaml", false)?;
+
+    Ok(())
+}
+----
+
+=== Advanced Usage Pattern
+
+[source,rust]
+----
+use bicep_docs::*;
+use std::error::Error;
+
+fn analyze_bicep_template(file_path: &str) -> Result<(), Box<dyn Error>> {
+    let source_code = std::fs::read_to_string(file_path)?;
+    let document = parse_bicep_document(&source_code)?;
+
+    // Analyze the document
+    println!("Template: {}", document.metadata.name.unwrap_or("Unnamed".to_string()));
+    println!("Parameters: {}", document.parameters.len());
+    println!("Resources: {}", document.resources.len());
+    println!("Outputs: {}", document.outputs.len());
+
+    // Check for missing descriptions
+    let mut missing_descriptions = Vec::new();
+
+    for (name, param) in &document.parameters {
+        if param.description.is_none() {
+            missing_descriptions.push(format!("Parameter: {}", name));
+        }
+    }
+
+    for (name, resource) in &document.resources {
+        if resource.description.is_none() {
+            missing_descriptions.push(format!("Resource: {}", name));
+        }
+    }
+
+    if !missing_descriptions.is_empty() {
+        println!("Missing descriptions:");
+        for item in missing_descriptions {
+            println!("  - {}", item);
+        }
+    }
+
+    // Export documentation
+    export_bicep_document_to_markdown(&document, "analysis.md", true, true)?;
+
+    Ok(())
+}
+----
+
+== Best Practices
+
+=== Memory Management
+
+1. **Prefer borrowing**: Use `&str` parameters when possible
+2. **Reuse parsed documents**: Parse once, export multiple times
+3. **Handle large files**: Use streaming for very large Bicep files
+
+=== Error Handling
+
+1. **Use Result types**: Always handle potential errors properly
+2. **Provide context**: Add meaningful error messages
+3. **Graceful degradation**: Continue processing when non-critical errors occur
+
+=== Performance
+
+1. **Cache parsed documents**: Avoid reparsing the same file
+2. **Use appropriate export formats**: JSON/YAML for machine processing, Markdown/AsciiDoc for humans
+3. **Filter empty sections**: Use `exclude_empty` for cleaner output
+
+== Thread Safety
+
+The library is designed to be thread-safe for read operations. Parsed `BicepDocument` instances can be safely shared across threads. However, file I/O operations should be coordinated to avoid conflicts.
+
+== Compatibility
+
+The API follows semantic versioning. Breaking changes will only be introduced in major version updates. The library is compatible with:
+
+* Rust 1.70+
+* All major platforms (Windows, macOS, Linux)
+* Both synchronous and asynchronous applications

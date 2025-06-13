@@ -1,0 +1,33 @@
+= Bicep-Docs Test Suite
+:toc:
+:toc-title: Table of Contents
+:sectnums:
+
+This directory contains tests for the Bicep-Docs project.
+
+== Overview
+
+The tests cover parsing, documentation generation, and output validation for Azure Bicep files using the Rust-based parser.
+
+== Structure
+
+* `test_export.rs`, `test_markdown.rs`, `test_parsing.rs`: Rust test modules for core features
+* `parsing/`: Bicep files for unit and integration tests
+* `TEST_PLAN.adoc`: Test plan and coverage
+
+== Running Tests
+
+[source,bash]
+----
+cargo test --all-features
+----
+
+== Adding New Tests
+
+1. Add new `.bicep` files to `parsing/` for new scenarios
+2. Add or update Rust test modules as needed
+3. Update `TEST_PLAN.adoc` if coverage changes
+
+== Reporting Issues
+
+If you find a bug or missing test, please open a GitHub Issue with details and reproduction steps.

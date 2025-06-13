@@ -1,0 +1,581 @@
+= Examples and Usage Patterns
+:toc:
+:toc-title: Table of Contents
+:sectnums:
+
+This document provides comprehensive examples of using Bicep-Docs in various scenarios.
+
+== Basic CLI Usage
+
+=== Quick Start
+
+The simplest way to generate documentation for a Bicep file:
+
+[source,bash]
+----
+# Generate Markdown documentation
+bicep-docs markdown main.bicep
+
+# Generate AsciiDoc documentation
+bicep-docs asciidoc main.bicep
+
+# Generate YAML structured output
+bicep-docs yaml main.bicep
+
+# Generate JSON structured output
+bicep-docs json main.bicep
+----
+
+=== Custom Output Paths
+
+[source,bash]
+----
+# Specify custom output file
+bicep-docs markdown --output docs/infrastructure.md main.bicep
+
+# Export to different directory
+bicep-docs asciidoc --output ../docs/bicep-reference.adoc main.bicep
+----
+
+=== Enhanced Output Options
+
+[source,bash]
+----
+# Enable emoji for better visual representation
+bicep-docs markdown --emoji main.bicep
+
+# Exclude empty sections for cleaner output
+bicep-docs markdown --exclude-empty main.bicep
+
+# Pretty-print JSON output
+bicep-docs json --pretty main.bicep
+
+# Combine options
+bicep-docs markdown --emoji --exclude-empty --output README.md main.bicep
+----
+
+=== Logging and Debugging
+
+[source,bash]
+----
+# Enable debug logging
+bicep-docs -v markdown main.bicep
+
+# Enable trace logging (very verbose)
+bicep-docs -vv markdown main.bicep
+
+# Quiet mode (no console output)
+bicep-docs -q markdown main.bicep
+
+# JSON formatted logs
+bicep-docs --log-format json markdown main.bicep
+
+# Save logs to file
+bicep-docs --log-file debug.log -v markdown main.bicep
+----
+
+== Library Usage Examples
+
+=== Basic Library Usage
+
+[source,rust]
+----
+use bicep_docs::*;
+use std::error::Error;
+
+fn main() -> Result<(), Box<dyn Error>> {
+    // One-step export from file to documentation
+    parse_and_export_to_markdown("infrastructure.bicep", "docs/infrastructure.md", false)?;
+
+    println!("Documentation generated successfully!");
+    Ok(())
+}
+----
+
+=== Parse Once, Export Multiple Formats
+
+[source,rust]
+----
+use bicep_docs::*;
+use std::error::Error;
+
+fn generate_all_formats(bicep_file: &str) -> Result<(), Box<dyn Error>> {
+    // Read the Bicep file
+    let source_code = std::fs::read_to_string(bicep_file)?;
+
+    // Parse once
+    let document = parse_bicep_document(&source_code)?;
+
+    // Export to multiple formats
+    export_bicep_document_to_markdown(&document, "docs/infrastructure.md", true, false)?;
+    export_bicep_document_to_asciidoc(&document, "docs/infrastructure.adoc", true, false)?;
+    export_bicep_document_to_yaml(&document, "docs/infrastructure.yaml", false)?;
+    export_bicep_document_to_json(&document, "docs/infrastructure.json", true, false)?;
+
+    println!("All documentation formats generated!");
+    Ok(())
+}
+----
+
+=== Working with Document Data
+
+[source,rust]
+----
+use bicep_docs::*;
+use std::error::Error;
+
+fn analyze_bicep_file(bicep_file: &str) -> Result<(), Box<dyn Error>> {
+    let source_code = std::fs::read_to_string(bicep_file)?;
+    let document = parse_bicep_document(&source_code)?;
+
+    // Access metadata
+    if let Some(name) = &document.metadata.name {
+        println!("Template Name: {}", name);
+    }
+
+    if let Some(description) = &document.metadata.description {
+        println!("Description: {}", description);
+    }
+
+    println!("Target Scope: {}", document.target_scope);
+
+    // Analyze parameters
+    println!("\nParameters ({}):", document.parameters.len());
+    for (name, param) in &document.parameters {
+        println!("  - {}: {:?}", name, param.param_type);
+        if let Some(desc) = &param.description {
+            println!("    Description: {}", desc);
+        }
+    }
+
+    // Analyze resources
+    println!("\nResources ({}):", document.resources.len());
+    for (name, resource) in &document.resources {
+        println!("  - {}: {}", name, resource.resource_type);
+        if let Some(desc) = &resource.description {
+            println!("    Description: {}", desc);
+        }
+    }
+
+    // Analyze outputs
+    println!("\nOutputs ({}):", document.outputs.len());
+    for (name, output) in &document.outputs {
+        println!("  - {}: {:?}", name, output.output_type);
+    }
+
+    Ok(())
+}
+----
+
+=== String-based Processing
+
+[source,rust]
+----
+use bicep_docs::*;
+use std::error::Error;
+
+fn process_bicep_string(bicep_content: &str) -> Result<String, Box<dyn Error>> {
+    // Parse the Bicep content
+    let document = parse_bicep_document(bicep_content)?;
+
+    // Generate markdown as string
+    let markdown_content = export_bicep_document_to_markdown_string(&document, true, false)?;
+
+    // Process or modify the markdown as needed
+    let processed_content = format!("# Custom Header\n\n{}", markdown_content);
+
+    Ok(processed_content)
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let bicep_code = r#"
+@description('Storage account name')
+param storageAccountName string
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
+  name: storageAccountName
+  location: resourceGroup().location
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+}
+"#;
+
+    let documentation = process_bicep_string(bicep_code)?;
+    println!("{}", documentation);
+
+    Ok(())
+}
+----
+
+== Integration Examples
+
+=== GitHub Actions Integration
+
+[source,yaml]
+----
+name: Generate Bicep Documentation
+
+on:
+  push:
+    paths:
+      - '**/*.bicep'
+  pull_request:
+    paths:
+      - '**/*.bicep'
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install bicep-docs
+        run: cargo install bicep-docs
+
+      - name: Generate documentation
+        run: |
+          find . -name "*.bicep" -exec bicep-docs markdown --emoji --exclude-empty {} \;
+
+      - name: Commit documentation
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update Bicep documentation [skip ci]"
+          git push
+----
+
+=== Docker Integration
+
+[source,dockerfile]
+----
+FROM rust:latest as builder
+
+# Install bicep-docs
+RUN cargo install bicep-docs
+
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the binary from builder
+COPY --from=builder /usr/local/cargo/bin/bicep-docs /usr/local/bin/bicep-docs
+
+# Set working directory
+WORKDIR /workspace
+
+# Default command
+CMD ["bicep-docs", "--help"]
+----
+
+Usage:
+[source,bash]
+----
+# Build the image
+docker build -t bicep-docs .
+
+# Run documentation generation
+docker run -v $(pwd):/workspace bicep-docs markdown /workspace/main.bicep
+----
+
+=== Build Script Integration
+
+[source,bash]
+----
+#!/bin/bash
+# generate-docs.sh
+
+set -e
+
+echo "Generating Bicep documentation..."
+
+# Find all Bicep files
+find . -name "*.bicep" -type f | while read -r bicep_file; do
+    echo "Processing: $bicep_file"
+
+    # Generate documentation in multiple formats
+    bicep-docs markdown --emoji --exclude-empty "$bicep_file"
+    bicep-docs yaml --exclude-empty "$bicep_file"
+
+    echo "Generated documentation for: $bicep_file"
+done
+
+echo "Documentation generation complete!"
+----
+
+== Advanced Use Cases
+
+=== Custom Documentation Pipeline
+
+[source,rust]
+----
+use bicep_docs::*;
+use std::error::Error;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+struct DocumentationPipeline {
+    input_dir: PathBuf,
+    output_dir: PathBuf,
+    formats: Vec<String>,
+}
+
+impl DocumentationPipeline {
+    fn new(input_dir: PathBuf, output_dir: PathBuf) -> Self {
+        Self {
+            input_dir,
+            output_dir,
+            formats: vec!["markdown".to_string(), "yaml".to_string()],
+        }
+    }
+
+    fn process_all(&self) -> Result<(), Box<dyn Error>> {
+        // Ensure output directory exists
+        fs::create_dir_all(&self.output_dir)?;
+
+        // Find all Bicep files
+        let bicep_files = self.find_bicep_files()?;
+
+        for bicep_file in bicep_files {
+            self.process_file(&bicep_file)?;
+        }
+
+        Ok(())
+    }
+
+    fn find_bicep_files(&self) -> Result<Vec<PathBuf>, Box<dyn Error>> {
+        let mut files = Vec::new();
+        self.visit_dir(&self.input_dir, &mut files)?;
+        Ok(files)
+    }
+
+    fn visit_dir(&self, dir: &Path, files: &mut Vec<PathBuf>) -> Result<(), Box<dyn Error>> {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if path.is_dir() {
+                self.visit_dir(&path, files)?;
+            } else if path.extension().and_then(|s| s.to_str()) == Some("bicep") {
+                files.push(path);
+            }
+        }
+        Ok(())
+    }
+
+    fn process_file(&self, bicep_file: &Path) -> Result<(), Box<dyn Error>> {
+        let source_code = fs::read_to_string(bicep_file)?;
+        let document = parse_bicep_document(&source_code)?;
+
+        // Generate relative path for output
+        let relative_path = bicep_file.strip_prefix(&self.input_dir)?;
+        let base_name = relative_path.with_extension("");
+
+        // Generate documentation in each format
+        for format in &self.formats {
+            match format.as_str() {
+                "markdown" => {
+                    let output_path = self.output_dir.join(&base_name).with_extension("md");
+                    if let Some(parent) = output_path.parent() {
+                        fs::create_dir_all(parent)?;
+                    }
+                    export_bicep_document_to_markdown(&document, &output_path, true, true)?;
+                }
+                "yaml" => {
+                    let output_path = self.output_dir.join(&base_name).with_extension("yaml");
+                    if let Some(parent) = output_path.parent() {
+                        fs::create_dir_all(parent)?;
+                    }
+                    export_bicep_document_to_yaml(&document, &output_path, true)?;
+                }
+                _ => eprintln!("Unknown format: {}", format),
+            }
+        }
+
+        Ok(())
+    }
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let pipeline = DocumentationPipeline::new(
+        PathBuf::from("./bicep"),
+        PathBuf::from("./docs"),
+    );
+
+    pipeline.process_all()?;
+    println!("Documentation pipeline completed successfully!");
+
+    Ok(())
+}
+----
+
+=== Template Validation and Documentation
+
+[source,rust]
+----
+use bicep_docs::*;
+use std::error::Error;
+
+fn validate_and_document(bicep_file: &str) -> Result<(), Box<dyn Error>> {
+    let source_code = std::fs::read_to_string(bicep_file)?;
+    let document = parse_bicep_document(&source_code)?;
+
+    // Validation checks
+    let mut issues = Vec::new();
+
+    // Check for missing parameter descriptions
+    for (name, param) in &document.parameters {
+        if param.description.is_none() {
+            issues.push(format!("Parameter '{}' is missing a description", name));
+        }
+    }
+
+    // Check for missing resource descriptions
+    for (name, resource) in &document.resources {
+        if resource.description.is_none() {
+            issues.push(format!("Resource '{}' is missing a description", name));
+        }
+    }
+
+    // Check for missing output descriptions
+    for (name, output) in &document.outputs {
+        if output.description.is_none() {
+            issues.push(format!("Output '{}' is missing a description", name));
+        }
+    }
+
+    // Report issues
+    if !issues.is_empty() {
+        println!("Documentation issues found:");
+        for issue in &issues {
+            println!("  - {}", issue);
+        }
+    }
+
+    // Generate documentation regardless
+    export_bicep_document_to_markdown(&document, "validation-report.md", true, false)?;
+
+    // Return error if critical issues found
+    if issues.len() > 10 {
+        return Err("Too many documentation issues found".into());
+    }
+
+    Ok(())
+}
+----
+
+== AST Export Tool Examples
+
+=== Basic AST Export
+
+[source,bash]
+----
+# Export complete AST to YAML
+cargo run --bin export-ast -- main.bicep
+
+# Export AST to JSON
+cargo run --bin export-ast -- --format json main.bicep
+
+# Show AST statistics
+cargo run --bin export-ast -- --stats main.bicep
+----
+
+=== Filtered AST Export
+
+[source,bash]
+----
+# Show only resource declarations
+cargo run --bin export-ast -- --type-filter resource_declaration main.bicep
+
+# Show only parameter declarations
+cargo run --bin export-ast -- --type-filter parameter_declaration main.bicep
+
+# Show nodes on specific line
+cargo run --bin export-ast -- --line 25 main.bicep
+----
+
+=== AST Analysis
+
+[source,bash]
+----
+# Show tree structure
+cargo run --bin export-ast -- --structure main.bicep
+
+# Get help on available node types
+cargo run --bin export-ast -- --help-node-types
+
+# Get help on field names
+cargo run --bin export-ast -- --help-field-names
+
+# See usage examples
+cargo run --bin export-ast -- --help-examples
+----
+
+== Troubleshooting Examples
+
+=== Common Issues and Solutions
+
+==== Issue: Parse Error
+[source,bash]
+----
+# Enable verbose logging to see parse details
+bicep-docs -vv markdown problematic-file.bicep
+
+# Check AST structure for issues
+cargo run --bin export-ast -- --stats problematic-file.bicep
+----
+
+==== Issue: Missing Content in Output
+[source,bash]
+----
+# Disable empty section filtering
+bicep-docs markdown --no-exclude-empty main.bicep
+
+# Check if content is present in YAML output
+bicep-docs yaml main.bicep
+----
+
+==== Issue: Performance with Large Files
+[source,bash]
+----
+# Use quiet mode to reduce overhead
+bicep-docs -q markdown large-file.bicep
+
+# Export to JSON for fastest processing
+bicep-docs json --pretty large-file.bicep
+----
+
+== Best Practices
+
+=== CLI Usage Best Practices
+
+1. **Use appropriate verbosity levels**: `-v` for debugging, `-q` for production scripts
+2. **Enable emoji for human-readable formats**: Improves readability in markdown/asciidoc
+3. **Exclude empty sections**: Use `--exclude-empty` for cleaner documentation
+4. **Save logs for debugging**: Use `--log-file` when troubleshooting issues
+
+=== Library Integration Best Practices
+
+1. **Parse once, export multiple times**: More efficient than repeated parsing
+2. **Handle errors gracefully**: Use proper error handling for production code
+3. **Use string exports for processing**: When you need to modify output programmatically
+4. **Cache parsed documents**: For applications that process the same files repeatedly
+
+=== Documentation Generation Best Practices
+
+1. **Include descriptions**: Add `@description` decorators to all elements
+2. **Use meaningful names**: Clear parameter and resource names improve documentation
+3. **Organize with metadata**: Use file-level metadata for better context
+4. **Regular generation**: Integrate documentation generation into your CI/CD pipeline

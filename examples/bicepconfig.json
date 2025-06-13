@@ -1,0 +1,42 @@
+{
+  "analyzers": {
+    "core": {
+      "enabled": true,
+      "no-unused-params": {
+        "level": "off"
+      },
+      "no-unused-vars": {
+        "level": "off"
+      }
+    }
+  },
+  "experimentalFeaturesEnabled": {
+    "assertions": true,
+    "extensibility": true,
+    "testFramework": true
+  },
+  "extensions": {
+    "microsoftGraphV1": "br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:0.2.0-preview"
+  },
+  "formatting": {
+    "indentKind": "Space",
+    "indentSize": 2,
+    "width": 80,
+    "insertFinalNewLine": true,
+    "newlineKind": "LF"
+  },
+  "moduleAliases": {
+    "br": {
+      "avmTypes": {
+        "registry": "mcr.microsoft.com",
+        "modulePath": "bicep/avm/utl/types"
+      }
+    },
+    "ts": {
+      "demoSpec": {
+        "subscription": "00000000-0000-0000-0000-000000000000",
+        "resourceGroup": "rg-demo-specs"
+      }
+    }
+  }
+}

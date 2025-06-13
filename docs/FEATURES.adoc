@@ -1,0 +1,342 @@
+= Bicep-Docs Features
+:toc:
+:toc-title: Table of Contents
+:sectnums:
+
+This document provides a comprehensive overview of all features available in Bicep-Docs.
+
+== Overview
+
+Bicep-Docs is a powerful documentation generator for Azure Bicep files that supports multiple output formats and provides both CLI and library interfaces.
+
+== Core Features
+
+=== Multi-Format Documentation Export
+
+Bicep-Docs supports exporting documentation in four different formats:
+
+* **Markdown** - Standard markdown format with table support
+* **AsciiDoc** - Rich documentation format with advanced features
+* **YAML** - Structured data format for programmatic processing
+* **JSON** - Machine-readable format with optional pretty-printing
+
+=== Comprehensive Bicep Element Support
+
+The parser supports all major Bicep language constructs:
+
+==== Parameters
+* Parameter declarations with type information
+* Decorators (`@description`, `@minLength`, `@maxLength`, `@minValue`, `@maxValue`, `@secure`, `@allowed`)
+* Default values
+* Optional parameters
+* Complex parameter types (objects, arrays, unions)
+
+==== Variables
+* Variable declarations
+* Exported variables (`@export()`)
+* Complex expressions and calculations
+
+==== Resources
+* Resource declarations
+* Nested/child resources
+* Existing resource references
+* Conditional resources
+* Resource loops
+* Parent-child relationships
+* API version tracking
+
+==== Types
+* Custom type definitions
+* Exported types
+* Object type definitions with properties
+* Union types
+* Array types
+* Type decorators and constraints
+
+==== Functions
+* User-defined functions
+* Function parameters and return types
+* Exported functions
+* Function expressions
+
+==== Outputs
+* Output declarations
+* Output types and values
+* Decorators and constraints
+* Secure outputs
+
+==== Imports
+* Module imports
+* Type imports
+* Function imports
+
+==== Metadata
+* File-level metadata
+* Target scope detection
+* Author and description information
+
+== CLI Features
+
+=== Command Structure
+
+The CLI follows a subcommand structure:
+
+```
+bicep-docs <global-options> <format> <format-options> <input-file>
+```
+
+=== Global Options
+
+* **Verbosity Control**: `-v` (debug), `-vv` (trace), `-q` (quiet)
+* **Log Formatting**: `--log-format` (text/json)
+* **Log File Output**: `--log-file <path>`
+
+=== Format-Specific Options
+
+==== Markdown and AsciiDoc
+* `--emoji`: Enable emoji symbols (✅/❌) for boolean values
+* `--exclude-empty`: Skip empty sections in output
+* `--output`: Specify custom output file path
+
+==== YAML
+* `--exclude-empty`: Skip empty sections in output
+* `--output`: Specify custom output file path
+
+==== JSON
+* `--pretty`: Enable pretty-printing with indentation
+* `--exclude-empty`: Skip empty sections in output
+* `--output`: Specify custom output file path
+
+=== Output Customization
+
+* **Automatic File Naming**: Defaults to input filename with appropriate extension
+* **Custom Output Paths**: Override default output location
+* **Empty Section Filtering**: Option to exclude empty sections from output
+* **Emoji Support**: Visual enhancement for boolean values in human-readable formats
+
+== Library Features
+
+=== High-Level API
+
+==== One-Step Export Functions
+```rust
+// Direct file-to-file export
+parse_and_export_to_markdown(input_path, output_path, exclude_empty)?;
+parse_and_export_to_asciidoc(input_path, output_path, exclude_empty)?;
+parse_and_export_to_yaml(source_code, output_path, exclude_empty)?;
+parse_and_export_to_json(source_code, output_path, pretty, exclude_empty)?;
+```
+
+==== Two-Step Process
+```rust
+// Parse once, export multiple times
+let document = parse_bicep_document(source_code)?;
+export_bicep_document_to_markdown(&document, path, emoji, exclude_empty)?;
+export_bicep_document_to_yaml(&document, path, exclude_empty)?;
+```
+
+==== String Export
+```rust
+// Export to strings for in-memory processing
+let markdown = export_bicep_document_to_markdown_string(&document, emoji, exclude_empty)?;
+let yaml = export_bicep_document_to_yaml_string(&document, exclude_empty)?;
+```
+
+=== Document Object Model
+
+The `BicepDocument` struct provides structured access to all parsed elements:
+
+```rust
+pub struct BicepDocument {
+    pub metadata: BicepMetadata,
+    pub target_scope: String,
+    pub imports: IndexMap<String, BicepImport>,
+    pub types: IndexMap<String, BicepType>,
+    pub parameters: IndexMap<String, BicepParameter>,
+    pub variables: IndexMap<String, BicepVariable>,
+    pub functions: IndexMap<String, BicepFunction>,
+    pub resources: IndexMap<String, BicepResource>,
+    pub outputs: IndexMap<String, BicepOutput>,
+}
+```
+
+=== Error Handling
+
+* Comprehensive error types for different failure modes
+* Graceful degradation when parsing non-critical elements
+* Detailed error messages with context information
+
+== Advanced Features
+
+=== Tree-Sitter Integration
+
+* Uses tree-sitter grammar for robust parsing
+* Handles syntax errors gracefully
+* Supports incremental parsing for performance
+
+=== AST Export Tool
+
+Separate utility for low-level AST analysis:
+
+* Multiple output formats (YAML, JSON, tree visualization)
+* Node type filtering
+* Line-based filtering
+* Statistics and structure analysis
+* Development and debugging support
+
+=== Decorator Processing
+
+Comprehensive decorator support:
+
+* System decorators (`@sys.description`, `@sys.metadata`)
+* Standard decorators (`@description`, `@secure`, `@export`)
+* Validation decorators (`@minLength`, `@maxLength`, `@minValue`, `@maxValue`)
+* Custom decorator preservation
+
+=== Type System
+
+Rich type system support:
+
+* Primitive types (string, int, bool, object, array)
+* Complex object types with nested properties
+* Union types and type constraints
+* Custom type definitions
+* Type validation and constraints
+
+=== Resource Relationships
+
+Advanced resource parsing:
+
+* Parent-child resource relationships
+* Nested resource declarations
+* Cross-resource dependencies
+* API version tracking
+* Conditional resource deployment
+
+== Output Format Details
+
+=== Markdown Output
+
+* GitHub-flavored markdown
+* Table-based parameter and output documentation
+* Code blocks for examples
+* Emoji support for boolean values
+* Hierarchical section organization
+
+=== AsciiDoc Output
+
+* Rich formatting with AsciiDoc syntax
+* Advanced table features
+* Cross-references and links
+* Document metadata integration
+* Professional documentation appearance
+
+=== YAML Output
+
+* Structured data representation
+* Preserves all parsed information
+* Machine-readable format
+* Suitable for further processing
+* Maintains type information
+
+=== JSON Output
+
+* Complete data serialization
+* Optional pretty-printing
+* Suitable for API integration
+* Preserves all metadata
+* Machine-readable format
+
+== Performance Features
+
+=== Memory Efficiency
+
+* Streaming parsing for large files
+* Efficient string handling
+* Minimal memory footprint
+* Garbage collection friendly
+
+=== Processing Speed
+
+* Single-pass parsing
+* Optimized tree traversal
+* Efficient serialization
+* Parallel processing where applicable
+
+== Security Features
+
+=== Safe Parsing
+
+* Memory-safe Rust implementation
+* No unsafe code in core library
+* Buffer overflow protection
+* Input validation and sanitization
+
+=== Sensitive Data Handling
+
+* Recognizes `@secure()` decorators
+* Handles sensitive parameters appropriately
+* Secure output indicators
+* Privacy-aware documentation generation
+
+== Extensibility
+
+=== Modular Architecture
+
+* Pluggable export formats
+* Extensible parser modules
+* Configurable output options
+* Clean API boundaries
+
+=== Custom Integration
+
+* Library API for custom applications
+* Programmatic document processing
+* Custom export format development
+* Integration with build pipelines
+
+== Quality Assurance
+
+=== Testing
+
+* Comprehensive unit tests
+* Integration tests with real Bicep files
+* Property-based testing
+* Continuous integration validation
+
+=== Code Quality
+
+* Rust clippy linting
+* Automated formatting
+* Memory safety validation with Miri
+* Security auditing with cargo-deny
+
+=== Documentation
+
+* Comprehensive API documentation
+* Usage examples
+* Developer guides
+* Contribution guidelines
+
+== Compatibility
+
+=== Bicep Language Support
+
+* Supports latest Bicep language features
+* Regular updates for new syntax
+* Backward compatibility maintenance
+* Comprehensive language construct coverage
+
+=== Platform Support
+
+* Cross-platform compatibility (Windows, macOS, Linux)
+* Multiple architecture support
+* Container-friendly deployment
+* CI/CD pipeline integration
+
+=== Integration Support
+
+* Crate.io distribution
+* GitHub Actions integration
+* Docker container support
+* Package manager compatibility

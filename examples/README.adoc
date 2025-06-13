@@ -1,0 +1,271 @@
+= Bicep-Docs Examples
+:toc:
+:toc-placement: preamble
+:sectnums:
+:icons: font
+
+This directory contains comprehensive examples demonstrating the bicep-docs tool's capabilities across various scenarios and use cases.
+
+== Overview
+
+The examples are organized into subdirectories, each focusing on specific aspects of Bicep documentation generation. Each example directory contains:
+
+* Source Bicep files showcasing different language features
+* Generated documentation in multiple formats (Markdown, AsciiDoc, YAML, JSON)
+* A local Makefile for building examples
+* A README.adoc explaining the specific examples
+
+== Quick Start
+
+To generate all examples across all directories:
+
+[source,bash]
+----
+# Generate all examples
+make all
+
+# Generate specific format across all directories
+make markdown
+make asciidoc
+make yaml
+make json
+
+# Clean all generated files
+make clean
+
+# Test that everything builds correctly
+make test
+----
+
+== Example Directories
+
+=== link:single-file/README.adoc[Single File Examples]
+
+**Directory:** `single-file/`
+
+Demonstrates comprehensive documentation generation from a single, feature-rich Bicep file. This example showcases:
+
+* All Bicep language constructs (parameters, types, variables, functions, resources, outputs)
+* Different output formats and their options
+* Command-line flag variations (emoji, exclude-empty, pretty printing)
+* Comparison between different output styles
+
+**Key Features:**
+* Complex parameter definitions with various decorators
+* Custom type definitions including union types and object types
+* User-defined functions with different signatures
+* Nested resources and resource loops
+* Comprehensive outputs with constraints
+
+**Generated Examples:**
+* 4 Markdown variants (default, emoji, exclude-empty, all-options)
+* 4 AsciiDoc variants (default, emoji, exclude-empty, all-options)
+* 2 YAML variants (default, exclude-empty)
+* 4 JSON variants (default, pretty, exclude-empty, all-options)
+
+[source,bash]
+----
+# Build all single-file examples
+make single-file
+
+# Build specific formats
+make single-file-markdown
+make single-file-json
+----
+
+== Global Configuration
+
+The examples directory includes a shared `bicepconfig.json` that enables experimental features and provides consistent formatting across all examples:
+
+* **Analyzers**: Core analyzers enabled with unused parameters/variables warnings disabled
+* **Experimental Features**: Assertions, extensibility, and test framework enabled
+* **Extensions**: Microsoft Graph v1 extension configured
+* **Formatting**: Consistent 2-space indentation, 80-character width, LF line endings
+* **Module Aliases**: AVM types and demo specifications configured
+
+== Using the Build System
+
+=== Main Targets
+
+[cols="2,5"]
+|===
+|Target |Description
+
+|`all`
+|Generate all examples in all directories
+
+|`clean`
+|Remove all generated output files
+
+|`test`
+|Clean, build all examples, and verify output files were created
+
+|`help`
+|Display comprehensive help information
+
+|`list`
+|List all available example directories
+
+|`status`
+|Show build status of all example directories
+|===
+
+=== Format-Specific Targets
+
+Generate specific output formats across all example directories:
+
+[source,bash]
+----
+make markdown    # All Markdown examples
+make asciidoc    # All AsciiDoc examples
+make yaml        # All YAML examples
+make json        # All JSON examples
+----
+
+=== Directory-Specific Targets
+
+Work with individual example directories:
+
+[source,bash]
+----
+make single-file           # All examples in single-file/
+make single-file-clean     # Clean single-file/ only
+make single-file-markdown  # Only Markdown examples in single-file/
+----
+
+=== Advanced Usage
+
+[source,bash]
+----
+# Check status of all examples
+make status
+
+# List available example directories
+make list
+
+# Build and verify everything works
+make test
+----
+
+== Output File Naming Convention
+
+All generated examples follow a consistent naming pattern:
+
+[source]
+----
+output-{format}-{options}.{extension}
+----
+
+**Examples:**
+* `output-markdown-default.md` - Default Markdown output
+* `output-markdown-emoji.md` - Markdown with emoji enabled
+* `output-asciidoc-exclude-empty.adoc` - AsciiDoc excluding empty sections
+* `output-json-pretty.json` - Pretty-printed JSON
+* `output-yaml-default.yaml` - Default YAML output
+
+== Understanding the Examples
+
+Each example directory demonstrates different aspects of the bicep-docs tool:
+
+=== What You'll Learn
+
+* **Format Differences**: How the same Bicep content appears in different output formats
+* **Option Effects**: How command-line flags change the output
+* **Best Practices**: Effective ways to document Bicep templates
+* **Integration Patterns**: How to incorporate bicep-docs into your workflows
+
+=== Comparing Outputs
+
+The examples make it easy to compare:
+
+* **Markdown vs AsciiDoc**: Human-readable formats with different markup styles
+* **YAML vs JSON**: Structured data formats for automation and integration
+* **Default vs Customized**: How options like `--emoji` and `--exclude-empty` affect output
+* **Compact vs Pretty**: Trade-offs between file size and readability
+
+== Adding New Examples
+
+To add a new example directory:
+
+1. **Create Directory Structure**:
+   [source,bash]
+   ----
+   mkdir new-example
+   cd new-example
+   ----
+
+2. **Add Source Files**: Create your Bicep files demonstrating specific features
+
+3. **Create Local Makefile**: Follow the pattern from `single-file/Makefile`
+
+4. **Add Documentation**: Create a `README.adoc` explaining your example
+
+5. **Update Parent Makefile**: Add your directory to `EXAMPLE_DIRS` in `examples/Makefile`
+
+6. **Update This README**: Add a section describing your new example
+
+=== Example Directory Template
+
+[source]
+----
+new-example/
+├── Makefile              # Local build targets
+├── README.adoc           # Example documentation
+├── source.bicep          # Source Bicep file(s)
+└── output-*.*            # Generated documentation (created by make)
+----
+
+== Troubleshooting
+
+=== Common Issues
+
+**Binary not found**: Ensure you've built the project first:
+[source,bash]
+----
+cd .. && cargo build
+----
+
+**Permission errors**: Ensure the Makefile has execute permissions and you're in the correct directory
+
+**Missing output files**: Run `make status` to check which examples are properly configured
+
+**Build failures**: Use `make test` to identify which examples are failing
+
+=== Getting Help
+
+* Run `make help` for command reference
+* Check individual `README.adoc` files in each example directory
+* Examine the source Bicep files to understand the demonstrated features
+* Review the generated outputs to see the documentation formats
+
+== Contributing
+
+When contributing new examples:
+
+1. **Focus on Specific Features**: Each example should demonstrate particular Bicep language features or bicep-docs capabilities
+2. **Provide Context**: Include comprehensive README documentation
+3. **Test Thoroughly**: Ensure all output formats generate correctly
+4. **Follow Conventions**: Use consistent naming and structure patterns
+5. **Update Documentation**: Keep this README current with new examples
+
+== Integration Examples
+
+The examples can serve as templates for integrating bicep-docs into various workflows:
+
+* **CI/CD Pipelines**: Automate documentation generation
+* **Documentation Sites**: Generate content for static site generators
+* **API Documentation**: Create structured data for documentation APIs
+* **Team Workflows**: Standardize template documentation practices
+
+By exploring these examples, you'll gain a comprehensive understanding of how to effectively use bicep-docs to document your Azure Bicep templates.
+
+== Future Examples
+
+This examples directory is designed to be expanded with additional scenarios as the bicep-docs tool evolves. Planned examples include:
+
+* **Multi-file Projects**: Bicep projects with modules and complex dependencies
+* **Enterprise Templates**: Large-scale, production-ready Bicep templates
+* **CI/CD Integration**: Examples of automated documentation generation in pipelines
+* **Custom Workflows**: Advanced usage patterns and integration scenarios
+
+Contributions of new example scenarios are welcome and encouraged!

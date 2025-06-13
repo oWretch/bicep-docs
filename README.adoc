@@ -1,0 +1,258 @@
+= Bicep Docs
+:toc:
+:toc-title: Table of Contents
+:sectnums:
+
+A documentation generator for Azure Bicep files, similar to `terraform-docs`.
+
+== Overview
+
+This library uses the tree-sitter grammar for Azure Bicep files to parse and generate a YAML representation of the Abstract Syntax Tree (AST). This can be used to analyze Bicep files programmatically, extract documentation, or perform other operations based on the structure of Bicep files.
+
+== Installation
+
+// NOTE: This library is not currently published on crates.io or any public registry for external use.
+
+
+=== From Source
+
+Clone the repository and build from source:
+
+[source,bash]
+----
+git clone https://github.com/your-username/bicep-docs.git
+cd bicep-docs
+cargo build --release
+----
+
+=== As a Library Dependency
+
+Currently, this library is not published for external use. If you wish to use it as a dependency, you must use a local path or git reference.
+
+[source,toml]
+----
+# Example (using a local path)
+bicep-docs = { path = "../bicep-docs" }
+----
+
+== Usage
+
+=== Command Line Interface
+
+The CLI supports multiple output formats for documenting Bicep files:
+
+==== Markdown Export
+
+[source,bash]
+----
+# Basic markdown export
+bicep-docs markdown path/to/your/file.bicep
+
+# With emoji support and custom output path
+bicep-docs markdown --emoji --output docs/bicep-docs.md path/to/your/file.bicep
+
+# Exclude empty sections
+bicep-docs markdown --exclude-empty path/to/your/file.bicep
+----
+
+==== AsciiDoc Export
+
+[source,bash]
+----
+# Basic AsciiDoc export
+bicep-docs asciidoc path/to/your/file.bicep
+
+# With emoji support
+bicep-docs asciidoc --emoji path/to/your/file.bicep
+----
+
+==== YAML Export
+
+[source,bash]
+----
+# Export structured data as YAML
+bicep-docs yaml path/to/your/file.bicep
+
+# Exclude empty sections
+bicep-docs yaml --exclude-empty path/to/your/file.bicep
+----
+
+==== JSON Export
+
+[source,bash]
+----
+# Export structured data as JSON
+bicep-docs json path/to/your/file.bicep
+
+# Pretty-printed JSON
+bicep-docs json --pretty path/to/your/file.bicep
+----
+
+==== Global Options
+
+[source,bash]
+----
+# Verbose output (debug level)
+bicep-docs -v markdown path/to/your/file.bicep
+
+# Very verbose output (trace level)
+bicep-docs -vv markdown path/to/your/file.bicep
+
+# Quiet mode (suppress logging)
+bicep-docs -q markdown path/to/your/file.bicep
+
+# JSON formatted logs
+bicep-docs --log-format json markdown path/to/your/file.bicep
+
+# Write logs to file
+bicep-docs --log-file debug.log markdown path/to/your/file.bicep
+----
+
+=== Library Usage
+
+The library provides both high-level convenience functions and low-level parsing capabilities.
+
+==== Quick Export Functions
+
+[source,rust]
+----
+use bicep_docs::*;
+use std::path::Path;
+
+// Parse and export to Markdown in one step
+parse_and_export_to_markdown("input.bicep", "output.md", false)?;
+
+// Parse and export to AsciiDoc
+parse_and_export_to_asciidoc("input.bicep", "output.adoc", false)?;
+
+// Parse and export to YAML
+let source_code = std::fs::read_to_string("input.bicep")?;
+parse_and_export_to_yaml(&source_code, "output.yaml", false)?;
+
+// Parse and export to JSON (pretty-printed)
+parse_and_export_to_json(&source_code, "output.json", true, false)?;
+----
+
+==== Two-Step Process with Document Object
+
+[source,rust]
+----
+use bicep_docs::*;
+
+// Read and parse the Bicep file
+let source_code = std::fs::read_to_string("example.bicep")?;
+let document = parse_bicep_document(&source_code)?;
+
+// Export to different formats
+export_bicep_document_to_markdown(&document, "output.md", true, false)?;
+export_bicep_document_to_asciidoc(&document, "output.adoc", true, false)?;
+export_bicep_document_to_yaml(&document, "output.yaml", false)?;
+export_bicep_document_to_json(&document, "output.json", true, false)?;
+
+// Or get as strings
+let markdown_content = export_bicep_document_to_markdown_string(&document, true, false)?;
+let yaml_content = export_bicep_document_to_yaml_string(&document, false)?;
+----
+
+==== Working with Parsed Documents
+
+[source,rust]
+----
+use bicep_docs::parsing::BicepDocument;
+
+let source_code = std::fs::read_to_string("example.bicep")?;
+let document: BicepDocument = parse_bicep_document(&source_code)?;
+
+// Access document metadata
+println!("Name: {:?}", document.metadata.name);
+println!("Description: {:?}", document.metadata.description);
+println!("Target Scope: {}", document.target_scope);
+
+// Iterate over parameters
+for (name, param) in &document.parameters {
+    println!("Parameter {}: {:?}", name, param.param_type);
+}
+
+// Iterate over resources
+for (name, resource) in &document.resources {
+    println!("Resource {}: {}", name, resource.resource_type);
+}
+----
+
+=== AST Export Tool
+
+For advanced analysis, use the AST export tool to examine the Abstract Syntax Tree:
+
+[source,bash]
+----
+# Export AST to YAML (default)
+cargo run --bin export-ast -- path/to/your/file.bicep
+
+# Show only statistics
+cargo run --bin export-ast -- --stats path/to/your/file.bicep
+
+# Export AST to JSON
+cargo run --bin export-ast -- --format json path/to/your/file.bicep
+
+# Filter by node type
+cargo run --bin export-ast -- --type-filter resource_declaration path/to/your/file.bicep
+----
+
+== Documentation
+
+=== Comprehensive Guides
+
+* link:docs/FEATURES.adoc[📋 Complete Feature Overview] - Detailed list of all capabilities
+* link:docs/EXAMPLES.adoc[💡 Examples and Usage Patterns] - Practical integration scenarios
+* link:docs/API.adoc[🔧 API Reference] - Complete library API documentation
+* link:docs/ast-export/README.adoc[🌳 AST Export Tool Guide] - Advanced analysis capabilities
+
+=== Contributing and Development
+
+* link:CONTRIBUTING.adoc[🤝 Contributing Guide] - How to contribute to the project
+* link:docs/PRE_COMMIT.adoc[⚡ Pre-Commit Configuration] - Development workflow setup
+* link:docs/SEMANTIC_VERSIONING.adoc[📦 Semantic Versioning] - Release process documentation
+
+[IMPORTANT]
+====
+Version numbers in `Cargo.toml`, `package.json`, and `CHANGELOG.adoc` are automatically
+managed by the semantic release process. Contributors should NOT manually edit these files.
+All version management is handled through conventional commits and automated CI/CD processes.
+====
+
+== Quick Start
+
+[source,bash]
+----
+# Install the tool
+cargo install bicep-docs
+
+# Generate documentation for your Bicep file
+bicep-docs markdown --emoji path/to/your/main.bicep
+
+# See all available options
+bicep-docs --help
+----
+
+
+For comprehensive information about Bicep-Docs features and usage patterns, see:
+
+* link:docs/FEATURES.adoc[Complete Feature Documentation] - Detailed overview of all capabilities
+* link:docs/EXAMPLES.adoc[Examples and Usage Patterns] - Practical examples for various scenarios
+* link:docs/ast-export/README.adoc[AST Export Tool Guide] - Advanced AST analysis and export
+* link:docs/ast-export/TUTORIAL.adoc[AST Export Tutorial] - Step-by-step AST analysis examples
+* link:docs/PRE_COMMIT.adoc[Pre-Commit Configuration Guide] - Development setup and hooks
+* link:docs/SEMANTIC_VERSIONING.adoc[Semantic Versioning and Release Process] - Release management
+* link:CONTRIBUTING.adoc[Contributing Guidelines] - How to contribute to the project
+* link:examples/single-file/[Example Files] - Sample Bicep files with generated documentation
+
+
+
+
+== Why `bicep-docs`?
+
+That is an excellent question. When I first started looking at automating my Bicep documentation, the main tool I found was link:https://github.com/Azure/PSDocs.Azure[PSDocs for Azure]. I had three main complaints with PSDocs, which (admittedly) are related. The first was the lack of link:https://github.com/Azure/PSDocs.Azure/issues/106[Native support for Bicep files]. This means documenting a Bicep file required compilation to ARM, which led to the other two problems.
+
+Problem two is, honestly, minor. Because of the requirement to compile to ARM, documentation required the full Bicep stack. Which is fine when you are deploying the Bicep, but is overkill when you just want to generate/validate the documentation in a pipeline.
+
+Problem three, however, is the one that motivated me to action. Because of the compilation to ARM, many of the nuances of a Bicep template get lost in the documentation. For example, I like to use a central Bicep module with common types and functions that I'll need frequently. When the Bicep file is compiled to ARM, these functions are fetched and compiled into the document. This is needed for deployment, but bloats the documentation of my file and also hides the fact of the shared module ecosystem. The same problem occurs when referencing local modules.

@@ -1,0 +1,204 @@
+= Pre-Commit Configuration Guide
+:toc:
+:sectnums:
+
+This document details the pre-commit configuration used in the Bicep-Docs project to ensure code quality, security, and conventional commit standards.
+
+== Overview
+
+This project uses https://pre-commit.com/[pre-commit] to automatically enforce code quality and conventional commits. The pre-commit configuration runs various checks including formatting, linting, testing, security auditing, and commit message validation.
+
+Pre-commit hooks help maintain consistent code quality by running automated checks before commits are accepted, catching issues early in the development process.
+
+== Installation
+
+To set up pre-commit hooks locally:
+
+[source,bash]
+----
+# Install pre-commit (if not already installed)
+pip install pre-commit
+# or
+brew install pre-commit
+
+# Install the git hook scripts
+pre-commit install
+
+# Install the commit-msg hook for conventional commits
+pre-commit install --hook-type commit-msg
+----
+
+== Pre-Commit Hooks
+
+The following hooks are configured and will run automatically before each commit:
+
+=== Code Quality Hooks
+
+==== cargo fmt
+* *Purpose*: Ensures consistent code formatting across the project
+* *Command*: \`cargo fmt --all -- --check\`
+* *What it does*: Checks that all Rust code follows the project's formatting standards
+
+==== cargo clippy
+* *Purpose*: Catches common mistakes and suggests improvements
+* *Command*: \`cargo clippy --all-targets --all-features -- -D warnings\`
+* *What it does*: Runs the Rust linter with all targets and features enabled, treating warnings as errors
+
+==== cargo check
+* *Purpose*: Verifies that the code compiles successfully
+* *Command*: \`cargo check --all-targets --all-features\`
+* *What it does*: Performs a compilation check without generating executable files
+
+==== cargo fix
+* *Purpose*: Automatically fixes common Rust idioms and deprecation warnings
+* *Command*: \`cargo fix --all-targets --all-features\`
+* *What it does*: Applies automatic fixes for issues that can be resolved programmatically
+
+=== Testing Hooks
+
+==== cargo test
+* *Purpose*: Runs the complete test suite
+* *Command*: \`cargo test --all-targets --all-features\`
+* *What it does*: Executes all unit tests, integration tests, and benchmarks
+
+==== cargo test --doc
+* *Purpose*: Validates documentation examples
+* *Command*: \`cargo test --doc --all-features\`
+* *What it does*: Runs doctests to ensure code examples in documentation are correct
+
+==== cargo doc
+* *Purpose*: Generates and validates documentation
+* *Command*: \`cargo doc --all-features --no-deps\`
+* *What it does*: Builds documentation and checks for documentation warnings
+
+=== Memory Safety Hooks
+
+==== cargo miri test
+* *Purpose*: Detects undefined behavior and memory safety issues
+* *Command*: \`cargo +nightly miri test --lib\`
+* *What it does*: Runs unit tests under Miri to catch memory safety violations
+* *Note*: Only runs library tests due to tree-sitter FFI incompatibility
+
+==== cargo miri run
+* *Purpose*: Validates memory safety of binary execution
+* *Command*: \`cargo +nightly miri run --bin bicep-docs -- --version\`
+* *What it does*: Executes the main binary under Miri to detect runtime issues
+
+=== Security and Dependency Hooks
+
+==== cargo update
+* *Purpose*: Keeps dependencies up to date
+* *Command*: \`cargo update --dry-run\`
+* *What it does*: Checks for available dependency updates without modifying Cargo.lock
+
+==== cargo deny check
+* *Purpose*: Security and license auditing
+* *Command*: \`cargo deny check\`
+* *What it does*: 
+- Checks for known security vulnerabilities
+- Validates license compatibility
+- Detects banned or problematic dependencies
+- Verifies allowed Git sources
+
+=== Commit Message Validation
+
+==== commitlint
+* *Purpose*: Enforces conventional commit message format
+* *Configuration*: Uses \`commitlint.config.js\`
+* *What it does*: Validates that commit messages follow the Conventional Commits specification
+
+== Manual Execution
+
+You can manually run pre-commit hooks without making a commit:
+
+[source,bash]
+----
+# Run all hooks on all files
+pre-commit run --all-files
+
+# Run all hooks on staged files only
+pre-commit run
+
+# Run specific hooks
+pre-commit run cargo-fmt
+pre-commit run cargo-clippy
+pre-commit run cargo-test
+pre-commit run cargo-miri-test
+pre-commit run cargo-deny-check
+----
+
+== Hook Configuration Details
+
+=== Miri Configuration
+
+The Miri hooks are specifically configured to work around limitations:
+
+* *Library tests only*: Uses \`--lib\` flag to avoid integration tests that use tree-sitter FFI
+* *Version check*: Uses \`--version\` flag to ensure clean exit without showing help text
+
+=== Cargo Deny Configuration
+
+The project includes a comprehensive \`deny.toml\` configuration:
+
+* *Allowed licenses*: MIT, Apache-2.0, MPL-2.0, Unlicense, BSL-1.0, Unicode-3.0
+* *Git sources*: Allows the custom tree-sitter-bicep repository
+* *Security auditing*: Enabled for all dependencies
+* *Duplicate detection*: Warns about multiple versions of the same crate
+
+== Troubleshooting
+
+=== Common Issues
+
+==== Miri Installation
+If Miri hooks fail, ensure you have the nightly toolchain:
+[source,bash]
+----
+rustup toolchain install nightly
+rustup component add miri --toolchain nightly
+----
+
+==== Pre-commit Not Running
+If hooks don't run automatically:
+[source,bash]
+----
+# Reinstall hooks
+pre-commit uninstall
+pre-commit install
+pre-commit install --hook-type commit-msg
+----
+
+==== License Issues
+If cargo-deny fails with license errors, check that all dependencies use allowed licenses in \`deny.toml\`.
+
+==== Performance
+Pre-commit hooks can take time on first run. Subsequent runs are faster due to caching.
+
+=== Skipping Hooks
+
+In exceptional cases, you can skip hooks (not recommended):
+[source,bash]
+----
+# Skip all hooks
+git commit --no-verify
+
+# Skip specific hooks
+SKIP=cargo-test git commit
+----
+
+== Continuous Integration
+
+The same pre-commit configuration is used in CI/CD pipelines to ensure consistency between local development and automated builds. All hooks must pass before code can be merged.
+
+== Benefits
+
+The pre-commit configuration provides:
+
+* *Consistent code quality*: Automated formatting and linting
+* *Early error detection*: Catches issues before they reach CI/CD
+* *Security assurance*: Dependency vulnerability scanning
+* *Documentation quality*: Validates examples and generates docs
+* *Memory safety*: Detects undefined behavior with Miri
+* *Conventional commits*: Ensures consistent commit message format
+* *License compliance*: Validates dependency licenses
+
+This comprehensive approach helps maintain high code quality and reduces the time spent on code review by catching common issues automatically.

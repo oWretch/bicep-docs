@@ -1,0 +1,114 @@
+= Bicep AST Export Tool Examples
+
+This directory contains examples of using the Bicep AST (Abstract Syntax Tree) export tool.
+
+== What is this tool?
+
+The Bicep AST export tool parses a Bicep file and exports its AST to a YAML or JSON file for analysis. The AST represents the structure of the Bicep code in a hierarchical format that's easier to analyze programmatically than the raw text.
+
+== Basic Usage
+
+Export a Bicep file's AST to a YAML file:
+
+[source,sh]
+----
+# Build and run the tool
+cargo run --bin export-ast -- path/to/your/file.bicep
+----
+
+The tool will generate a file named `<filename>_tree.yaml` in the current directory.
+
+== Output Formats
+
+The tool supports multiple output formats:
+
+* *YAML* (default): `cargo run --bin export-ast -- -f yaml file.bicep`
+* *JSON*: `cargo run --bin export-ast -- -f json file.bicep`
+* *SimpleTree*: `cargo run --bin export-ast -- -f simpletree file.bicep`
+
+== Common Operations
+
+=== Show Statistics Only
+
+Just show statistics about the AST without exporting to a file:
+
+[source,sh]
+----
+cargo run --bin export-ast -- --stats file.bicep
+----
+
+=== Filter by Node Type
+
+Filter the AST to only include nodes of a specific type:
+
+[source,sh]
+----
+cargo run --bin export-ast -- --type-filter resource_declaration file.bicep
+----
+
+Common node types include: `resource_declaration`, `parameter_declaration`, `variable_declaration`, `output_declaration`.
+
+=== Filter by Line Number
+
+Show only nodes that appear on a specific line:
+
+[source,sh]
+----
+cargo run --bin export-ast -- --line 10 file.bicep
+----
+
+=== Show Tree Structure
+
+Display a tree structure visualization of the AST:
+
+[source,sh]
+----
+cargo run --bin export-ast -- --structure file.bicep
+----
+
+=== Filter by Field Name
+
+Filter nodes by a specific field name:
+
+[source,sh]
+----
+cargo run --bin export-ast -- --field-filter name file.bicep
+----
+
+=== Show Help
+
+For more details about the tool usage:
+
+[source,sh]
+----
+# General help
+cargo run --bin export-ast -- --help
+
+# Show usage examples
+cargo run --bin export-ast -- --help-examples
+
+# Show common node types
+cargo run --bin export-ast -- --help-node-types
+
+# Show common field names
+cargo run --bin export-ast -- --help-field-names
+----
+
+== Example Files
+
+The `single-file` directory contains:
+
+* `example.bicep` - An example Bicep file
+* `example_tree.yaml` - The exported AST in YAML format
+
+== Analyzing the Output
+
+When viewing the AST, each node has:
+
+* `kind` - The type of node in the tree-sitter grammar
+* `field_name` - The field in the parent grammar rule (if any)
+* `named` - Whether this is a named node in the grammar
+* `text` - The actual text content of this node
+* `children` - Child nodes
+
+This structure makes it easy to understand the relationships between different parts of your Bicep code.
