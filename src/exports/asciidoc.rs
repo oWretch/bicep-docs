@@ -307,22 +307,8 @@ fn generate_types_section(
                     asciidoc.push_str(".Properties\n");
                     let prop_items = vec![
                         ("Type", format!("m| {}", prop_param.parameter_type)),
-                        (
-                            "Nullable",
-                            if prop_param.is_nullable {
-                                "✅ Yes".to_string()
-                            } else {
-                                "❌ No".to_string()
-                            },
-                        ),
-                        (
-                            "Secure",
-                            if prop_param.is_secure {
-                                "✅ Yes".to_string()
-                            } else {
-                                "❌ No".to_string()
-                            },
-                        ),
+                        ("Nullable", format_yes_no(prop_param.is_nullable, use_emoji)),
+                        ("Secure", format_yes_no(prop_param.is_secure, use_emoji)),
                     ];
 
                     generate_key_value_display(asciidoc, &prop_items, "h,1");
@@ -788,6 +774,8 @@ fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, exc
             items.push(("Batch Size", format!("`{}`", batch_size)));
         }
 
+        generate_key_value_display(asciidoc, &items, "h,1");
+
         if let Some(condition) = &module.condition {
             asciidoc.push_str("\n.Condition\n");
             asciidoc.push_str(&format_code_block(condition));
@@ -797,8 +785,6 @@ fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, exc
             asciidoc.push_str("\n.Loop\n");
             asciidoc.push_str(&format_code_block(loop_statement));
         }
-
-        generate_key_value_display(asciidoc, &items, "h,1");
 
         asciidoc.push('\n');
     }
