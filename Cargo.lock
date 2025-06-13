@@ -767,7 +767,7 @@ dependencies = [
 [[package]]
 name = "tree-sitter-bicep"
 version = "1.1.0"
-source = "git+https://github.com/oWretch/tree-sitter-bicep.git?branch=f%2Fextension#c544f8a8b30d6491ac87f2d38ed4a2143f034d6b"
+source = "git+https://github.com/oWretch/tree-sitter-bicep.git?branch=f%2Fextension#8288b2b7a0313842d3b2997b36bf1cbd2b60abc0"
 dependencies = [
  "cc",
  "tree-sitter-language",
