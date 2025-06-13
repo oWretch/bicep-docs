@@ -123,8 +123,8 @@ pub fn export_to_string(
 
             if !module_imports.is_empty() {
                 markdown.push_str("### Module Imports\n\n");
-                markdown.push_str("| Source | Symbols | Wildcard Alias |\n");
-                markdown.push_str("|--------|---------|----------------|\n");
+                markdown.push_str("| Source | Symbols |\n");
+                markdown.push_str("|--------|---------|\n");
 
                 for import in module_imports {
                     if let BicepImport::Module {
@@ -134,30 +134,30 @@ pub fn export_to_string(
                     } = import
                     {
                         let symbols_str = if let Some(symbols) = symbols {
-                            if symbols.is_empty() {
-                                "None".to_string()
-                            } else {
-                                symbols
-                                    .iter()
-                                    .map(|sym| {
-                                        if let Some(alias) = &sym.alias {
-                                            format!("{} as {}", sym.name, alias)
-                                        } else {
-                                            sym.name.clone()
-                                        }
-                                    })
-                                    .collect::<Vec<_>>()
-                                    .join(", ")
-                            }
+                            symbols
+                                .iter()
+                                .map(|sym| {
+                                    if let Some(alias) = &sym.alias {
+                                        format!("`{}` as `{}`", sym.name, alias)
+                                    } else {
+                                        format!("`{}`", sym.name)
+                                    }
+                                })
+                                .collect::<Vec<_>>()
+                                .join(", ")
                         } else {
-                            "None".to_string()
+                            String::new()
                         };
-                        let wildcard_str = wildcard_alias.as_deref().unwrap_or("N/A");
+                        let wildcard_str = if let Some(alias) = wildcard_alias {
+                            format!("`*` as `{}`", alias)
+                        } else {
+                            String::new()
+                        };
                         markdown.push_str(&format!(
-                            "| {} | {} | {} |\n",
+                            "| {} | {}{} | \n",
                             escape_markdown(&source.to_string()),
                             escape_markdown(&symbols_str),
-                            escape_markdown(wildcard_str)
+                            escape_markdown(&wildcard_str)
                         ));
                     }
                 }
