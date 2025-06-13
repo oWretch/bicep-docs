@@ -278,14 +278,9 @@ fn generate_types_section(
         // Basic information table with properties label
         asciidoc.push_str(".Properties\n");
         let items = vec![
-            ("Type", format!("m| {}", custom_type.definition)),
             (
                 "Exported",
                 format_yes_no(custom_type.is_exported, use_emoji),
-            ),
-            (
-                "Nullable",
-                format_yes_no(false, use_emoji), // Types themselves are not nullable
             ),
             ("Secure", format_yes_no(custom_type.is_secure, use_emoji)),
         ];

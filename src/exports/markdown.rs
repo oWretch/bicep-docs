@@ -265,14 +265,9 @@ fn generate_types_section(
 
         // Basic information table
         let items = vec![
-            ("Type", format!("`{}`", custom_type.definition)),
             (
                 "Exported",
                 format_yes_no(custom_type.is_exported, use_emoji),
-            ),
-            (
-                "Nullable",
-                format_yes_no(false, use_emoji), // Types are not nullable
             ),
             ("Secure", format_yes_no(custom_type.is_secure, use_emoji)),
         ];
