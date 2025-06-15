@@ -12,8 +12,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Rust toolchain
+      - name: Set up stable Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Set up nightly Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
         with:
           components: clippy, rustfmt, miri
 
@@ -39,7 +44,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Cache npm packages
         uses: actions/cache@v4
@@ -52,7 +57,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12' # Or your preferred version
+          python-version: "3.12" # Or your preferred version
 
       - name: Cache pip dependencies
         uses: actions/cache@v4
