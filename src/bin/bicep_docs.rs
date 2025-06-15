@@ -20,8 +20,13 @@ use tracing_subscriber::{
 ///
 /// Parse Azure Bicep files and export documentation in a range of formats
 #[derive(Parser)]
-#[command(name = "bicep-docs")]
-#[command(version, about, long_about = None)]
+#[command(
+    name = "bicep-docs",
+    version,
+    about,
+    long_about = None,
+    subcommand_help_heading = "Formats",
+    subcommand_value_name = "FORMAT")]
 struct Cli {
     /// Set the verbosity level of output (v: debug, vv: trace)
     #[arg(short, long, action = clap::ArgAction::Count)]
@@ -93,6 +98,7 @@ struct CommonExportOptions {
 
     /// Output file path. Defaults to input filename with appropriate extension.
     #[arg(short, long)]
+    #[arg(value_hint = clap::ValueHint::FilePath)]
     output: Option<PathBuf>,
 
     /// Enable emoji usage in documentation output
