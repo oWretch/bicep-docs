@@ -1,45 +1,65 @@
 # GitHub Copilot Instructions for Bicep-Docs
 
-This document outlines the coding standards, best practices, and architectural patterns used in the Bicep-Docs project. Follow these guidelines when making suggestions or generating code.
+This document outlines the coding standards, best practices, and architectural
+patterns used in the Bicep-Docs project. Follow these guidelines when making
+suggestions or generating code.
 
-> **IMPORTANT**: This file must be kept up-to-date whenever structural changes are made to the project, including but not limited to: adding new commands or options to the CLI, adding new export formats, changing the organization of modules, or modifying core library functions.
+> **IMPORTANT**: This file must be kept up-to-date whenever structural changes
+> are made to the project, including but not limited to: adding new commands or
+> options to the CLI, adding new export formats, changing the organization of
+> modules, or modifying core library functions.
 
-> **NOTE**: The CHANGELOG.adoc file and version numbers in Cargo.toml and package.json are automatically maintained through the semantic release process and should NEVER be manually updated. All version management is handled by conventional commits and automated CI/CD processes.
+> **NOTE**: The CHANGELOG.adoc file and version numbers in Cargo.toml and
+> package.json are automatically maintained through the semantic release process
+> and should NEVER be manually updated. All version management is handled by
+> conventional commits and automated CI/CD processes.
 
 ## Project Overview
 
-Bicep-Docs is a Rust-based parser and documentation generator for Azure Bicep files. It uses tree-sitter for parsing and provides structured output in multiple formats including YAML, JSON, Markdown, and AsciiDoc.
+Bicep-Docs is a Rust-based parser and documentation generator for Azure Bicep
+files. It uses tree-sitter for parsing and provides structured output in
+multiple formats including YAML, JSON, Markdown, and AsciiDoc.
 
 ## Coding Standards
 
 ### Rust Idioms
 
 1. **Error Handling**
+
    - Use `Result<T, E>` for fallible operations
    - Prefer `Box<dyn Error>` for error types in parsing functions
    - Use `?` operator for error propagation
    - Avoid `unwrap()` in library code; use proper error handling
 
 2. **Memory Management**
+
    - Prefer borrowing (`&str`, `&[T]`) over owned types when possible
    - Use `String::new()` instead of `"".to_string()` for empty strings
    - Use `Vec::with_capacity()` when the size is known
-   - Prefer `&str` over `String` for function parameters when ownership isn't needed
+   - Prefer `&str` over `String` for function parameters when ownership isn't
+     needed
 
 3. **Pattern Matching**
+
    - Use exhaustive pattern matching with `match`
    - Prefer `if let` for single pattern matches
    - Use `matches!` macro for boolean pattern checks
 
 4. **Collections**
+
    - Use `IndexMap` for ordered key-value mappings (maintains insertion order)
    - Use `Vec` for ordered collections
    - Use `HashMap` for unordered key-value mappings when order doesn't matter
 
+5. **`format` macro**
+   - Use inline args in the format macro (e.g. `format!("Something {variable}")`
+     over `format!("Something {}", variable)`)
+
 ### Documentation Standards
 
 1. **Function Documentation**
-   ```rust
+
+   ````rust
    /// Brief description of what the function does
    ///
    /// More detailed explanation if needed, including:
@@ -65,9 +85,10 @@ Bicep-Docs is a Rust-based parser and documentation generator for Azure Bicep fi
    /// ```rust
    /// // Example usage
    /// ```
-   ```
+   ````
 
 2. **Struct Documentation**
+
    ```rust
    /// Brief description of the struct's purpose
    ///
@@ -89,11 +110,13 @@ Bicep-Docs is a Rust-based parser and documentation generator for Azure Bicep fi
 ### Security Best Practices
 
 1. **Input Validation**
+
    - Validate all external inputs (file paths, node indices)
    - Use bounds checking for array/slice access
    - Sanitize strings before processing
 
 2. **Memory Safety**
+
    - Avoid unsafe code unless absolutely necessary
    - Use safe indexing methods (`get()` instead of direct indexing)
    - Handle UTF-8 validation properly
@@ -106,11 +129,13 @@ Bicep-Docs is a Rust-based parser and documentation generator for Azure Bicep fi
 ### Performance Guidelines
 
 1. **String Operations**
+
    - Use `&str` for read-only string operations
    - Pre-allocate `String` capacity when size is known
    - Use `format!` sparingly; prefer string concatenation for simple cases
 
 2. **Collection Operations**
+
    - Use `Vec::with_capacity()` when size is predictable
    - Prefer iteration over indexing
    - Use `collect()` judiciously; consider fold operations
@@ -199,12 +224,14 @@ pub fn parse_and_export(source: &str, path: P, use_emoji: bool, exclude_empty: b
 ```
 
 The JSON export format has additional parameters:
+
 ```rust
 pub fn export_to_file(document: &BicepDocument, path: P, pretty: bool, exclude_empty: bool) -> Result<(), Box<dyn Error>>;
 pub fn export_to_string(document: &BicepDocument, pretty: bool, exclude_empty: bool) -> Result<String, Box<dyn Error>>;
 ```
 
 YAML exports don't use the emoji parameter as it's not relevant for that format:
+
 ```rust
 pub fn export_to_file(document: &BicepDocument, path: P, exclude_empty: bool) -> Result<(), Box<dyn Error>>;
 pub fn export_to_string(document: &BicepDocument, exclude_empty: bool) -> Result<String, Box<dyn Error>>;
@@ -215,6 +242,7 @@ pub fn export_to_string(document: &BicepDocument, exclude_empty: bool) -> Result
 ### Common Patterns
 
 1. **Parser Functions**
+
    ```rust
    pub fn parse_declaration(
        node: Node,
@@ -226,6 +254,7 @@ pub fn export_to_string(document: &BicepDocument, exclude_empty: bool) -> Result
    ```
 
 2. **Error Handling**
+
    ```rust
    match parse_operation() {
        Ok(result) => process_result(result),
@@ -254,11 +283,13 @@ pub fn export_to_string(document: &BicepDocument, exclude_empty: bool) -> Result
 ## Testing Standards
 
 1. **Unit Tests**
+
    - Test each parsing function independently
    - Include edge cases and error conditions
    - Use descriptive test names
 
 2. **Integration Tests**
+
    - Test complete file parsing
    - Validate output format
    - Test with real Bicep files
@@ -270,6 +301,7 @@ pub fn export_to_string(document: &BicepDocument, exclude_empty: bool) -> Result
 ## Code Review Guidelines
 
 1. **Before Submitting**
+
    - Remove debug print statements
    - Add comprehensive documentation
    - Run `cargo clippy` and fix warnings
@@ -289,6 +321,7 @@ pub fn export_to_string(document: &BicepDocument, exclude_empty: bool) -> Result
 ### Serde Attributes
 
 1. **Consistent Serialization**
+
    ```rust
    #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
    #[serde(rename_all = "camelCase")]
@@ -309,6 +342,7 @@ pub fn export_to_string(document: &BicepDocument, exclude_empty: bool) -> Result
 ### Tree-Sitter Integration
 
 1. **Node Traversal**
+
    ```rust
    let mut cursor = node.walk();
    let children = node.children(&mut cursor).collect::<Vec<_>>();
@@ -328,6 +362,7 @@ pub fn export_to_string(document: &BicepDocument, exclude_empty: bool) -> Result
 ### Logging
 
 1. **Use Structured Logging**
+
    ```rust
    use tracing::{debug, info, warn, error};
 
@@ -345,23 +380,31 @@ pub fn export_to_string(document: &BicepDocument, exclude_empty: bool) -> Result
    - `info!`: Important events
    - `debug!`: Detailed diagnostic information
 
-Remember: The goal is maintainable, performant, and secure code that follows Rust best practices while being accessible to contributors of all levels.
+Remember: The goal is maintainable, performant, and secure code that follows
+Rust best practices while being accessible to contributors of all levels.
 
 ## Maintenance Instructions
 
 ### Keeping This Documentation Updated
 
-This documentation should be updated whenever significant changes are made to the project structure or patterns, particularly:
+This documentation should be updated whenever significant changes are made to
+the project structure or patterns, particularly:
 
-1. **New CLI Commands or Options**: When adding new commands, subcommands, or flags to the CLI, update the CLI Structure section.
+1. **New CLI Commands or Options**: When adding new commands, subcommands, or
+   flags to the CLI, update the CLI Structure section.
 
-2. **New Export Formats**: When adding a new export format, update the Export Module Structure section and ensure it follows the established patterns.
+2. **New Export Formats**: When adding a new export format, update the Export
+   Module Structure section and ensure it follows the established patterns.
 
-3. **Core Library Changes**: When adding or modifying core library functions, ensure they are documented here if they represent a pattern others should follow.
+3. **Core Library Changes**: When adding or modifying core library functions,
+   ensure they are documented here if they represent a pattern others should
+   follow.
 
-4. **Module Organization**: When restructuring modules or adding new modules, update the relevant sections in this document.
+4. **Module Organization**: When restructuring modules or adding new modules,
+   update the relevant sections in this document.
 
-5. **New Coding Patterns**: When establishing new patterns that should be followed throughout the codebase, document them here.
+5. **New Coding Patterns**: When establishing new patterns that should be
+   followed throughout the codebase, document them here.
 
 ### Update Process
 
@@ -370,7 +413,8 @@ This documentation should be updated whenever significant changes are made to th
 3. Include both in the same pull request
 4. Review the documentation for clarity and completeness
 5. Include a comment in your PR that you have updated this documentation
-6. Ensure that the code compiles without warnings, runs all tests, and passes `cargo clippy` checks
+6. Ensure that the code compiles without warnings, runs all tests, and passes
+   `cargo clippy` checks
 7. Ensure all the pre-commit hooks pass
 
 **IMPORTANT**: Do NOT manually update:
@@ -379,25 +423,34 @@ This documentation should be updated whenever significant changes are made to th
 - Version numbers in Cargo.toml or package.json (managed by semantic release)
 - Release tags or GitHub releases (handled by CI/CD)
 
-This ensures that the Copilot instructions remain accurate and useful for all contributors.
+This ensures that the Copilot instructions remain accurate and useful for all
+contributors.
 
 ## Pull Request and Branching Guidelines
 
-When using Copilot to work on issues or features, follow these guidelines to ensure high-quality, maintainable contributions:
+When using Copilot to work on issues or features, follow these guidelines to
+ensure high-quality, maintainable contributions:
 
 ### Branch Naming and Management
 
-- **Conventional Branching**: All branches must follow the [Conventional Branching standard](https://conventional-branch.github.io/). Use descriptive, semantically meaningful branch names (e.g., `feat/cli-add-yaml-export`, `fix/parsing-metadata-bug`, `docs/update-copilot-instructions`).
-- Branches should be created from the latest `main` branch unless otherwise specified.
+- **Conventional Branching**: All branches must follow the
+  [Conventional Branching standard](https://conventional-branch.github.io/). Use
+  descriptive, semantically meaningful branch names (e.g.,
+  `feat/cli-add-yaml-export`, `fix/parsing-metadata-bug`,
+  `docs/update-copilot-instructions`).
+- Branches should be created from the latest `main` branch unless otherwise
+  specified.
 - Keep branches focused and limited in scope; avoid mixing unrelated changes.
 
 ### Pull Request (PR) Best Practices
 
-- **PR Title**: Use a clear, concise, and descriptive title that summarizes the change. Prefer imperative mood (e.g., "Add YAML export to CLI").
+- **PR Title**: Use a clear, concise, and descriptive title that summarizes the
+  change. Prefer imperative mood (e.g., "Add YAML export to CLI").
 - **PR Description**:
   - Reference the related issue(s) using GitHub keywords (e.g., `Closes #42`).
   - Summarize what was changed and why.
-  - List any notable implementation details, especially if Copilot was used for non-trivial code generation.
+  - List any notable implementation details, especially if Copilot was used for
+    non-trivial code generation.
   - Describe any manual changes or fixes made to Copilot-generated code.
   - Note if documentation or tests were updated.
 - **Checklist Before Submitting**:
@@ -412,18 +465,26 @@ When using Copilot to work on issues or features, follow these guidelines to ens
 
 ### Copilot Usage Notes
 
-- Always review Copilot-generated code for correctness, security, and style. Do not blindly accept suggestions.
-- Refactor or rewrite Copilot code as needed to match project idioms and best practices.
-- If Copilot was used for a significant portion of the PR, mention this in the PR description.
+- Always review Copilot-generated code for correctness, security, and style. Do
+  not blindly accept suggestions.
+- Refactor or rewrite Copilot code as needed to match project idioms and best
+  practices.
+- If Copilot was used for a significant portion of the PR, mention this in the
+  PR description.
 - Ensure that all new or changed code is covered by appropriate tests.
-- If Copilot introduces new patterns or abstractions, update this documentation accordingly.
-- **NEVER** modify CHANGELOG.adoc, version numbers, or release-related files - these are automated.
+- If Copilot introduces new patterns or abstractions, update this documentation
+  accordingly.
+- **NEVER** modify CHANGELOG.adoc, version numbers, or release-related files -
+  these are automated.
 
 ### General Best Practices
 
 - Keep PRs small and focused; large PRs are harder to review and maintain.
-- Use draft PRs for work in progress and convert to "Ready for review" when complete.
+- Use draft PRs for work in progress and convert to "Ready for review" when
+  complete.
 - Respond promptly to code review feedback and address requested changes.
 - Squash or rebase commits as appropriate to maintain a clean history.
 
-By following these guidelines, you help maintain a high standard of quality and consistency in the Bicep-Docs project, especially when leveraging Copilot for development.
+By following these guidelines, you help maintain a high standard of quality and
+consistency in the Bicep-Docs project, especially when leveraging Copilot for
+development.

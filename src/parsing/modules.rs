@@ -70,7 +70,7 @@ pub enum ModuleSource {
 impl std::fmt::Display for ModuleSource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ModuleSource::LocalPath(path) => write!(f, "{}", path),
+            ModuleSource::LocalPath(path) => write!(f, "{path}"),
             ModuleSource::Registry {
                 alias,
                 registry_fqdn,
@@ -78,11 +78,11 @@ impl std::fmt::Display for ModuleSource {
                 version,
             } => {
                 if let Some(alias) = alias {
-                    write!(f, "br/{}:{}:{}", alias, path, version)
+                    write!(f, "br/{alias}:{path}:{version}")
                 } else if let Some(fqdn) = registry_fqdn {
-                    write!(f, "br:{}{}:{}", fqdn, path, version)
+                    write!(f, "br:{fqdn}{path}:{version}")
                 } else {
-                    write!(f, "br:{}:{}", path, version)
+                    write!(f, "br:{path}:{version}")
                 }
             },
             ModuleSource::TypeSpec {
@@ -93,15 +93,15 @@ impl std::fmt::Display for ModuleSource {
                 version,
             } => {
                 if let Some(alias) = alias {
-                    write!(f, "ts/{}:{}:{}", alias, template_spec_name, version)
+                    write!(f, "ts/{alias}:{template_spec_name}:{version}")
                 } else if let Some(sub_id) = subscription_id {
                     if let Some(rg) = resource_group_name {
-                        write!(f, "ts:{}/{}/{}:{}", sub_id, rg, template_spec_name, version)
+                        write!(f, "ts:{sub_id}/{rg}/{template_spec_name}:{version}")
                     } else {
-                        write!(f, "ts:{}//{}:{}", sub_id, template_spec_name, version)
+                        write!(f, "ts:{sub_id}//{template_spec_name}:{version}")
                     }
                 } else {
-                    write!(f, "ts:{}:{}", template_spec_name, version)
+                    write!(f, "ts:{template_spec_name}:{version}")
                 }
             },
         }
@@ -216,8 +216,7 @@ impl ModuleSource {
         }
 
         Err(Box::new(BicepParserError::ParseError(format!(
-            "Unknown module source format: {}",
-            source
+            "Unknown module source format: {source}"
         ))))
     }
 
@@ -255,8 +254,7 @@ impl ModuleSource {
         }
 
         Err(Box::new(BicepParserError::ParseError(format!(
-            "Invalid registry module format with alias: {}",
-            full_source
+            "Invalid registry module format with alias: {full_source}"
         ))))
     }
 
@@ -294,8 +292,7 @@ impl ModuleSource {
         }
 
         Err(Box::new(BicepParserError::ParseError(format!(
-            "Invalid registry module format with FQDN: {}",
-            full_source
+            "Invalid registry module format with FQDN: {full_source}"
         ))))
     }
 
@@ -334,8 +331,7 @@ impl ModuleSource {
         }
 
         Err(Box::new(BicepParserError::ParseError(format!(
-            "Invalid TypeSpec module format with alias: {}",
-            full_source
+            "Invalid TypeSpec module format with alias: {full_source}"
         ))))
     }
 
@@ -377,8 +373,7 @@ impl ModuleSource {
         }
 
         Err(Box::new(BicepParserError::ParseError(format!(
-            "Invalid TypeSpec module format with subscription: {}",
-            full_source
+            "Invalid TypeSpec module format with subscription: {full_source}"
         ))))
     }
 }
@@ -518,8 +513,7 @@ pub fn parse_module_declaration(
                             },
                             Err(e) => {
                                 return Err(Box::new(BicepParserError::ParseError(format!(
-                                    "Failed to parse module source: {}",
-                                    e
+                                    "Failed to parse module source: {e}"
                                 ))));
                             },
                         }
@@ -545,7 +539,7 @@ pub fn parse_module_declaration(
                                             dep_names.push(identifier.to_string());
                                         },
                                         _ => {
-                                            dep_names.push(format!("{}", dep));
+                                            dep_names.push(format!("{dep}"));
                                         },
                                     }
                                 }
@@ -694,9 +688,9 @@ pub fn parse_module_declaration(
     // Create the loop statement from iterator and array
     let loop_statement = if loop_iterator.is_some() || loop_array.is_some() {
         match (loop_iterator, loop_array) {
-            (Some(iterator), Some(array)) => Some(format!("for {} in {}", iterator, array)),
-            (Some(iterator), None) => Some(format!("for {}", iterator)),
-            (None, Some(array)) => Some(format!("for _ in {}", array)),
+            (Some(iterator), Some(array)) => Some(format!("for {iterator} in {array}")),
+            (Some(iterator), None) => Some(format!("for {iterator}")),
+            (None, Some(array)) => Some(format!("for _ in {array}")),
             (None, None) => None,
         }
     } else {

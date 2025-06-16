@@ -63,7 +63,7 @@ pub fn export_to_string(
 
     // Title and document attributes
     if let Some(name) = &document.name {
-        asciidoc.push_str(&format!("= {}\n", name));
+        asciidoc.push_str(&format!("= {name}\n"));
     } else {
         asciidoc.push_str("= Bicep Template\n");
     }
@@ -160,7 +160,7 @@ pub fn export_to_string(
                             String::new()
                         };
                         let wildcard_str = if let Some(alias) = wildcard_alias {
-                            format!("`*` as `{}`", alias)
+                            format!("`*` as `{alias}`")
                         } else {
                             String::new()
                         };
@@ -269,7 +269,7 @@ fn generate_types_section(
     }
 
     for (name, custom_type) in &document.types {
-        asciidoc.push_str(&format!("=== `{}`\n\n", name));
+        asciidoc.push_str(&format!("=== `{name}`\n\n"));
 
         if let Some(description) = &custom_type.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
@@ -293,7 +293,7 @@ fn generate_types_section(
                 asciidoc.push_str("\n*Object Definition*\n\n");
 
                 for (prop_name, prop_param) in properties {
-                    asciidoc.push_str(&format!("==== `{}`\n\n", prop_name));
+                    asciidoc.push_str(&format!("==== `{prop_name}`\n\n"));
 
                     if let Some(description) = &prop_param.description {
                         asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
@@ -380,7 +380,7 @@ fn generate_functions_section(
     }
 
     for (name, function) in &document.functions {
-        asciidoc.push_str(&format!("=== `{}`\n\n", name));
+        asciidoc.push_str(&format!("=== `{name}`\n\n"));
 
         if let Some(description) = &function.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
@@ -425,7 +425,7 @@ fn generate_parameters_section(
     }
 
     for (name, parameter) in &document.parameters {
-        asciidoc.push_str(&format!("=== `{}`\n\n", name));
+        asciidoc.push_str(&format!("=== `{name}`\n\n"));
 
         if let Some(description) = &parameter.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
@@ -499,7 +499,7 @@ fn generate_parameters_section(
                 asciidoc.push_str("\n*Object Definition*\n\n");
 
                 for (prop_name, prop_param) in properties {
-                    asciidoc.push_str(&format!("==== `{}`\n\n", prop_name));
+                    asciidoc.push_str(&format!("==== `{prop_name}`\n\n"));
 
                     if let Some(description) = &prop_param.description {
                         asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
@@ -572,7 +572,7 @@ fn generate_nested_object_properties(
     let header_prefix = "=".repeat(header_level);
 
     for (prop_name, prop_param) in properties {
-        asciidoc.push_str(&format!("{} `{}`\n\n", header_prefix, prop_name));
+        asciidoc.push_str(&format!("{header_prefix} `{prop_name}`\n\n"));
 
         if let Some(description) = &prop_param.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
@@ -643,7 +643,7 @@ fn generate_variables_section(
     }
 
     for (name, variable) in &document.variables {
-        asciidoc.push_str(&format!("=== `{}`\n\n", name));
+        asciidoc.push_str(&format!("=== `{name}`\n\n"));
 
         if let Some(description) = &variable.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
@@ -679,7 +679,7 @@ fn generate_resources_section(
     }
 
     for (name, resource) in &document.resources {
-        asciidoc.push_str(&format!("=== `{}`\n\n", name));
+        asciidoc.push_str(&format!("=== `{name}`\n\n"));
 
         if let Some(description) = &resource.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
@@ -746,7 +746,7 @@ fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, exc
     }
 
     for (name, module) in &document.modules {
-        asciidoc.push_str(&format!("=== {}\n\n", name));
+        asciidoc.push_str(&format!("=== {name}\n\n"));
 
         if let Some(description) = &module.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
@@ -766,7 +766,7 @@ fn generate_modules_section(asciidoc: &mut String, document: &BicepDocument, exc
         }
 
         if let Some(batch_size) = module.batch_size {
-            items.push(("Batch Size", format!("`{}`", batch_size)));
+            items.push(("Batch Size", format!("`{batch_size}`")));
         }
 
         generate_key_value_display(asciidoc, &items, "h,1");
@@ -802,7 +802,7 @@ fn generate_outputs_section(
     }
 
     for (name, output) in &document.outputs {
-        asciidoc.push_str(&format!("=== `{}`\n\n", name));
+        asciidoc.push_str(&format!("=== `{name}`\n\n"));
 
         if let Some(description) = &output.description {
             asciidoc.push_str(&format!("{}\n\n", escape_asciidoc(description)));
@@ -863,7 +863,7 @@ fn generate_outputs_section(
 
 /// Generate key-value property display
 fn generate_key_value_display(asciidoc: &mut String, items: &[(&str, String)], cols: &str) {
-    asciidoc.push_str(&format!("[%autowidth,cols=\"{}\",frame=none]\n", cols));
+    asciidoc.push_str(&format!("[%autowidth,cols=\"{cols}\",frame=none]\n"));
     asciidoc.push_str("|===\n");
     for (key, value) in items {
         match value.split_once("|") {
@@ -917,7 +917,7 @@ fn generate_function_arguments_display(
 
 /// Format a value as a code block for display in AsciiDoc
 fn format_code_block(value: &str) -> String {
-    format!("[source]\n----\n{}\n----\n", value)
+    format!("[source]\n----\n{value}\n----\n")
 }
 
 #[cfg(test)]

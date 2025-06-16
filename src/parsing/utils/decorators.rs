@@ -162,9 +162,7 @@ pub fn parse_decorator(node: Node, source_code: &str) -> Result<BicepDecorator, 
                             if let Ok(Some(value)) = parse_value_node(grandchild, source_code) {
                                 argument = value;
                             } else {
-                                return Err(
-                                    format!("Invalid decorator argument for {}", name).into()
-                                );
+                                return Err(format!("Invalid decorator argument for {name}").into());
                             }
                         },
                     }
