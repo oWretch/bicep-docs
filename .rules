@@ -488,3 +488,9 @@ ensure high-quality, maintainable contributions:
 By following these guidelines, you help maintain a high standard of quality and
 consistency in the Bicep-Docs project, especially when leveraging Copilot for
 development.
+
+## Copilot Coding Agent Configuration
+
+If running in coding agent (padawan) mode on GitHub, make sure to use the
+`report_progress` tool to push commits to the remote repository. Do not attempt
+to use git push as you do not have write access to the repository directly.
