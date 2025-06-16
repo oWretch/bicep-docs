@@ -246,11 +246,11 @@ pub fn parse_resource_declaration(
                             },
                             BicepValue::Identifier(identifier) => {
                                 // Use the identifier name but mark it as a reference for YAML output
-                                name = format!("${{{}}}", identifier);
+                                name = format!("${{{identifier}}}");
                             },
                             _ => {
                                 // For other types, convert to string
-                                name = format!("{}", name_value);
+                                name = format!("{name_value}");
                             },
                         }
                     }
@@ -267,7 +267,7 @@ pub fn parse_resource_declaration(
                             },
                             _ => {
                                 // For other types, convert to string
-                                parent = Some(format!("{}", parent_value));
+                                parent = Some(format!("{parent_value}"));
                             },
                         }
                     }
@@ -303,7 +303,7 @@ pub fn parse_resource_declaration(
                                         },
                                         _ => {
                                             // For other types, try to convert to string
-                                            dep_names.push(format!("{}", dep_val));
+                                            dep_names.push(format!("{dep_val}"));
                                         },
                                     }
                                 }
@@ -616,10 +616,10 @@ pub fn parse_resource_declaration(
                             },
                             BicepValue::Identifier(id) => {
                                 // Use the identifier name but mark it as a reference
-                                name = format!("${{{}}}", id);
+                                name = format!("${{{id}}}");
                             },
                             _ => {
-                                name = format!("{}", value);
+                                name = format!("{value}");
                             },
                         }
                     } else if key == "scope" && scope.is_none() {
@@ -651,10 +651,10 @@ pub fn parse_resource_declaration(
                         },
                         BicepValue::Identifier(id) => {
                             // Use the identifier name but mark it as a reference
-                            name = format!("${{{}}}", id);
+                            name = format!("${{{id}}}");
                         },
                         _ => {
-                            name = format!("{}", value);
+                            name = format!("{value}");
                         },
                     }
                 }
@@ -669,9 +669,9 @@ pub fn parse_resource_declaration(
     // Create the loop statement from iterator and array
     let loop_statement = if loop_iterator.is_some() || loop_array.is_some() {
         match (loop_iterator, loop_array) {
-            (Some(iterator), Some(array)) => Some(format!("for {} in {}", iterator, array)),
-            (Some(iterator), None) => Some(format!("for {}", iterator)),
-            (None, Some(array)) => Some(format!("for _ in {}", array)),
+            (Some(iterator), Some(array)) => Some(format!("for {iterator} in {array}")),
+            (Some(iterator), None) => Some(format!("for {iterator}")),
+            (None, Some(array)) => Some(format!("for _ in {array}")),
             (None, None) => None,
         }
     } else {
@@ -732,7 +732,7 @@ pub fn parse_resource_declaration(
 
                         // Create prefixed identifier
                         let prefixed_identifier =
-                            format!("{}::{}", parent_identifier, child_identifier);
+                            format!("{parent_identifier}::{child_identifier}");
                         collected.push((prefixed_identifier, child_resource));
                     }
                 }

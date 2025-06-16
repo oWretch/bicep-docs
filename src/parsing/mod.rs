@@ -63,11 +63,11 @@ pub enum BicepParserError {
 impl fmt::Display for BicepParserError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            BicepParserError::UnknownKind(kind) => write!(f, "Unknown kind: {}", kind),
+            BicepParserError::UnknownKind(kind) => write!(f, "Unknown kind: {kind}"),
             BicepParserError::InvalidValue { kind, reason } => {
-                write!(f, "Invalid {} value: {}", kind, reason)
+                write!(f, "Invalid {kind} value: {reason}")
             },
-            BicepParserError::ParseError(msg) => write!(f, "Parse error: {}", msg),
+            BicepParserError::ParseError(msg) => write!(f, "Parse error: {msg}"),
         }
     }
 }
@@ -154,13 +154,13 @@ pub enum BicepType {
 impl std::fmt::Display for BicepType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            BicepType::Array(inner_type) => write!(f, "{}[]", inner_type),
+            BicepType::Array(inner_type) => write!(f, "{inner_type}[]"),
             BicepType::String => write!(f, "string"),
             BicepType::Int => write!(f, "int"),
             BicepType::Bool => write!(f, "bool"),
             BicepType::Object(Some(_params)) => write!(f, "object"),
             BicepType::Object(None) => write!(f, "object"),
-            BicepType::CustomType(name) => write!(f, "{}", name),
+            BicepType::CustomType(name) => write!(f, "{name}"),
             BicepType::Union(values) => {
                 // Join values with " | " for display
                 write!(f, "{}", values.join(" | "))
@@ -284,7 +284,7 @@ impl BicepValue {
                     if indent == 0 {
                         st.to_string()
                     } else {
-                        format!("'{}'", st)
+                        format!("'{st}'")
                     }
                 },
                 BicepValue::Int(n) => n.to_string(),
@@ -412,16 +412,16 @@ impl<'de> Deserialize<'de> for BicepValue {
 impl std::fmt::Display for BicepValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            BicepValue::String(s) => write!(f, "{}", s),
-            BicepValue::Int(n) => write!(f, "{}", n),
-            BicepValue::Bool(b) => write!(f, "{}", b),
+            BicepValue::String(s) => write!(f, "{s}"),
+            BicepValue::Int(n) => write!(f, "{n}"),
+            BicepValue::Bool(b) => write!(f, "{b}"),
             BicepValue::Array(arr) => {
                 write!(f, "[")?;
                 for (i, item) in arr.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}", item)?;
+                    write!(f, "{item}")?;
                 }
                 write!(f, "]")
             },
@@ -434,12 +434,12 @@ impl std::fmt::Display for BicepValue {
                         if i > 0 {
                             write!(f, ", ")?;
                         }
-                        write!(f, "{}: {}", key, value)?;
+                        write!(f, "{key}: {value}")?;
                     }
                     write!(f, " }}")
                 }
             },
-            BicepValue::Identifier(id) => write!(f, "${{{}}}", id),
+            BicepValue::Identifier(id) => write!(f, "${{{id}}}"),
         }
     }
 }
@@ -849,7 +849,7 @@ fn get_primitive_value(node: Node, source_code: &str) -> Result<BicepValue, Box<
                 Ok(n) => Ok(BicepValue::Int(n)),
                 Err(_) => Err(Box::new(BicepParserError::InvalidValue {
                     kind: "number".to_string(),
-                    reason: format!("Could not parse '{}' as integer", node_text),
+                    reason: format!("Could not parse '{node_text}' as integer"),
                 })),
             }
         },
@@ -859,7 +859,7 @@ fn get_primitive_value(node: Node, source_code: &str) -> Result<BicepValue, Box<
                 Ok(b) => Ok(BicepValue::Bool(b)),
                 Err(_) => Err(Box::new(BicepParserError::InvalidValue {
                     kind: "boolean".to_string(),
-                    reason: format!("Could not parse '{}' as boolean", node_text),
+                    reason: format!("Could not parse '{node_text}' as boolean"),
                 })),
             }
         },

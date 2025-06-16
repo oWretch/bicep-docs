@@ -66,7 +66,7 @@ pub fn export_to_string(
 
     // Title and overview section
     if let Some(name) = &document.name {
-        markdown.push_str(&format!("# {}\n\n", name));
+        markdown.push_str(&format!("# {name}\n\n"));
     } else {
         markdown.push_str("# Bicep Template\n\n");
     }
@@ -77,7 +77,7 @@ pub fn export_to_string(
     }
 
     if let Some(target_scope) = &document.target_scope {
-        markdown.push_str(&format!("**Target Scope:** `{}`\n\n", target_scope));
+        markdown.push_str(&format!("**Target Scope:** `{target_scope}`\n\n"));
     }
 
     // Additional metadata
@@ -149,7 +149,7 @@ pub fn export_to_string(
                             String::new()
                         };
                         let wildcard_str = if let Some(alias) = wildcard_alias {
-                            format!("`*` as `{}`", alias)
+                            format!("`*` as `{alias}`")
                         } else {
                             String::new()
                         };
@@ -257,7 +257,7 @@ fn generate_types_section(
     }
 
     for (name, custom_type) in &document.types {
-        markdown.push_str(&format!("### `{}`\n\n", name));
+        markdown.push_str(&format!("### `{name}`\n\n"));
 
         if let Some(description) = &custom_type.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -279,7 +279,7 @@ fn generate_types_section(
                 markdown.push_str("\n**Object Definition**\n\n");
 
                 for (prop_name, prop_param) in properties {
-                    markdown.push_str(&format!("#### `{}`\n\n", prop_name));
+                    markdown.push_str(&format!("#### `{prop_name}`\n\n"));
 
                     if let Some(description) = &prop_param.description {
                         markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -381,7 +381,7 @@ fn generate_functions_section(
     }
 
     for (name, function) in &document.functions {
-        markdown.push_str(&format!("### `{}`\n\n", name));
+        markdown.push_str(&format!("### `{name}`\n\n"));
 
         if let Some(description) = &function.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -432,7 +432,7 @@ fn generate_parameters_section(
     }
 
     for (name, parameter) in &document.parameters {
-        markdown.push_str(&format!("### `{}`\n\n", name));
+        markdown.push_str(&format!("### `{name}`\n\n"));
 
         if let Some(description) = &parameter.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -533,7 +533,7 @@ fn generate_nested_object_properties(
     let header_prefix = "#".repeat(header_level);
 
     for (prop_name, prop_param) in properties {
-        markdown.push_str(&format!("{} `{}`\n\n", header_prefix, prop_name));
+        markdown.push_str(&format!("{header_prefix} `{prop_name}`\n\n"));
 
         if let Some(description) = &prop_param.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -627,7 +627,7 @@ fn generate_variables_section(
     }
 
     for (name, variable) in &document.variables {
-        markdown.push_str(&format!("### `{}`\n\n", name));
+        markdown.push_str(&format!("### `{name}`\n\n"));
 
         if let Some(description) = &variable.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -662,7 +662,7 @@ fn generate_resources_section(
     }
 
     for (name, resource) in &document.resources {
-        markdown.push_str(&format!("### `{}`\n\n", name));
+        markdown.push_str(&format!("### `{name}`\n\n"));
 
         if let Some(description) = &resource.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -677,7 +677,7 @@ fn generate_resources_section(
 
         if let Some(scope) = &resource.scope {
             let scope_str = scope.to_string();
-            items.push(("Scope", format!("`{}`", scope_str)));
+            items.push(("Scope", format!("`{scope_str}`")));
         }
 
         if resource.existing {
@@ -692,7 +692,7 @@ fn generate_resources_section(
             if !depends_on.is_empty() {
                 let deps = depends_on
                     .iter()
-                    .map(|v| format!("`{}`", v))
+                    .map(|v| format!("`{v}`"))
                     .collect::<Vec<_>>()
                     .join("  \n");
                 items.push(("Depends On", deps));
@@ -700,7 +700,7 @@ fn generate_resources_section(
         }
 
         if let Some(batch_size) = resource.batch_size {
-            items.push(("Batch Size", format!("`{}`", batch_size)));
+            items.push(("Batch Size", format!("`{batch_size}`")));
         }
 
         if let Some(condition) = &resource.condition {
@@ -734,7 +734,7 @@ fn generate_modules_section(
     }
 
     for (name, module) in &document.modules {
-        markdown.push_str(&format!("### {}\n\n", name));
+        markdown.push_str(&format!("### {name}\n\n"));
 
         if let Some(description) = &module.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -754,7 +754,7 @@ fn generate_modules_section(
         }
 
         if let Some(batch_size) = module.batch_size {
-            items.push(("Batch Size", format!("`{}`", batch_size)));
+            items.push(("Batch Size", format!("`{batch_size}`")));
         }
 
         if let Some(condition) = &module.condition {
@@ -788,7 +788,7 @@ fn generate_outputs_section(
     }
 
     for (name, output) in &document.outputs {
-        markdown.push_str(&format!("### `{}`\n\n", name));
+        markdown.push_str(&format!("### `{name}`\n\n"));
 
         if let Some(description) = &output.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -858,18 +858,18 @@ fn generate_outputs_section(
 
 /// Format a constraint value with backticks for display in markdown
 fn format_constraint_value(value: &str) -> String {
-    format!("`{}`", value)
+    format!("`{value}`")
 }
 
 /// Format a value as acode block for display in Markdown
 fn format_code_block(value: &str) -> String {
-    format!("```bicep\n{}\n```\n", value)
+    format!("```bicep\n{value}\n```\n")
 }
 
 /// Generate key-value property display
 fn generate_key_value_display(markdown: &mut String, items: &[(&str, String)]) {
     for (key, value) in items {
-        markdown.push_str(&format!("**{}:** {}  \n", key, value));
+        markdown.push_str(&format!("**{key}:** {value}  \n"));
     }
 }
 
