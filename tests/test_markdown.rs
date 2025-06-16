@@ -41,23 +41,40 @@ mod markdown {
 
     #[test]
     fn test_parse_and_export_to_markdown() {
-        let output_path = "sample_parameters.md";
+        let output_path = std::env::temp_dir().join("sample_parameters.md");
 
-        // Test the convenience function (with exclude_empty = false)
-        parse_and_export_to_markdown("tests/parsing/parameters.bicep", output_path, false)
+        // Use a closure to ensure cleanup happens even if the test fails
+        let result = std::panic::catch_unwind(|| {
+            // Test the convenience function (with exclude_empty = false)
+            parse_and_export_to_markdown(
+                "tests/parsing/parameters.bicep",
+                output_path.clone(),
+                false,
+            )
             .expect("Failed to parse and export");
 
-        // Verify the file was created
-        assert!(std::path::Path::new(output_path).exists());
+            // Verify the file was created
+            assert!(output_path.exists());
 
-        // Read and verify content
-        let content = fs::read_to_string(output_path).expect("Failed to read output file");
+            // Read and verify content
+            let content = fs::read_to_string(&output_path).expect("Failed to read output file");
 
-        assert!(content.contains("# Bicep Template"));
-        assert!(content.contains("## Parameters"));
+            assert!(content.contains("# Bicep Template"));
+            assert!(content.contains("## Parameters"));
 
-        println!("Markdown successfully exported to {}", output_path);
-        // Note: Not cleaning up the file so we can inspect it
+            println!(
+                "Markdown successfully exported to {}",
+                output_path.display()
+            );
+        });
+
+        // Always attempt to remove the file, regardless of test outcome
+        let _ = fs::remove_file(&output_path);
+
+        // Resume panic if the test closure failed
+        if let Err(err) = result {
+            std::panic::resume_unwind(err);
+        }
     }
 
     #[test]
