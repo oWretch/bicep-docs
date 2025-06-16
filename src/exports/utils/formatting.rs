@@ -15,7 +15,7 @@ use crate::parsing::{BicepType, BicepValue};
 ///
 /// String representation of the type wrapped in backticks
 pub fn format_bicep_type_with_backticks(bicep_type: &BicepType) -> String {
-    format!("`{}`", bicep_type)
+    format!("`{bicep_type}`")
 }
 
 /// Format a Bicep value as code with backticks
@@ -28,7 +28,7 @@ pub fn format_bicep_type_with_backticks(bicep_type: &BicepType) -> String {
 ///
 /// String representation of the value wrapped in backticks
 pub fn format_bicep_value_with_backticks(value: &BicepValue) -> String {
-    format!("`{}`", value)
+    format!("`{value}`")
 }
 
 /// Formats a Bicep array value as a newline-separated list
@@ -49,7 +49,7 @@ pub fn format_bicep_array_as_list(array: &[BicepValue]) -> String {
     formatted.push_str(
         &array
             .iter()
-            .map(|item| format!("- `{}`", item))
+            .map(|item| format!("- `{item}`"))
             .collect::<Vec<_>>()
             .join("\n"),
     );

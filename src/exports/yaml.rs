@@ -180,14 +180,14 @@ fn convert_to_block_scalar(content: &str, key_part: &str) -> String {
     // Split into lines and format as block scalar
     let lines: Vec<&str> = unescaped.lines().collect();
     if lines.len() > 1 {
-        let mut result = format!("{} |-", key_part);
+        let mut result = format!("{key_part} |-");
         for line in lines {
-            result.push_str(&format!("\n{}{}", content_indent, line));
+            result.push_str(&format!("\n{content_indent}{line}"));
         }
         result
     } else {
         // Single line, keep as quoted string
-        format!("{} \"{}\"", key_part, content)
+        format!("{key_part} \"{content}\"")
     }
 }
 
