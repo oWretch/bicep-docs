@@ -37,7 +37,7 @@ This makes tracing the usage throughout the documentation impossible, and also b
 
 == Installation
 
-Download the latest release from link:/oWretch/bicep-docs/releases[GitHub].
+Download the latest release from link:https://github.com/oWretch/bicep-docs/releases[GitHub].
 Extract the downloaded file and ensure it is placed into your path.
 
 == Basic Usage
