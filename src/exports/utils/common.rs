@@ -4,6 +4,7 @@
 /// export formats to avoid code duplication and ensure consistency.
 use indexmap::IndexMap;
 
+use crate::localization::{TranslationKey, Translator};
 use crate::parsing::BicepValue;
 
 /// Helper function to format Yes/No values with or without emoji
@@ -12,11 +13,29 @@ use crate::parsing::BicepValue;
 ///
 /// * `value` - Boolean value to format
 /// * `use_emoji` - Whether to use emoji symbols (✅/❌) or plain text (Yes/No)
+/// * `translator` - The translator for localized text
 ///
 /// # Returns
 ///
 /// Formatted string with either emoji or plain text
-pub fn format_yes_no(value: bool, use_emoji: bool) -> String {
+pub fn format_yes_no(value: bool, use_emoji: bool, translator: &Translator) -> String {
+    let text = if value {
+        translator.translate(&TranslationKey::Yes)
+    } else {
+        translator.translate(&TranslationKey::No)
+    };
+
+    if use_emoji {
+        let emoji = if value { "✅" } else { "❌" };
+        format!("{emoji} {text}")
+    } else {
+        text
+    }
+}
+
+/// Legacy wrapper for format_yes_no for backwards compatibility
+/// This will be removed once all callers are updated
+pub fn format_yes_no_legacy(value: bool, use_emoji: bool) -> String {
     match (value, use_emoji) {
         (true, true) => "✅ Yes".to_string(),
         (true, false) => "Yes".to_string(),
@@ -87,10 +106,25 @@ mod tests {
 
     #[test]
     fn test_format_yes_no() {
-        assert_eq!(format_yes_no(true, true), "✅ Yes");
-        assert_eq!(format_yes_no(true, false), "Yes");
-        assert_eq!(format_yes_no(false, true), "❌ No");
-        assert_eq!(format_yes_no(false, false), "No");
+        use crate::localization::{load_translations, Language};
+
+        let translator = load_translations(Language::English).unwrap();
+        assert_eq!(format_yes_no(true, true, &translator), "✅ Yes");
+        assert_eq!(format_yes_no(true, false, &translator), "Yes");
+        assert_eq!(format_yes_no(false, true, &translator), "❌ No");
+        assert_eq!(format_yes_no(false, false, &translator), "No");
+
+        let spanish_translator = load_translations(Language::Spanish).unwrap();
+        assert_eq!(format_yes_no(true, false, &spanish_translator), "Sí");
+        assert_eq!(format_yes_no(false, false, &spanish_translator), "No");
+    }
+
+    #[test]
+    fn test_format_yes_no_legacy() {
+        assert_eq!(format_yes_no_legacy(true, true), "✅ Yes");
+        assert_eq!(format_yes_no_legacy(true, false), "Yes");
+        assert_eq!(format_yes_no_legacy(false, true), "❌ No");
+        assert_eq!(format_yes_no_legacy(false, false), "No");
     }
 
     #[test]

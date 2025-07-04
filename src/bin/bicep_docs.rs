@@ -8,8 +8,9 @@ use std::{
 use bicep_docs::{
     export_bicep_document_to_asciidoc, export_bicep_document_to_asciidoc_string,
     export_bicep_document_to_json, export_bicep_document_to_json_string,
-    export_bicep_document_to_markdown, export_bicep_document_to_markdown_string,
-    export_bicep_document_to_yaml, export_bicep_document_to_yaml_string,
+    export_bicep_document_to_markdown, export_bicep_document_to_yaml,
+    export_bicep_document_to_yaml_string,
+    localization::{detect_system_locale, load_translations, Language, Translator},
 };
 use clap::{self, Args, Parser, Subcommand, ValueEnum};
 use tracing::{debug, debug_span, error, trace, Level};
@@ -46,6 +47,10 @@ struct Cli {
     /// Path to a file to write logs to (instead of stdout/stderr)
     #[arg(long)]
     log_file: Option<PathBuf>,
+
+    /// Set the language for CLI messages and generated documentation
+    #[arg(long, value_enum)]
+    language: Option<Language>,
 
     #[command(subcommand)]
     command: Commands,
@@ -281,7 +286,10 @@ where
 }
 
 /// Handle the YAML export command
-fn handle_yaml_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>> {
+fn handle_yaml_export(
+    common: CommonExportOptions,
+    _translator: &Translator,
+) -> Result<(), Box<dyn Error>> {
     if common.check {
         // YAML export doesn't use emoji parameter, so handle separately
         debug!("Beginning YAML check for file: {}", common.input.display());
@@ -324,7 +332,11 @@ fn handle_yaml_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>>
 }
 
 /// Handle the JSON export command
-fn handle_json_export(common: CommonExportOptions, pretty: bool) -> Result<(), Box<dyn Error>> {
+fn handle_json_export(
+    common: CommonExportOptions,
+    pretty: bool,
+    _translator: &Translator,
+) -> Result<(), Box<dyn Error>> {
     debug!(
         "Beginning JSON export for file: {} (pretty: {})",
         common.input.display(),
@@ -371,7 +383,10 @@ fn handle_json_export(common: CommonExportOptions, pretty: bool) -> Result<(), B
 }
 
 /// Handle the Markdown export command
-fn handle_markdown_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>> {
+fn handle_markdown_export(
+    common: CommonExportOptions,
+    translator: &Translator,
+) -> Result<(), Box<dyn Error>> {
     handle_export(
         common,
         "md",
@@ -379,13 +394,22 @@ fn handle_markdown_export(common: CommonExportOptions) -> Result<(), Box<dyn Err
             export_bicep_document_to_markdown(doc, path, emoji, exclude_empty)
         },
         |doc, emoji, exclude_empty| {
-            export_bicep_document_to_markdown_string(doc, emoji, exclude_empty)
+            // Use the localized version for string export
+            bicep_docs::exports::markdown::export_to_string_localized(
+                doc,
+                emoji,
+                exclude_empty,
+                translator,
+            )
         },
     )
 }
 
 /// Handle the AsciiDoc export command
-fn handle_asciidoc_export(common: CommonExportOptions) -> Result<(), Box<dyn Error>> {
+fn handle_asciidoc_export(
+    common: CommonExportOptions,
+    _translator: &Translator,
+) -> Result<(), Box<dyn Error>> {
     handle_export(
         common,
         "adoc",
@@ -481,6 +505,21 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     trace!("Starting Bicep-Docs with verbosity level: {}", cli.verbose);
     debug!("Parsed command line arguments");
 
+    // Determine the language to use
+    let language = cli.language.unwrap_or_else(|| {
+        let system_locale = detect_system_locale();
+        debug!("Detected system locale: {:?}", system_locale);
+        system_locale.language
+    });
+
+    debug!("Using language: {}", language);
+
+    // Load translations
+    let translator = load_translations(language).map_err(|e| {
+        error!("Failed to load translations for {}: {}", language, e);
+        Box::new(e) as Box<dyn Error>
+    })?;
+
     // Create a top-level span for the command execution
     let command_name = match &cli.command {
         Commands::Yaml { .. } => "yaml",
@@ -493,10 +532,10 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let _guard = span.enter();
 
     let result = match cli.command {
-        Commands::Yaml { common } => handle_yaml_export(common),
-        Commands::Json { common, pretty } => handle_json_export(common, pretty),
-        Commands::Markdown { common } => handle_markdown_export(common),
-        Commands::Asciidoc { common } => handle_asciidoc_export(common),
+        Commands::Yaml { common } => handle_yaml_export(common, &translator),
+        Commands::Json { common, pretty } => handle_json_export(common, pretty, &translator),
+        Commands::Markdown { common } => handle_markdown_export(common, &translator),
+        Commands::Asciidoc { common } => handle_asciidoc_export(common, &translator),
     };
 
     if let Err(ref e) = result {
