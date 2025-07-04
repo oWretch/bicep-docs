@@ -2,11 +2,17 @@ use std::{error::Error, path::Path};
 
 use tree_sitter::{Parser, Tree};
 
+// Initialize rust-i18n
+rust_i18n::i18n!("locales");
+
 pub mod exports;
 pub mod localization;
 pub mod parsing;
 
 pub use parsing::{BicepDocument, BicepParserError, BicepType, BicepValue};
+
+// Re-export the t! macro to make it available throughout the crate
+pub use rust_i18n::t;
 
 /// Parse a bicep file content and return the tree-sitter Tree
 ///
@@ -170,7 +176,6 @@ pub fn export_bicep_document_to_markdown_string(
 /// * `document` - The BicepDocument to export
 /// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
 /// * `exclude_empty` - Whether to exclude empty sections from the output
-/// * `translator` - The translator for localized text
 ///
 /// # Returns
 ///
@@ -179,9 +184,8 @@ pub fn export_bicep_document_to_markdown_string_localized(
     document: &BicepDocument,
     use_emoji: bool,
     exclude_empty: bool,
-    translator: &localization::Translator,
 ) -> Result<String, Box<dyn Error>> {
-    exports::markdown::export_to_string_localized(document, use_emoji, exclude_empty, translator)
+    exports::markdown::export_to_string_localized(document, use_emoji, exclude_empty)
 }
 
 /// Export a parsed Bicep document as AsciiDoc to a file
@@ -305,64 +309,29 @@ pub fn parse_and_export_to_markdown<P: AsRef<Path>, Q: AsRef<Path>>(
 /// Test example to demonstrate the localization system
 #[cfg(test)]
 mod localization_demo {
-    use crate::localization::{load_translations, Language, TranslationKey};
+    use crate::{
+        localization::{init_localization, Language},
+        t,
+    };
 
     #[test]
     fn demonstrate_translations() {
         // Test key translations across languages
-        let english_translator = load_translations(Language::English).unwrap();
-        let spanish_translator = load_translations(Language::Spanish).unwrap();
-        let french_translator = load_translations(Language::French).unwrap();
-        let german_translator = load_translations(Language::German).unwrap();
-        let japanese_translator = load_translations(Language::Japanese).unwrap();
-        let chinese_translator = load_translations(Language::Chinese).unwrap();
+        init_localization(Language::English);
+        assert_eq!(t!("common.yes"), "Yes");
+        assert_eq!(t!("export.types"), "Types");
+        assert_eq!(t!("export.target_scope"), "Target Scope");
 
-        // Verify some key translations
-        assert_eq!(english_translator.translate(&TranslationKey::Yes), "Yes");
-        assert_eq!(spanish_translator.translate(&TranslationKey::Yes), "Sí");
-        assert_eq!(french_translator.translate(&TranslationKey::Yes), "Oui");
-        assert_eq!(german_translator.translate(&TranslationKey::Yes), "Ja");
-        assert_eq!(japanese_translator.translate(&TranslationKey::Yes), "はい");
-        assert_eq!(chinese_translator.translate(&TranslationKey::Yes), "是");
+        init_localization(Language::Spanish);
+        assert_eq!(t!("common.yes"), "Sí");
+        assert_eq!(t!("export.types"), "Tipos");
+        assert_eq!(t!("export.target_scope"), "Ámbito de Destino");
 
-        assert_eq!(
-            english_translator.translate(&TranslationKey::Types),
-            "Types"
-        );
-        assert_eq!(
-            spanish_translator.translate(&TranslationKey::Types),
-            "Tipos"
-        );
-        assert_eq!(french_translator.translate(&TranslationKey::Types), "Types");
-        assert_eq!(german_translator.translate(&TranslationKey::Types), "Typen");
-        assert_eq!(japanese_translator.translate(&TranslationKey::Types), "型");
-        assert_eq!(chinese_translator.translate(&TranslationKey::Types), "类型");
+        init_localization(Language::French);
+        assert_eq!(t!("common.yes"), "Oui");
+        assert_eq!(t!("export.types"), "Types");
+        assert_eq!(t!("export.target_scope"), "Portée Cible");
 
-        assert_eq!(
-            english_translator.translate(&TranslationKey::TargetScope),
-            "Target Scope"
-        );
-        assert_eq!(
-            spanish_translator.translate(&TranslationKey::TargetScope),
-            "Ámbito de Destino"
-        );
-        assert_eq!(
-            french_translator.translate(&TranslationKey::TargetScope),
-            "Portée Cible"
-        );
-        assert_eq!(
-            german_translator.translate(&TranslationKey::TargetScope),
-            "Zielbereich"
-        );
-        assert_eq!(
-            japanese_translator.translate(&TranslationKey::TargetScope),
-            "ターゲットスコープ"
-        );
-        assert_eq!(
-            chinese_translator.translate(&TranslationKey::TargetScope),
-            "目标范围"
-        );
-
-        println!("✅ All translations working correctly across 6 languages!");
+        println!("✅ All translations working correctly!");
     }
 }

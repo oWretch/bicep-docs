@@ -31,6 +31,7 @@ tree-sitter = "0.25"
 # tree-sitter-bicep = { git = "https://github.com/tree-sitter-grammars/tree-sitter-bicep.git", tag = "v1.1.0" }
 tree-sitter-bicep = { git = "https://github.com/oWretch/tree-sitter-bicep.git", branch = "f/extension" }
 # Localization dependencies
+rust-i18n = "3"
 sys-locale = "0.3"
 
 [[bin]]

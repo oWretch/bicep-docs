@@ -1,0 +1,65 @@
+cli:
+  app_description: Azure Bicepファイル用ドキュメントジェネレーター
+  app_about: Azure Bicepファイルを解析し、様々な形式でドキュメントをエクスポート
+  verbose_help: '出力の詳細レベルを設定 (v: debug, vv: trace)'
+  quiet_help: ログ出力を表示しない
+  log_format_help: ログ出力の形式を設定
+  log_file_help: ログを書き込むファイルのパス (stdout/stderrの代わり)
+  language_help: CLIメッセージと生成されるドキュメントの言語を設定
+  markdown_command_desc: BicepファイルをMarkdown形式でドキュメント化
+  asciidoc_command_desc: BicepファイルをAsciiDoc形式でドキュメント化
+  yaml_command_desc: BicepファイルをYAML形式でドキュメント化
+  json_command_desc: BicepファイルをJSON形式でドキュメント化
+  input_help: 解析するBicepファイルのパス
+  output_help: 出力ファイルパス。デフォルトは適切な拡張子を持つ入力ファイル名。
+  emoji_help: ドキュメント出力で絵文字の使用を有効にする
+  exclude_empty_help: ドキュメントで空のセクションのエクスポートをスキップ
+  check_help: 生成されたドキュメントが既存ファイルと一致するかチェックし、適切なコードで終了
+  pretty_help: 読みやすさのためにJSONをインデント付きでフォーマット
+export:
+  bicep_template: Bicepテンプレート
+  target_scope: ターゲットスコープ
+  additional_metadata: 追加メタデータ
+  imports: インポート
+  types: 型
+  functions: 関数
+  parameters: パラメータ
+  variables: 変数
+  resources: リソース
+  modules: モジュール
+  outputs: 出力
+  namespace_header: 名前空間
+  version_header: バージョン
+  source_header: ソース
+  symbols_header: シンボル
+  name_header: 名前
+  type_header: 型
+  required_header: 必須
+  default_header: デフォルト
+  description_header: 説明
+  no_imports_defined: インポートが定義されていません。
+  no_types_defined: カスタム型が定義されていません
+  no_functions_defined: 関数が定義されていません
+  no_parameters_defined: パラメータが定義されていません
+  no_variables_defined: 変数が定義されていません
+  no_resources_defined: リソースが定義されていません
+  no_modules_defined: モジュールが定義されていません
+  no_outputs_defined: 出力が定義されていません
+  minimum_value: 最小値
+  maximum_value: 最大値
+  minimum_length: 最小長
+  maximum_length: 最大長
+  allowed_values: 許可された値
+  discriminator: 判別子
+  sealed: シール済み
+  namespace_imports: 名前空間インポート
+  module_imports: モジュールインポート
+  object_definition: オブジェクト定義
+common:
+  'yes': はい
+  'no': いいえ
+error:
+  file_not_found: ファイルが見つかりません
+  parse_error: 解析エラー
+  export_error: エクスポートエラー
+  invalid_language: 無効な言語

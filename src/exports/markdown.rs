@@ -13,6 +13,7 @@ use crate::{
         },
     },
     parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType},
+    t,
 };
 
 /// Export a Bicep document to a Markdown file
@@ -62,13 +63,8 @@ pub fn export_to_string(
     use_emoji: bool,
     exclude_empty: bool,
 ) -> Result<String, Box<dyn StdError>> {
-    // Use default English translator for backward compatibility
-    let translator = crate::localization::load_translations(crate::localization::Language::English)
-        .unwrap_or_else(|_| {
-            // Fallback to a minimal translator if loading fails
-            crate::localization::Translator::new(crate::localization::Language::English).unwrap()
-        });
-    export_to_string_localized(document, use_emoji, exclude_empty, &translator)
+    // Use rust-i18n for localization. The current locale should already be set.
+    export_to_string_localized(document, use_emoji, exclude_empty)
 }
 
 /// Export a Bicep document to a Markdown string with localization support
@@ -78,7 +74,6 @@ pub fn export_to_string(
 /// * `document` - The BicepDocument to export
 /// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
 /// * `exclude_empty` - Whether to exclude empty sections from the output
-/// * `translator` - The translator for localized text
 ///
 /// # Returns
 ///
@@ -91,19 +86,16 @@ pub fn export_to_string_localized(
     document: &BicepDocument,
     use_emoji: bool,
     exclude_empty: bool,
-    translator: &crate::localization::Translator,
 ) -> Result<String, Box<dyn StdError>> {
-    use crate::localization::TranslationKey;
-
     let mut markdown = String::new();
 
     // Title and overview section
     if let Some(name) = &document.name {
-        markdown.push_str(&format!("# {name}\n\n"));
+        markdown.push_str(&format!("# {name}\n\n").to_string());
     } else {
         markdown.push_str(&format!(
             "# {}\n\n",
-            translator.translate(&TranslationKey::BicepTemplate)
+            t!("export.bicep_template").to_string()
         ));
     }
 
@@ -115,7 +107,7 @@ pub fn export_to_string_localized(
     if let Some(target_scope) = &document.target_scope {
         markdown.push_str(&format!(
             "**{}:** `{target_scope}`\n\n",
-            translator.translate(&TranslationKey::TargetScope)
+            t!("export.target_scope").to_string()
         ));
     }
 
@@ -123,17 +115,14 @@ pub fn export_to_string_localized(
     if !document.metadata.is_empty() {
         markdown.push_str(&format!(
             "## {}\n\n",
-            translator.translate(&TranslationKey::AdditionalMetadata)
+            t!("export.additional_metadata").to_string()
         ));
         generate_metadata_display_markdown(&mut markdown, &document.metadata);
     }
 
     // Imports section
     if !document.imports.is_empty() || !exclude_empty {
-        markdown.push_str(&format!(
-            "## {}\n\n",
-            translator.translate(&TranslationKey::Imports)
-        ));
+        markdown.push_str(&format!("## {}\n\n", t!("export.imports").to_string()));
         if !document.imports.is_empty() {
             // Separate namespace and module imports
             let namespace_imports: Vec<_> = document
@@ -150,14 +139,12 @@ pub fn export_to_string_localized(
             if !namespace_imports.is_empty() {
                 markdown.push_str(&format!(
                     "### {}\n\n",
-                    translator.translate(&TranslationKey::Custom(
-                        "export.namespace_imports".to_string()
-                    ))
+                    t!("export.namespace_imports").to_string()
                 ));
                 markdown.push_str(&format!(
                     "| {} | {} |\n",
-                    translator.translate(&TranslationKey::NamespaceHeader),
-                    translator.translate(&TranslationKey::VersionHeader)
+                    t!("export.namespace_header").to_string(),
+                    t!("export.version_header").to_string()
                 ));
                 markdown.push_str("|-----------|----------|\n");
 
@@ -175,13 +162,12 @@ pub fn export_to_string_localized(
             if !module_imports.is_empty() {
                 markdown.push_str(&format!(
                     "### {}\n\n",
-                    translator
-                        .translate(&TranslationKey::Custom("export.module_imports".to_string()))
+                    t!("export.module_imports").to_string()
                 ));
                 markdown.push_str(&format!(
                     "| {} | {} |\n",
-                    translator.translate(&TranslationKey::SourceHeader),
-                    translator.translate(&TranslationKey::SymbolsHeader)
+                    t!("export.source_header").to_string(),
+                    t!("export.symbols_header").to_string()
                 ));
                 markdown.push_str("|--------|---------|\n");
 
@@ -217,20 +203,17 @@ pub fn export_to_string_localized(
         } else if !exclude_empty {
             markdown.push_str(&format!(
                 "{}.\n\n",
-                translator.translate(&TranslationKey::NoImportsDefined)
+                t!("export.no_imports_defined").to_string()
             ));
         }
     }
 
     // Types section
     if !document.types.is_empty() || !exclude_empty {
-        markdown.push_str(&format!(
-            "## {}\n\n",
-            translator.translate(&TranslationKey::Types)
-        ));
+        markdown.push_str(&format!("## {}\n\n", t!("export.types").to_string()));
         if !document.types.is_empty() {
             for (name, custom_type) in &document.types {
-                markdown.push_str(&format!("### `{name}`\n\n"));
+                markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
                 if let Some(description) = &custom_type.description {
                     markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -245,7 +228,7 @@ pub fn export_to_string_localized(
                 ];
 
                 for (label, value) in items {
-                    markdown.push_str(&format!("**{label}:** {value}  \n"));
+                    markdown.push_str(&format!("**{label}:** {value}  \n").to_string());
                 }
                 markdown.push('\n');
 
@@ -253,9 +236,7 @@ pub fn export_to_string_localized(
                 if let BicepType::Object(Some(properties)) = &custom_type.definition {
                     markdown.push_str(&format!(
                         "\n**{}**\n\n",
-                        translator.translate(&TranslationKey::Custom(
-                            "export.object_definition".to_string()
-                        ))
+                        t!("export.object_definition").to_string()
                     ));
                     for (prop_name, prop_param) in properties {
                         markdown.push_str(&format!(
@@ -290,7 +271,8 @@ pub fn export_to_string_localized(
 
                         if !prop_items.is_empty() {
                             for (label, value) in prop_items {
-                                markdown.push_str(&format!("  - **{label}:** {value}\n"));
+                                markdown
+                                    .push_str(&format!("  - **{label}:** {value}\n").to_string());
                             }
                         }
                     }
@@ -300,7 +282,7 @@ pub fn export_to_string_localized(
         } else if !exclude_empty {
             markdown.push_str(&format!(
                 "*{}*\n\n",
-                translator.translate(&TranslationKey::NoTypesDefined)
+                t!("export.no_types_defined").to_string()
             ));
         }
     }
@@ -392,7 +374,7 @@ fn generate_types_section(
     }
 
     for (name, custom_type) in &document.types {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &custom_type.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -414,7 +396,7 @@ fn generate_types_section(
                 markdown.push_str("\n**Object Definition**\n\n");
 
                 for (prop_name, prop_param) in properties {
-                    markdown.push_str(&format!("#### `{prop_name}`\n\n"));
+                    markdown.push_str(&format!("#### `{prop_name}`\n\n").to_string());
 
                     if let Some(description) = &prop_param.description {
                         markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -516,7 +498,7 @@ fn generate_functions_section(
     }
 
     for (name, function) in &document.functions {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &function.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -567,7 +549,7 @@ fn generate_parameters_section(
     }
 
     for (name, parameter) in &document.parameters {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &parameter.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -668,7 +650,7 @@ fn generate_nested_object_properties(
     let header_prefix = "#".repeat(header_level);
 
     for (prop_name, prop_param) in properties {
-        markdown.push_str(&format!("{header_prefix} `{prop_name}`\n\n"));
+        markdown.push_str(&format!("{header_prefix} `{prop_name}`\n\n").to_string());
 
         if let Some(description) = &prop_param.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -762,7 +744,7 @@ fn generate_variables_section(
     }
 
     for (name, variable) in &document.variables {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &variable.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -797,7 +779,7 @@ fn generate_resources_section(
     }
 
     for (name, resource) in &document.resources {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &resource.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -812,7 +794,7 @@ fn generate_resources_section(
 
         if let Some(scope) = &resource.scope {
             let scope_str = scope.to_string();
-            items.push(("Scope", format!("`{scope_str}`")));
+            items.push(("Scope", format!("`{scope_str}`").to_string()));
         }
 
         if resource.existing {
@@ -827,7 +809,7 @@ fn generate_resources_section(
             if !depends_on.is_empty() {
                 let deps = depends_on
                     .iter()
-                    .map(|v| format!("`{v}`"))
+                    .map(|v| format!("`{v}`").to_string())
                     .collect::<Vec<_>>()
                     .join("  \n");
                 items.push(("Depends On", deps));
@@ -835,7 +817,7 @@ fn generate_resources_section(
         }
 
         if let Some(batch_size) = resource.batch_size {
-            items.push(("Batch Size", format!("`{batch_size}`")));
+            items.push(("Batch Size", format!("`{batch_size}`").to_string()));
         }
 
         if let Some(condition) = &resource.condition {
@@ -869,7 +851,7 @@ fn generate_modules_section(
     }
 
     for (name, module) in &document.modules {
-        markdown.push_str(&format!("### {name}\n\n"));
+        markdown.push_str(&format!("### {name}\n\n").to_string());
 
         if let Some(description) = &module.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -889,7 +871,7 @@ fn generate_modules_section(
         }
 
         if let Some(batch_size) = module.batch_size {
-            items.push(("Batch Size", format!("`{batch_size}`")));
+            items.push(("Batch Size", format!("`{batch_size}`").to_string()));
         }
 
         if let Some(condition) = &module.condition {
@@ -923,7 +905,7 @@ fn generate_outputs_section(
     }
 
     for (name, output) in &document.outputs {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &output.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -993,18 +975,18 @@ fn generate_outputs_section(
 
 /// Format a constraint value with backticks for display in markdown
 fn format_constraint_value(value: &str) -> String {
-    format!("`{value}`")
+    format!("`{value}`").to_string()
 }
 
 /// Format a value as acode block for display in Markdown
 fn format_code_block(value: &str) -> String {
-    format!("```bicep\n{value}\n```\n")
+    format!("```bicep\n{value}\n```\n").to_string()
 }
 
 /// Generate key-value property display
 fn generate_key_value_display(markdown: &mut String, items: &[(&str, String)]) {
     for (key, value) in items {
-        markdown.push_str(&format!("**{key}:** {value}  \n"));
+        markdown.push_str(&format!("**{key}:** {value}  \n").to_string());
     }
 }
 
