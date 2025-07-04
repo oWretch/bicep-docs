@@ -8,8 +8,9 @@ use std::{
 use bicep_docs::{
     export_bicep_document_to_asciidoc, export_bicep_document_to_asciidoc_string,
     export_bicep_document_to_json, export_bicep_document_to_json_string,
-    export_bicep_document_to_markdown, export_bicep_document_to_markdown_string,
-    export_bicep_document_to_yaml, export_bicep_document_to_yaml_string,
+    export_bicep_document_to_markdown, export_bicep_document_to_yaml,
+    export_bicep_document_to_yaml_string,
+    localization::{detect_system_locale, init_localization, Language},
 };
 use clap::{self, Args, Parser, Subcommand, ValueEnum};
 use tracing::{debug, debug_span, error, trace, Level};
@@ -46,6 +47,10 @@ struct Cli {
     /// Path to a file to write logs to (instead of stdout/stderr)
     #[arg(long)]
     log_file: Option<PathBuf>,
+
+    /// Set the language for CLI messages and generated documentation
+    #[arg(long, value_enum)]
+    language: Option<Language>,
 
     #[command(subcommand)]
     command: Commands,
@@ -379,7 +384,8 @@ fn handle_markdown_export(common: CommonExportOptions) -> Result<(), Box<dyn Err
             export_bicep_document_to_markdown(doc, path, emoji, exclude_empty)
         },
         |doc, emoji, exclude_empty| {
-            export_bicep_document_to_markdown_string(doc, emoji, exclude_empty)
+            // Use the localized version for string export
+            bicep_docs::exports::markdown::export_to_string_localized(doc, emoji, exclude_empty)
         },
     )
 }
@@ -480,6 +486,18 @@ pub fn main() -> Result<(), Box<dyn Error>> {
 
     trace!("Starting Bicep-Docs with verbosity level: {}", cli.verbose);
     debug!("Parsed command line arguments");
+
+    // Determine the language to use
+    let language = cli.language.unwrap_or_else(|| {
+        let system_locale = detect_system_locale();
+        debug!("Detected system locale: {:?}", system_locale);
+        system_locale
+    });
+
+    debug!("Using language: {}", language);
+
+    // Initialize localization
+    init_localization(language);
 
     // Create a top-level span for the command execution
     let command_name = match &cli.command {

@@ -7,12 +7,13 @@ use std::{fs, path::Path};
 
 use crate::{
     exports::utils::{
-        common::{format_yes_no, generate_metadata_display_markdown},
+        common::{format_yes_no_legacy as format_yes_no, generate_metadata_display_markdown},
         formatting::{
             escape_markdown, format_bicep_array_as_list, format_bicep_type_with_backticks,
         },
     },
     parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType},
+    t,
 };
 
 /// Export a Bicep document to a Markdown file
@@ -62,13 +63,40 @@ pub fn export_to_string(
     use_emoji: bool,
     exclude_empty: bool,
 ) -> Result<String, Box<dyn StdError>> {
+    // Use rust-i18n for localization. The current locale should already be set.
+    export_to_string_localized(document, use_emoji, exclude_empty)
+}
+
+/// Export a Bicep document to a Markdown string with localization support
+///
+/// # Arguments
+///
+/// * `document` - The BicepDocument to export
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
+/// * `exclude_empty` - Whether to exclude empty sections from the output
+///
+/// # Returns
+///
+/// Result containing the Markdown string representation of the document
+///
+/// # Errors
+///
+/// Returns an error if serialization fails
+pub fn export_to_string_localized(
+    document: &BicepDocument,
+    use_emoji: bool,
+    exclude_empty: bool,
+) -> Result<String, Box<dyn StdError>> {
     let mut markdown = String::new();
 
     // Title and overview section
     if let Some(name) = &document.name {
-        markdown.push_str(&format!("# {name}\n\n"));
+        markdown.push_str(&format!("# {name}\n\n").to_string());
     } else {
-        markdown.push_str("# Bicep Template\n\n");
+        markdown.push_str(&format!(
+            "# {}\n\n",
+            t!("export.bicep_template").to_string()
+        ));
     }
 
     // Description
@@ -77,19 +105,24 @@ pub fn export_to_string(
     }
 
     if let Some(target_scope) = &document.target_scope {
-        markdown.push_str(&format!("**Target Scope:** `{target_scope}`\n\n"));
+        markdown.push_str(&format!(
+            "**{}:** `{target_scope}`\n\n",
+            t!("export.target_scope").to_string()
+        ));
     }
 
     // Additional metadata
     if !document.metadata.is_empty() {
-        markdown.push_str("## Additional Metadata\n\n");
-
+        markdown.push_str(&format!(
+            "## {}\n\n",
+            t!("export.additional_metadata").to_string()
+        ));
         generate_metadata_display_markdown(&mut markdown, &document.metadata);
     }
 
     // Imports section
     if !document.imports.is_empty() || !exclude_empty {
-        markdown.push_str("## Imports\n\n");
+        markdown.push_str(&format!("## {}\n\n", t!("export.imports").to_string()));
         if !document.imports.is_empty() {
             // Separate namespace and module imports
             let namespace_imports: Vec<_> = document
@@ -104,17 +137,22 @@ pub fn export_to_string(
                 .collect();
 
             if !namespace_imports.is_empty() {
-                markdown.push_str("### Namespace Imports\n\n");
-                markdown.push_str("| Namespace | Version |\n");
+                markdown.push_str(&format!(
+                    "### {}\n\n",
+                    t!("export.namespace_imports").to_string()
+                ));
+                markdown.push_str(&format!(
+                    "| {} | {} |\n",
+                    t!("export.namespace_header").to_string(),
+                    t!("export.version_header").to_string()
+                ));
                 markdown.push_str("|-----------|----------|\n");
 
                 for import in namespace_imports {
                     if let BicepImport::Namespace { namespace, version } = import {
-                        let version_str = version.as_deref().unwrap_or("N/A");
                         markdown.push_str(&format!(
-                            "| {} | {} |\n",
-                            escape_markdown(namespace),
-                            escape_markdown(version_str)
+                            "| `{namespace}` | `{}` |\n",
+                            version.as_deref().unwrap_or("N/A")
                         ));
                     }
                 }
@@ -122,15 +160,20 @@ pub fn export_to_string(
             }
 
             if !module_imports.is_empty() {
-                markdown.push_str("### Module Imports\n\n");
-                markdown.push_str("| Source | Symbols |\n");
+                markdown.push_str(&format!(
+                    "### {}\n\n",
+                    t!("export.module_imports").to_string()
+                ));
+                markdown.push_str(&format!(
+                    "| {} | {} |\n",
+                    t!("export.source_header").to_string(),
+                    t!("export.symbols_header").to_string()
+                ));
                 markdown.push_str("|--------|---------|\n");
 
                 for import in module_imports {
                     if let BicepImport::Module {
-                        source,
-                        symbols,
-                        wildcard_alias,
+                        source, symbols, ..
                     } = import
                     {
                         let symbols_str = if let Some(symbols) = symbols {
@@ -148,30 +191,104 @@ pub fn export_to_string(
                         } else {
                             String::new()
                         };
-                        let wildcard_str = if let Some(alias) = wildcard_alias {
-                            format!("`*` as `{alias}`")
-                        } else {
-                            String::new()
-                        };
                         markdown.push_str(&format!(
-                            "| {} | {}{} | \n",
+                            "| `{}` | `{}` |\n",
                             escape_markdown(&source.to_string()),
-                            escape_markdown(&symbols_str),
-                            escape_markdown(&wildcard_str)
+                            escape_markdown(&symbols_str)
                         ));
                     }
                 }
                 markdown.push('\n');
             }
         } else if !exclude_empty {
-            markdown.push_str("No imports defined.\n\n");
+            markdown.push_str(&format!(
+                "{}.\n\n",
+                t!("export.no_imports_defined").to_string()
+            ));
         }
     }
 
     // Types section
     if !document.types.is_empty() || !exclude_empty {
-        generate_types_section(&mut markdown, document, use_emoji, exclude_empty);
+        markdown.push_str(&format!("## {}\n\n", t!("export.types").to_string()));
+        if !document.types.is_empty() {
+            for (name, custom_type) in &document.types {
+                markdown.push_str(&format!("### `{name}`\n\n").to_string());
+
+                if let Some(description) = &custom_type.description {
+                    markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
+                }
+
+                let items = vec![
+                    (
+                        "Exported",
+                        format_yes_no(custom_type.is_exported, use_emoji),
+                    ),
+                    ("Secure", format_yes_no(custom_type.is_secure, use_emoji)),
+                ];
+
+                for (label, value) in items {
+                    markdown.push_str(&format!("**{label}:** {value}  \n").to_string());
+                }
+                markdown.push('\n');
+
+                // Show object definition if this is an object type
+                if let BicepType::Object(Some(properties)) = &custom_type.definition {
+                    markdown.push_str(&format!(
+                        "\n**{}**\n\n",
+                        t!("export.object_definition").to_string()
+                    ));
+                    for (prop_name, prop_param) in properties {
+                        markdown.push_str(&format!(
+                            "- **{}** (`{}`): {}",
+                            escape_markdown(prop_name),
+                            format_bicep_type_with_backticks(&prop_param.parameter_type),
+                            if !prop_param.is_nullable {
+                                "Required"
+                            } else {
+                                "Optional"
+                            }
+                        ));
+
+                        if let Some(description) = &prop_param.description {
+                            markdown.push_str(&format!(" - {}", escape_markdown(description)));
+                        }
+
+                        markdown.push('\n');
+
+                        // Additional property constraints
+                        let mut prop_items = Vec::new();
+                        if prop_param.is_nullable {
+                            prop_items.push((
+                                "Nullable",
+                                format_yes_no(prop_param.is_nullable, use_emoji),
+                            ));
+                        }
+                        if prop_param.is_secure {
+                            prop_items
+                                .push(("Secure", format_yes_no(prop_param.is_secure, use_emoji)));
+                        }
+
+                        if !prop_items.is_empty() {
+                            for (label, value) in prop_items {
+                                markdown
+                                    .push_str(&format!("  - **{label}:** {value}\n").to_string());
+                            }
+                        }
+                    }
+                    markdown.push('\n');
+                }
+            }
+        } else if !exclude_empty {
+            markdown.push_str(&format!(
+                "*{}*\n\n",
+                t!("export.no_types_defined").to_string()
+            ));
+        }
     }
+
+    // For the remaining sections, use the original functions for now
+    // This demonstrates the pattern for future localization integration
 
     // Functions section
     if !document.functions.is_empty() || !exclude_empty {
@@ -257,7 +374,7 @@ fn generate_types_section(
     }
 
     for (name, custom_type) in &document.types {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &custom_type.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -279,7 +396,7 @@ fn generate_types_section(
                 markdown.push_str("\n**Object Definition**\n\n");
 
                 for (prop_name, prop_param) in properties {
-                    markdown.push_str(&format!("#### `{prop_name}`\n\n"));
+                    markdown.push_str(&format!("#### `{prop_name}`\n\n").to_string());
 
                     if let Some(description) = &prop_param.description {
                         markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -381,7 +498,7 @@ fn generate_functions_section(
     }
 
     for (name, function) in &document.functions {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &function.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -432,7 +549,7 @@ fn generate_parameters_section(
     }
 
     for (name, parameter) in &document.parameters {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &parameter.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -533,7 +650,7 @@ fn generate_nested_object_properties(
     let header_prefix = "#".repeat(header_level);
 
     for (prop_name, prop_param) in properties {
-        markdown.push_str(&format!("{header_prefix} `{prop_name}`\n\n"));
+        markdown.push_str(&format!("{header_prefix} `{prop_name}`\n\n").to_string());
 
         if let Some(description) = &prop_param.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -627,7 +744,7 @@ fn generate_variables_section(
     }
 
     for (name, variable) in &document.variables {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &variable.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -662,7 +779,7 @@ fn generate_resources_section(
     }
 
     for (name, resource) in &document.resources {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &resource.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -677,7 +794,7 @@ fn generate_resources_section(
 
         if let Some(scope) = &resource.scope {
             let scope_str = scope.to_string();
-            items.push(("Scope", format!("`{scope_str}`")));
+            items.push(("Scope", format!("`{scope_str}`").to_string()));
         }
 
         if resource.existing {
@@ -692,7 +809,7 @@ fn generate_resources_section(
             if !depends_on.is_empty() {
                 let deps = depends_on
                     .iter()
-                    .map(|v| format!("`{v}`"))
+                    .map(|v| format!("`{v}`").to_string())
                     .collect::<Vec<_>>()
                     .join("  \n");
                 items.push(("Depends On", deps));
@@ -700,7 +817,7 @@ fn generate_resources_section(
         }
 
         if let Some(batch_size) = resource.batch_size {
-            items.push(("Batch Size", format!("`{batch_size}`")));
+            items.push(("Batch Size", format!("`{batch_size}`").to_string()));
         }
 
         if let Some(condition) = &resource.condition {
@@ -734,7 +851,7 @@ fn generate_modules_section(
     }
 
     for (name, module) in &document.modules {
-        markdown.push_str(&format!("### {name}\n\n"));
+        markdown.push_str(&format!("### {name}\n\n").to_string());
 
         if let Some(description) = &module.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -754,7 +871,7 @@ fn generate_modules_section(
         }
 
         if let Some(batch_size) = module.batch_size {
-            items.push(("Batch Size", format!("`{batch_size}`")));
+            items.push(("Batch Size", format!("`{batch_size}`").to_string()));
         }
 
         if let Some(condition) = &module.condition {
@@ -788,7 +905,7 @@ fn generate_outputs_section(
     }
 
     for (name, output) in &document.outputs {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &output.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -858,18 +975,18 @@ fn generate_outputs_section(
 
 /// Format a constraint value with backticks for display in markdown
 fn format_constraint_value(value: &str) -> String {
-    format!("`{value}`")
+    format!("`{value}`").to_string()
 }
 
 /// Format a value as acode block for display in Markdown
 fn format_code_block(value: &str) -> String {
-    format!("```bicep\n{value}\n```\n")
+    format!("```bicep\n{value}\n```\n").to_string()
 }
 
 /// Generate key-value property display
 fn generate_key_value_display(markdown: &mut String, items: &[(&str, String)]) {
     for (key, value) in items {
-        markdown.push_str(&format!("**{key}:** {value}  \n"));
+        markdown.push_str(&format!("**{key}:** {value}  \n").to_string());
     }
 }
 
