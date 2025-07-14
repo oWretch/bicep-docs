@@ -42,7 +42,7 @@ jobs:
 
       - name: Install semantic-release-cargo
         if: needs.get-next-version.outputs.new-release-published == 'true'
-        uses: EricCrosson/install-github-release-binary@6908366f8ad1cd8e9301c3d9d11c59228206d199
+        uses: EricCrosson/install-github-release-binary@516fae6d6d0dc717cefbb4d4ede159a75cb13c20
         with:
           targets: semantic-release-cargo/semantic-release-cargo@v2
 
