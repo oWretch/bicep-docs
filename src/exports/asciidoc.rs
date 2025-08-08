@@ -149,7 +149,7 @@ pub fn export_to_string(
                                 .iter()
                                 .map(|sym| {
                                     if let Some(alias) = &sym.alias {
-                                        format!("`{}` as `{}`", sym.name, alias)
+                                        format!("`{}` as `{alias}`", sym.name)
                                     } else {
                                         format!("`{}`", sym.name)
                                     }

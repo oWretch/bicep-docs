@@ -396,13 +396,13 @@ fn analyze_bicep_template(file_path: &str) -> Result<(), Box<dyn Error>> {
 
     for (name, param) in &document.parameters {
         if param.description.is_none() {
-            missing_descriptions.push(format!("Parameter: {}", name));
+            missing_descriptions.push(format!("Parameter: {name}"));
         }
     }
 
     for (name, resource) in &document.resources {
         if resource.description.is_none() {
-            missing_descriptions.push(format!("Resource: {}", name));
+            missing_descriptions.push(format!("Resource: {name}"));
         }
     }
 

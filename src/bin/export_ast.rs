@@ -352,9 +352,9 @@ fn generate_node_paths(node: &mut NodeSerialized, current_path: &str) {
     let my_path = if current_path.is_empty() {
         node.kind.clone()
     } else if let Some(field_name) = &node.field_name {
-        format!("{}:{}.{}", current_path, field_name, node.kind)
+        format!("{current_path}:{field_name}.{}", node.kind)
     } else {
-        format!("{}.{}", current_path, node.kind)
+        format!("{current_path}.{}", node.kind)
     };
 
     // Set this node's path
@@ -381,16 +381,15 @@ fn visualize_tree_structure(
 
     // Generate the current line's prefix
     let this_prefix = if is_last {
-        format!("{}└── ", prefix)
+        format!("{prefix}└── ")
     } else {
-        format!("{}├── ", prefix)
+        format!("{prefix}├── ")
     };
 
     // Display this node
     let display_name = if let Some(field_name) = &node.field_name {
         format!(
-            "{}:{} ({})",
-            field_name,
+            "{field_name}:{} ({})",
             node.kind,
             node.start_position.row + 1
         )
@@ -403,9 +402,9 @@ fn visualize_tree_structure(
 
     // Determine the next level's prefix
     let next_prefix = if is_last {
-        format!("{}    ", prefix)
+        format!("{prefix}    ")
     } else {
-        format!("{}│   ", prefix)
+        format!("{prefix}│   ")
     };
 
     // Recursively print children
@@ -632,8 +631,7 @@ fn generate_brief_structure(node: &NodeSerialized) {
         };
         let display_name = if let Some(field_name) = &child.field_name {
             format!(
-                "{}:{} (Line {})",
-                field_name,
+                "{field_name}:{} (Line {})",
                 child.kind,
                 child.start_position.row + 1
             )
@@ -736,26 +734,26 @@ fn main() -> Result<(), Box<dyn Error>> {
             let stem = input_path.file_stem().unwrap_or_default().to_string_lossy();
 
             match output_format {
-                OutputFormat::Yaml => format!("{}_tree.yaml", stem),
-                OutputFormat::Json => format!("{}_tree.json", stem),
-                OutputFormat::SimpleTree => format!("{}_simple_tree.json", stem),
+                OutputFormat::Yaml => format!("{stem}_tree.yaml"),
+                OutputFormat::Json => format!("{stem}_tree.json"),
+                OutputFormat::SimpleTree => format!("{stem}_simple_tree.json"),
             }
         },
     };
-    debug!("Output will be written to: {}", output_file);
+    debug!("Output will be written to: {output_file}");
 
     // Read and parse the input file
-    info!("Reading Bicep file: {}", input_file);
+    info!("Reading Bicep file: {input_file}");
     let source_code = fs::read_to_string(input_file).map_err(|e| {
-        error!("Failed to read file {}: {}", input_file, e);
-        format!("Failed to read file {}: {}", input_file, e)
+        error!("Failed to read file {input_file}: {e}");
+        format!("Failed to read file {input_file}: {e}")
     })?;
     debug!("Read {} bytes from file", source_code.len());
 
     info!("Parsing Bicep file...");
     let tree = parse_bicep_file(&source_code).ok_or_else(|| {
-        error!("Failed to parse file {} as valid Bicep", input_file);
-        format!("Failed to parse file {} as valid Bicep", input_file)
+        error!("Failed to parse file {input_file} as valid Bicep");
+        format!("Failed to parse file {input_file} as valid Bicep")
     })?;
     debug!("Successfully parsed file");
 
@@ -767,7 +765,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Apply line filter if requested
     if let Some(line) = filter_line {
-        debug!("Applying line filter: {}", line);
+        debug!("Applying line filter: {line}");
         if let Some(filtered) = filter_nodes_by_line(&serialized, line) {
             serialized = filtered;
             debug!(
@@ -851,7 +849,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 end_position: Position { row: 0, column: 0 },
                 start_byte: 0,
                 end_byte: 0,
-                text: format!("Search results for path pattern: {}", path_pattern),
+                text: format!("Search results for path pattern: {path_pattern}"),
                 path: Some("search_results".to_string()),
                 children: matching_nodes,
             };

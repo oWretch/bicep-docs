@@ -182,7 +182,7 @@ fn process_bicep_string(bicep_content: &str) -> Result<String, Box<dyn Error>> {
     let markdown_content = export_bicep_document_to_markdown_string(&document, true, false)?;
 
     // Process or modify the markdown as needed
-    let processed_content = format!("# Custom Header\n\n{}", markdown_content);
+    let processed_content = format!("# Custom Header\n\n{markdown_content}");
 
     Ok(processed_content)
 }
@@ -438,21 +438,21 @@ fn validate_and_document(bicep_file: &str) -> Result<(), Box<dyn Error>> {
     // Check for missing parameter descriptions
     for (name, param) in &document.parameters {
         if param.description.is_none() {
-            issues.push(format!("Parameter '{}' is missing a description", name));
+            issues.push(format!("Parameter '{name}' is missing a description"));
         }
     }
 
     // Check for missing resource descriptions
     for (name, resource) in &document.resources {
         if resource.description.is_none() {
-            issues.push(format!("Resource '{}' is missing a description", name));
+            issues.push(format!("Resource '{name}' is missing a description"));
         }
     }
 
     // Check for missing output descriptions
     for (name, output) in &document.outputs {
         if output.description.is_none() {
-            issues.push(format!("Output '{}' is missing a description", name));
+            issues.push(format!("Output '{name}' is missing a description"));
         }
     }
 

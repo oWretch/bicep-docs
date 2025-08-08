@@ -554,7 +554,7 @@ pub fn parse_module_declaration(
                                 depends_on = Some(vec![identifier.to_string()]);
                             },
                             _ => {
-                                depends_on = Some(vec![format!("{}", depends_value)]);
+                                depends_on = Some(vec![format!("{depends_value}")]);
                             },
                         }
                     }
@@ -690,7 +690,7 @@ pub fn parse_module_declaration(
         match (loop_iterator, loop_array) {
             (Some(iterator), Some(array)) => Some(format!("for {iterator} in {array}")),
             (Some(iterator), None) => Some(format!("for {iterator}")),
-            (None, Some(array)) => Some(format!("for _ in {array}")),
+            (None, Some(array)) => Some(format!("for item in {array}")),
             (None, None) => None,
         }
     } else {

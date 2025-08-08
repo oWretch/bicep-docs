@@ -663,11 +663,13 @@ fn generate_resources_section(
         }
 
         if let Some(condition) = &resource.condition {
-            items.push(("Condition", format!("  \n{}", format_code_block(condition))));
+            let condition_block = format_code_block(condition);
+            items.push(("Condition", format!("  \n{condition_block}")));
         }
 
         if let Some(loop_statement) = &resource.loop_statement {
-            items.push(("Loop", format!("  \n{}", format_code_block(loop_statement))));
+            let loop_block = format_code_block(loop_statement);
+            items.push(("Loop", format!("  \n{loop_block}")));
         }
 
         generate_key_value_display(markdown, &items);
@@ -717,11 +719,13 @@ fn generate_modules_section(
         }
 
         if let Some(condition) = &module.condition {
-            items.push(("Condition", format!("  \n{}", format_code_block(condition))));
+            let condition_block = format_code_block(condition);
+            items.push(("Condition", format!("  \n{condition_block}")));
         }
 
         if let Some(loop_statement) = &module.loop_statement {
-            items.push(("Loop", format!("  \n{}", format_code_block(loop_statement))));
+            let loop_block = format_code_block(loop_statement);
+            items.push(("Loop", format!("  \n{loop_block}")));
         }
 
         generate_key_value_display(markdown, &items);
