@@ -206,14 +206,15 @@ fn generate_types_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Types\n\n");
-
     if document.types.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No custom types defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.types")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_types_defined")));
         }
         return;
     }
+
+    markdown.push_str(&format!("## {}\n\n", t!("export.types")));
 
     for (name, custom_type) in &document.types {
         markdown.push_str(&format!("### `{name}`\n\n").to_string());
@@ -330,14 +331,15 @@ fn generate_functions_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Functions\n\n");
-
     if document.functions.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No functions defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.functions")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_functions_defined")));
         }
         return;
     }
+
+    markdown.push_str(&format!("## {}\n\n", t!("export.functions")));
 
     for (name, function) in &document.functions {
         markdown.push_str(&format!("### `{name}`\n\n").to_string());
@@ -381,14 +383,15 @@ fn generate_parameters_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Parameters\n\n");
-
     if document.parameters.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No parameters defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.parameters")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_parameters_defined")));
         }
         return;
     }
+
+    markdown.push_str(&format!("## {}\n\n", t!("export.parameters")));
 
     for (name, parameter) in &document.parameters {
         markdown.push_str(&format!("### `{name}`\n\n").to_string());
@@ -576,14 +579,15 @@ fn generate_variables_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Variables\n\n");
-
     if document.variables.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No variables defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.variables")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_variables_defined")));
         }
         return;
     }
+
+    markdown.push_str(&format!("## {}\n\n", t!("export.variables")));
 
     for (name, variable) in &document.variables {
         markdown.push_str(&format!("### `{name}`\n\n").to_string());
@@ -611,14 +615,15 @@ fn generate_resources_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Resources\n\n");
-
     if document.resources.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No resources defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.resources")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_resources_defined")));
         }
         return;
     }
+
+    markdown.push_str(&format!("## {}\n\n", t!("export.resources")));
 
     for (name, resource) in &document.resources {
         markdown.push_str(&format!("### `{name}`\n\n").to_string());
@@ -685,14 +690,15 @@ fn generate_modules_section(
     _use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Modules\n\n");
-
     if document.modules.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No modules defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.modules")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_modules_defined")));
         }
         return;
     }
+
+    markdown.push_str(&format!("## {}\n\n", t!("export.modules")));
 
     for (name, module) in &document.modules {
         markdown.push_str(&format!("### {name}\n\n").to_string());
@@ -741,14 +747,15 @@ fn generate_outputs_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Outputs\n\n");
-
     if document.outputs.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No outputs defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.outputs")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_outputs_defined")));
         }
         return;
     }
+
+    markdown.push_str(&format!("## {}\n\n", t!("export.outputs")));
 
     for (name, output) in &document.outputs {
         markdown.push_str(&format!("### `{name}`\n\n").to_string());
@@ -861,6 +868,9 @@ mod tests {
 
     #[test]
     fn test_export_to_string_basic() {
+        // Initialize localization for testing
+        crate::localization::init_localization(crate::localization::Language::English);
+
         let document = BicepDocument {
             name: Some("Test Template".to_string()),
             description: Some("A test template for unit testing".to_string()),
@@ -877,14 +887,17 @@ mod tests {
         assert!(markdown.contains("resourceGroup"));
 
         // When exclude_empty is false, empty sections should be present
-        assert!(markdown.contains("## Parameters"));
-        assert!(markdown.contains("*No parameters defined*"));
-        assert!(markdown.contains("## Resources"));
-        assert!(markdown.contains("*No resources defined*"));
+        assert!(markdown.contains(&format!("## {}", crate::t!("export.parameters"))));
+        assert!(markdown.contains(&crate::t!("export.no_parameters_defined").to_string()));
+        assert!(markdown.contains(&format!("## {}", crate::t!("export.resources"))));
+        assert!(markdown.contains(&crate::t!("export.no_resources_defined").to_string()));
     }
 
     #[test]
     fn test_export_to_string_with_parameters() {
+        // Initialize localization for testing
+        crate::localization::init_localization(crate::localization::Language::English);
+
         let parameter = BicepParameter {
             parameter_type: BicepType::String,
             description: Some("Test parameter".to_string()),
@@ -904,7 +917,7 @@ mod tests {
         assert!(result.is_ok());
 
         let markdown = result.unwrap();
-        assert!(markdown.contains("## Parameters"));
+        assert!(markdown.contains(&format!("## {}", crate::t!("export.parameters"))));
         assert!(markdown.contains("### `testParam`"));
         assert!(markdown.contains("Test parameter"));
         assert!(markdown.contains("default"));
@@ -912,6 +925,9 @@ mod tests {
 
     #[test]
     fn test_export_to_string_with_exclude_empty() {
+        // Initialize localization for testing
+        crate::localization::init_localization(crate::localization::Language::English);
+
         // Create a document with some empty collections and one non-empty collection
         let mut document = BicepDocument {
             name: Some("Test Template".to_string()),
@@ -934,18 +950,18 @@ mod tests {
 
         // Should contain the document name and the parameter section
         assert!(result.contains("# Test Template"));
-        assert!(result.contains("## Parameters"));
+        assert!(result.contains(&format!("## {}", crate::t!("export.parameters"))));
         assert!(result.contains("### `testParam`"));
 
         // Should NOT contain empty sections
-        assert!(!result.contains("## Resources"));
-        assert!(!result.contains("*No resources defined*"));
-        assert!(!result.contains("## Variables"));
-        assert!(!result.contains("*No variables defined*"));
-        assert!(!result.contains("## Modules"));
-        assert!(!result.contains("*No modules defined*"));
-        assert!(!result.contains("## Outputs"));
-        assert!(!result.contains("*No outputs defined*"));
+        assert!(!result.contains(&format!("## {}", crate::t!("export.resources"))));
+        assert!(!result.contains(&crate::t!("export.no_resources_defined").to_string()));
+        assert!(!result.contains(&format!("## {}", crate::t!("export.variables"))));
+        assert!(!result.contains(&crate::t!("export.no_variables_defined").to_string()));
+        assert!(!result.contains(&format!("## {}", crate::t!("export.modules"))));
+        assert!(!result.contains(&crate::t!("export.no_modules_defined").to_string()));
+        assert!(!result.contains(&format!("## {}", crate::t!("export.outputs"))));
+        assert!(!result.contains(&crate::t!("export.no_outputs_defined").to_string()));
     }
 
     #[test]

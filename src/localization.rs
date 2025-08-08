@@ -6,9 +6,10 @@ use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 
 /// Supported languages in the application
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ValueEnum)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ValueEnum, Default)]
 pub enum Language {
     #[serde(rename = "en")]
+    #[default]
     English,
     #[serde(rename = "es")]
     Spanish,
@@ -70,12 +71,6 @@ impl Language {
             Language::Japanese,
             Language::Chinese,
         ]
-    }
-}
-
-impl Default for Language {
-    fn default() -> Self {
-        Language::English
     }
 }
 

@@ -494,18 +494,17 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let language = if let Some(lang_str) = cli.language {
         match Language::from_code(&lang_str) {
             Some(lang) => {
-                debug!("Successfully parsed language: {} -> {:?}", lang_str, lang);
+                debug!("Successfully parsed language: {lang_str} -> {lang:?}");
                 lang
             },
             None => {
                 // Check if it's a valid locale format but not supported
                 if is_valid_locale_format(&lang_str) {
-                    error!("Locale '{}' is not yet supported. Supported locales: en, es, fr, de, ja, zh", lang_str);
+                    error!("Locale '{lang_str}' is not yet supported. Supported locales: en, es, fr, de, ja, zh");
                     process::exit(1);
                 } else {
                     error!(
-                        "Invalid locale format '{}'. Expected format: 'en', 'es-es', 'fr-ca', etc.",
-                        lang_str
+                        "Invalid locale format '{lang_str}'. Expected format: 'en', 'es-es', 'fr-ca', etc."
                     );
                     process::exit(1);
                 }
@@ -517,7 +516,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         system_locale
     };
 
-    debug!("Using language: {}", language);
+    debug!("Using language: {language}");
 
     // Initialize localization
     init_localization(language);
