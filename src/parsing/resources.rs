@@ -320,7 +320,7 @@ pub fn parse_resource_declaration(
                             },
                             _ => {
                                 // For other types, try to convert to string
-                                depends_on = Some(vec![format!("{}", dep_val)]);
+                                depends_on = Some(vec![format!("{dep_val}")]);
                             },
                         }
                     }
@@ -671,7 +671,7 @@ pub fn parse_resource_declaration(
         match (loop_iterator, loop_array) {
             (Some(iterator), Some(array)) => Some(format!("for {iterator} in {array}")),
             (Some(iterator), None) => Some(format!("for {iterator}")),
-            (None, Some(array)) => Some(format!("for _ in {array}")),
+            (None, Some(array)) => Some(format!("for item in {array}")),
             (None, None) => None,
         }
     } else {

@@ -158,7 +158,8 @@ fn check_file_diff(generated_content: &str, output_path: &Path) -> Result<(), Bo
                 && existing_lines[i] == generated_lines[j]
             {
                 // Lines match
-                context_lines.push(format!(" {}", existing_lines[i]));
+                let line_text = existing_lines[i];
+                context_lines.push(format!(" {line_text}"));
                 i += 1;
                 j += 1;
 
@@ -176,11 +177,13 @@ fn check_file_diff(generated_content: &str, output_path: &Path) -> Result<(), Bo
             } else {
                 // Lines differ
                 if i < existing_lines.len() {
-                    changes.push(format!("-{}", existing_lines[i]));
+                    let removed_line = existing_lines[i];
+                    changes.push(format!("-{removed_line}"));
                     i += 1;
                 }
                 if j < generated_lines.len() {
-                    changes.push(format!("+{}", generated_lines[j]));
+                    let added_line = generated_lines[j];
+                    changes.push(format!("+{added_line}"));
                     j += 1;
                 }
             }
