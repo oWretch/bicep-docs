@@ -185,7 +185,7 @@ pub fn export_bicep_document_to_markdown_string_localized(
     use_emoji: bool,
     exclude_empty: bool,
 ) -> Result<String, Box<dyn Error>> {
-    exports::markdown::export_to_string_localized(document, use_emoji, exclude_empty)
+    exports::markdown::export_to_string(document, use_emoji, exclude_empty)
 }
 
 /// Export a parsed Bicep document as AsciiDoc to a file

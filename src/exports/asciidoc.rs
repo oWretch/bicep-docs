@@ -7,7 +7,7 @@ use std::{fs, path::Path};
 
 use crate::{
     exports::utils::{
-        common::{format_yes_no_legacy as format_yes_no, generate_metadata_display_asciidoc},
+        common::{format_yes_no, generate_metadata_display_asciidoc},
         formatting::{escape_asciidoc, format_bicep_array_as_list},
     },
     parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType},

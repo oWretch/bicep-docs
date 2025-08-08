@@ -48,9 +48,9 @@ struct Cli {
     #[arg(long)]
     log_file: Option<PathBuf>,
 
-    /// Set the language for CLI messages and generated documentation
-    #[arg(long, value_enum)]
-    language: Option<Language>,
+    /// Set the language for CLI messages and generated documentation (use locale codes like 'en', 'es', 'fr', 'de', 'ja', 'zh')
+    #[arg(long)]
+    language: Option<String>,
 
     #[command(subcommand)]
     command: Commands,
@@ -385,7 +385,7 @@ fn handle_markdown_export(common: CommonExportOptions) -> Result<(), Box<dyn Err
         },
         |doc, emoji, exclude_empty| {
             // Use the localized version for string export
-            bicep_docs::exports::markdown::export_to_string_localized(doc, emoji, exclude_empty)
+            bicep_docs::exports::markdown::export_to_string(doc, emoji, exclude_empty)
         },
     )
 }
@@ -488,11 +488,31 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     debug!("Parsed command line arguments");
 
     // Determine the language to use
-    let language = cli.language.unwrap_or_else(|| {
+    let language = if let Some(lang_str) = cli.language {
+        match Language::from_code(&lang_str) {
+            Some(lang) => {
+                debug!("Successfully parsed language: {} -> {:?}", lang_str, lang);
+                lang
+            },
+            None => {
+                // Check if it's a valid locale format but not supported
+                if is_valid_locale_format(&lang_str) {
+                    error!("Locale '{}' is not yet supported. Supported locales: en, es, fr, de, ja, zh", lang_str);
+                    process::exit(1);
+                } else {
+                    error!(
+                        "Invalid locale format '{}'. Expected format: 'en', 'es-es', 'fr-ca', etc.",
+                        lang_str
+                    );
+                    process::exit(1);
+                }
+            },
+        }
+    } else {
         let system_locale = detect_system_locale();
         debug!("Detected system locale: {:?}", system_locale);
         system_locale
-    });
+    };
 
     debug!("Using language: {}", language);
 
@@ -586,5 +606,25 @@ mod tests {
         } else {
             panic!("Expected Markdown command");
         }
+    }
+}
+
+/// Check if a string has a valid locale format
+/// Accepts formats like: en, en-US, fr-CA, etc.
+fn is_valid_locale_format(s: &str) -> bool {
+    let parts: Vec<&str> = s.split('-').collect();
+    match parts.len() {
+        1 => {
+            // Simple language code like "en", "fr"
+            parts[0].len() == 2 && parts[0].chars().all(|c| c.is_ascii_lowercase())
+        },
+        2 => {
+            // Language-region like "en-US", "fr-CA"
+            parts[0].len() == 2
+                && parts[0].chars().all(|c| c.is_ascii_lowercase())
+                && parts[1].len() == 2
+                && parts[1].chars().all(|c| c.is_ascii_uppercase())
+        },
+        _ => false,
     }
 }

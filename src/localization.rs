@@ -35,15 +35,15 @@ impl Language {
         }
     }
 
-    /// Get the language name in English
+    /// Get the language name in its native form
     pub fn name(&self) -> &'static str {
         match self {
             Language::English => "English",
-            Language::Spanish => "Spanish",
-            Language::French => "French",
-            Language::German => "German",
-            Language::Japanese => "Japanese",
-            Language::Chinese => "Chinese",
+            Language::Spanish => "Español",
+            Language::French => "Français",
+            Language::German => "Deutsch",
+            Language::Japanese => "日本語",
+            Language::Chinese => "中文",
         }
     }
 

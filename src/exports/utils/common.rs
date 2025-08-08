@@ -30,17 +30,6 @@ pub fn format_yes_no(value: bool, use_emoji: bool) -> String {
     }
 }
 
-/// Legacy wrapper for format_yes_no for backwards compatibility
-/// This will be removed once all callers are updated
-pub fn format_yes_no_legacy(value: bool, use_emoji: bool) -> String {
-    match (value, use_emoji) {
-        (true, true) => "✅ Yes".to_string(),
-        (true, false) => "Yes".to_string(),
-        (false, true) => "❌ No".to_string(),
-        (false, false) => "No".to_string(),
-    }
-}
-
 /// Generate metadata display for Markdown format
 ///
 /// # Arguments
@@ -114,14 +103,6 @@ mod tests {
         init_localization(Language::Spanish);
         assert_eq!(format_yes_no(true, false), "Sí");
         assert_eq!(format_yes_no(false, false), "No");
-    }
-
-    #[test]
-    fn test_format_yes_no_legacy() {
-        assert_eq!(format_yes_no_legacy(true, true), "✅ Yes");
-        assert_eq!(format_yes_no_legacy(true, false), "Yes");
-        assert_eq!(format_yes_no_legacy(false, true), "❌ No");
-        assert_eq!(format_yes_no_legacy(false, false), "No");
     }
 
     #[test]

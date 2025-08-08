@@ -4,7 +4,7 @@ This document provides guidelines for contributors who want to add or improve tr
 
 ## Overview
 
-Bicep-docs supports internationalization (i18n) for both the CLI interface and generated documentation. The localization system uses JSON-based translation files and supports automatic fallback to English for missing translations.
+Bicep-docs supports internationalization (i18n) for both the CLI interface and generated documentation. The localization system uses YAML-based translation files and supports automatic fallback to English for missing translations.
 
 ## Supported Languages
 
@@ -18,44 +18,38 @@ Currently supported languages:
 
 ## Translation Files Structure
 
-Translation files are located in `src/locales/` and follow the JSON format with nested objects using dot notation keys:
+Translation files are located in `locales/` and follow the YAML format with nested objects using dot notation keys:
 
 ```
-src/locales/
-├── en.json    # English (reference)
-├── es.json    # Spanish
-├── fr.json    # French
-├── de.json    # German
-├── ja.json    # Japanese
-└── zh.json    # Chinese
+locales/
+├── en.yml    # English (reference)
+├── es.yml    # Spanish
+├── fr.yml    # French
+├── de.yml    # German
+├── ja.yml    # Japanese
+└── zh.yml    # Chinese
 ```
 
 ### Translation File Format
 
-Each translation file is a JSON object with nested sections:
+Each translation file is a YAML object with nested sections:
 
-```json
-{
-  "cli": {
-    "app_description": "Documentation generator for Azure Bicep files",
-    "verbose_help": "Set the verbosity level of output",
-    "language_help": "Set the language for CLI messages and generated documentation"
-  },
-  "export": {
-    "bicep_template": "Bicep Template",
-    "target_scope": "Target Scope",
-    "types": "Types",
-    "parameters": "Parameters"
-  },
-  "common": {
-    "yes": "Yes",
-    "no": "No"
-  },
-  "error": {
-    "file_not_found": "File not found",
-    "parse_error": "Parse error"
-  }
-}
+```yaml
+cli:
+  app_description: "Documentation generator for Azure Bicep files"
+  verbose_help: "Set the verbosity level of output"
+  language_help: "Set the language for CLI messages and generated documentation"
+export:
+  bicep_template: "Bicep Template"
+  target_scope: "Target Scope"
+  types: "Types"
+  parameters: "Parameters"
+common:
+  yes: "Yes"
+  no: "No"
+error:
+  file_not_found: "File not found"
+  parse_error: "Parse error"
 ```
 
 ### Translation Key Categories
@@ -120,14 +114,14 @@ To add support for a new language:
    }
    ```
 
-3. **Create the translation file** `src/locales/pt.json` using `en.json` as a template.
+3. **Create the translation file** `locales/pt.yml` using `en.yml` as a template.
 
 4. **Update the translation loader** in `src/localization/translations.rs`:
    ```rust
    fn load_language_translations(language: Language) -> Result<HashMap<String, String>, LocalizationError> {
        let json_content = match language {
            // ... existing cases ...
-           Language::Portuguese => include_str!("../locales/pt.json"),
+           Language::Portuguese => include_str!("../locales/pt.yml"),
        };
        // ...
    }
@@ -159,10 +153,8 @@ Some technical terms should generally remain in English or use established trans
 ### Format Strings
 
 Some translations may include format placeholders like `{0}`, `{1}`. Ensure these are preserved:
-```json
-{
-  "message_with_args": "File {0} exported to {1}"
-}
+```yaml
+message_with_args: "File {0} exported to {1}"
 ```
 
 ### Emojis and Symbols
@@ -186,22 +178,22 @@ cargo test localization_demo::demonstrate_translations -- --nocapture
 ### Manual Testing
 ```bash
 # Test CLI with different languages
-./target/debug/bicep-docs --language spanish --help
-./target/debug/bicep-docs --language french markdown --help
+./target/debug/bicep-docs --language es --help
+./target/debug/bicep-docs --language fr markdown --help
 
 # Test document generation
 echo 'param name string' > test.bicep
-./target/debug/bicep-docs --language german markdown test.bicep
+./target/debug/bicep-docs --language de markdown test.bicep
 ```
 
 ## Updating Existing Translations
 
 When updating translations:
 
-1. **Check for new keys** - Compare with `en.json` to ensure all keys are present
+1. **Check for new keys** - Compare with `en.yml` to ensure all keys are present
 2. **Verify consistency** - Ensure terminology is consistent across the file
 3. **Test the changes** - Run tests and manual verification
-4. **Review formatting** - Ensure JSON is properly formatted
+4. **Review formatting** - Ensure YAML is properly formatted
 
 ### Finding Missing Translations
 
@@ -218,7 +210,7 @@ When adding new translatable strings to the code:
 
 1. **Add the key** to `TranslationKey` enum in `src/localization/mod.rs`
 2. **Update the key() method** to return the appropriate dot-notation string
-3. **Add translations** to all language files, starting with `en.json`
+3. **Add translations** to all language files, starting with `en.yml`
 4. **Update the translator** calls in the code to use the new key
 
 ### Removing Obsolete Keys
@@ -247,7 +239,7 @@ When removing unused translation keys:
 ## Current Implementation Status
 
 ### Completed
-- ✅ Localization infrastructure with JSON-based translations
+- ✅ Localization infrastructure with YAML-based translations
 - ✅ CLI language flag (`--language`) with system locale detection
 - ✅ 6 language translations (en, es, fr, de, ja, zh)
 - ✅ Automatic fallback to English for missing translations
