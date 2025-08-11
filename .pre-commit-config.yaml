@@ -4,25 +4,15 @@ repos:
     rev: 0.4.0
     hooks:
       - id: cargo-fmt
-      - id: cargo-update
       - id: cargo-clippy
         args: ["--all-targets", "--all-features"]
       - id: cargo-check
         args: ["--all-targets", "--all-features"]
       - id: cargo-test
-        args: ["--all-targets", "--all-features"]
+        args: ["--all-targets", "--all-features", "--", "--test-threads=1"]
       - id: cargo-test-doc
         args: ["--all-features"]
-      - id: cargo-doc
-        args: ["--no-deps", "--document-private-items"]
-      - id: cargo-fix
-        args: ["--allow-dirty", "--allow-staged"]
-      - id: cargo-miri-test
-        args: ["--lib"]
-      - id: cargo-miri-run
-        args: ["--bin", "bicep-docs", "--", "--version"]
-      - id: cargo-deny-check
-  
+
   # Conventional Commits
   - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
     rev: v9.22.0

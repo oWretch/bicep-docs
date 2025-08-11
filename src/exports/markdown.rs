@@ -48,7 +48,7 @@ pub fn export_to_file<P: AsRef<Path>>(
 /// # Arguments
 ///
 /// * `document` - The BicepDocument to export
-/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values  
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
 /// * `exclude_empty` - Whether to exclude empty sections from the output
 ///
 /// # Returns
@@ -865,8 +865,10 @@ fn generate_function_arguments_display(markdown: &mut String, arguments: &[Bicep
 mod tests {
     use super::*;
     use crate::parsing::{BicepDocument, BicepParameter, BicepType, BicepValue};
+    use serial_test::serial;
 
     #[test]
+    #[serial]
     fn test_export_to_string_basic() {
         // Initialize localization for testing
         crate::localization::init_localization(crate::localization::Language::English);
@@ -894,6 +896,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_export_to_string_with_parameters() {
         // Initialize localization for testing
         crate::localization::init_localization(crate::localization::Language::English);
@@ -924,6 +927,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_export_to_string_with_exclude_empty() {
         // Initialize localization for testing
         crate::localization::init_localization(crate::localization::Language::English);

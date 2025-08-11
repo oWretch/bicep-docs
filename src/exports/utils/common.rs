@@ -91,6 +91,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[serial_test::serial]
     fn test_format_yes_no() {
         use crate::localization::{init_localization, Language};
 

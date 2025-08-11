@@ -46,6 +46,9 @@ doctest = false
 bench = false
 doc = false
 
+[dev-dependencies]
+serial_test = "3.0"
+
 [profile.release]
 codegen-units = 1
 lto = "fat"

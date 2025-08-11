@@ -68,6 +68,9 @@ jobs:
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
+      - name: Run cargo deny check
+        run: cargo deny check
+
       - name: Run tests
         run: cargo test --all-features
 

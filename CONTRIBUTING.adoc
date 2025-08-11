@@ -39,6 +39,33 @@ This project uses https://pre-commit.com/[pre-commit] to automatically enforce c
 
 For detailed information about the pre-commit configuration, including installation instructions, available hooks, and troubleshooting, see the link:docs/PRE_COMMIT.adoc[Pre-Commit Configuration Guide].
 
+== Locale-Dependent Tests
+
+Some tests (such as those that verify localized output or translations) depend on setting the application's locale. The Bicep-Docs application uses a global locale setting, which matches real-world usage, but this can cause issues when running tests in parallel.
+
+[IMPORTANT]
+====
+If you add or modify tests that set the locale (e.g., using `init_localization`), you **must** ensure they are run serially to avoid test interference.
+
+- Use the `serial_test` crate and annotate such tests with `#[serial]`.
+- Only locale-dependent tests need this annotation.
+- This prevents nondeterministic failures due to global locale state.
+
+Example:
+
+[source,rust]
+----
+#[test]
+#[serial]
+fn test_localized_output() {
+    crate::localization::init_localization(crate::localization::Language::English);
+    // ... test code ...
+}
+----
+
+If you see test failures where output is in the wrong language, check for missing `#[serial]` annotations on locale-dependent tests.
+====
+
 == Commit Message Linting
 
 This project uses https://commitlint.js.org/[commitlint] to enforce the https://www.conventionalcommits.org/[Conventional Commits] specification for commit messages.

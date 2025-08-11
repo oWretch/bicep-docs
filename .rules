@@ -298,6 +298,25 @@ pub fn export_to_string(document: &BicepDocument, exclude_empty: bool) -> Result
    - Use property-based testing for complex parsing logic
    - Verify round-trip serialization/deserialization
 
+4. **Locale-Dependent Tests**
+
+   - Any test that sets the application's locale (e.g., using `init_localization`) **must** be run serially to avoid interference from global locale state.
+   - Use the `serial_test` crate and annotate such tests with `#[serial]`.
+   - Only locale-dependent tests need this annotation.
+   - This prevents nondeterministic failures due to global locale state.
+   - If you see test failures where output is in the wrong language, check for missing `#[serial]` annotations on locale-dependent tests.
+
+   Example:
+
+   ```rust
+   #[test]
+   #[serial]
+   fn test_localized_output() {
+       crate::localization::init_localization(crate::localization::Language::English);
+       // ... test code ...
+   }
+   ```
+
 ## Code Review Guidelines
 
 1. **Before Submitting**
