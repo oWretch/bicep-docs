@@ -548,6 +548,26 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     result
 }
 
+/// Check if a string has a valid locale format
+/// Accepts formats like: en, en-US, fr-CA, etc.
+fn is_valid_locale_format(s: &str) -> bool {
+    let parts: Vec<&str> = s.split('-').collect();
+    match parts.len() {
+        1 => {
+            // Simple language code like "en", "fr"
+            parts[0].len() == 2 && parts[0].chars().all(|c| c.is_ascii_lowercase())
+        },
+        2 => {
+            // Language-region like "en-US", "fr-CA"
+            parts[0].len() == 2
+                && parts[0].chars().all(|c| c.is_ascii_lowercase())
+                && parts[1].len() == 2
+                && parts[1].chars().all(|c| c.is_ascii_uppercase())
+        },
+        _ => false,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use clap::Parser;
@@ -608,25 +628,5 @@ mod tests {
         } else {
             panic!("Expected Markdown command");
         }
-    }
-}
-
-/// Check if a string has a valid locale format
-/// Accepts formats like: en, en-US, fr-CA, etc.
-fn is_valid_locale_format(s: &str) -> bool {
-    let parts: Vec<&str> = s.split('-').collect();
-    match parts.len() {
-        1 => {
-            // Simple language code like "en", "fr"
-            parts[0].len() == 2 && parts[0].chars().all(|c| c.is_ascii_lowercase())
-        },
-        2 => {
-            // Language-region like "en-US", "fr-CA"
-            parts[0].len() == 2
-                && parts[0].chars().all(|c| c.is_ascii_lowercase())
-                && parts[1].len() == 2
-                && parts[1].chars().all(|c| c.is_ascii_uppercase())
-        },
-        _ => false,
     }
 }
