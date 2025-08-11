@@ -2,9 +2,8 @@
 ///
 /// This module contains utility functions that are used by multiple
 /// export formats to avoid code duplication and ensure consistency.
+use crate::{parsing::BicepValue, t};
 use indexmap::IndexMap;
-
-use crate::parsing::BicepValue;
 
 /// Helper function to format Yes/No values with or without emoji
 ///
@@ -17,11 +16,17 @@ use crate::parsing::BicepValue;
 ///
 /// Formatted string with either emoji or plain text
 pub fn format_yes_no(value: bool, use_emoji: bool) -> String {
-    match (value, use_emoji) {
-        (true, true) => "✅ Yes".to_string(),
-        (true, false) => "Yes".to_string(),
-        (false, true) => "❌ No".to_string(),
-        (false, false) => "No".to_string(),
+    let text = if value {
+        t!("common.yes").to_string()
+    } else {
+        t!("common.no").to_string()
+    };
+
+    if use_emoji {
+        let emoji = if value { "✅" } else { "❌" };
+        format!("{emoji} {text}")
+    } else {
+        text
     }
 }
 
@@ -86,10 +91,18 @@ mod tests {
     use super::*;
 
     #[test]
+    #[serial_test::serial]
     fn test_format_yes_no() {
+        use crate::localization::{init_localization, Language};
+
+        init_localization(Language::English);
         assert_eq!(format_yes_no(true, true), "✅ Yes");
         assert_eq!(format_yes_no(true, false), "Yes");
         assert_eq!(format_yes_no(false, true), "❌ No");
+        assert_eq!(format_yes_no(false, false), "No");
+
+        init_localization(Language::Spanish);
+        assert_eq!(format_yes_no(true, false), "Sí");
         assert_eq!(format_yes_no(false, false), "No");
     }
 

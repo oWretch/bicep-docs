@@ -30,6 +30,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "time"
 tree-sitter = "0.25"
 # tree-sitter-bicep = { git = "https://github.com/tree-sitter-grammars/tree-sitter-bicep.git", tag = "v1.1.0" }
 tree-sitter-bicep = { git = "https://github.com/oWretch/tree-sitter-bicep.git", branch = "f/extension" }
+# Localization dependencies
+rust-i18n = "3"
+sys-locale = "0.3"
 
 [[bin]]
 name = "bicep-docs"
@@ -42,6 +45,9 @@ test = false
 doctest = false
 bench = false
 doc = false
+
+[dev-dependencies]
+serial_test = "3.0"
 
 [profile.release]
 codegen-units = 1

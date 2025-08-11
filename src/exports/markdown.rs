@@ -13,6 +13,7 @@ use crate::{
         },
     },
     parsing::{BicepDocument, BicepFunctionArgument, BicepImport, BicepType},
+    t,
 };
 
 /// Export a Bicep document to a Markdown file
@@ -42,7 +43,7 @@ pub fn export_to_file<P: AsRef<Path>>(
     Ok(())
 }
 
-/// Export a Bicep document to a Markdown string
+/// Export a Bicep document to a Markdown string with localization support
 ///
 /// # Arguments
 ///
@@ -68,7 +69,7 @@ pub fn export_to_string(
     if let Some(name) = &document.name {
         markdown.push_str(&format!("# {name}\n\n"));
     } else {
-        markdown.push_str("# Bicep Template\n\n");
+        markdown.push_str(&format!("# {}\n\n", t!("export.bicep_template")));
     }
 
     // Description
@@ -77,131 +78,27 @@ pub fn export_to_string(
     }
 
     if let Some(target_scope) = &document.target_scope {
-        markdown.push_str(&format!("**Target Scope:** `{target_scope}`\n\n"));
+        markdown.push_str(&format!(
+            "**{}:** `{target_scope}`\n\n",
+            t!("export.target_scope")
+        ));
     }
 
     // Additional metadata
     if !document.metadata.is_empty() {
-        markdown.push_str("## Additional Metadata\n\n");
-
+        markdown.push_str(&format!("## {}\n\n", t!("export.additional_metadata")));
         generate_metadata_display_markdown(&mut markdown, &document.metadata);
     }
 
-    // Imports section
-    if !document.imports.is_empty() || !exclude_empty {
-        markdown.push_str("## Imports\n\n");
-        if !document.imports.is_empty() {
-            // Separate namespace and module imports
-            let namespace_imports: Vec<_> = document
-                .imports
-                .iter()
-                .filter(|imp| matches!(imp, BicepImport::Namespace { .. }))
-                .collect();
-            let module_imports: Vec<_> = document
-                .imports
-                .iter()
-                .filter(|imp| matches!(imp, BicepImport::Module { .. }))
-                .collect();
-
-            if !namespace_imports.is_empty() {
-                markdown.push_str("### Namespace Imports\n\n");
-                markdown.push_str("| Namespace | Version |\n");
-                markdown.push_str("|-----------|----------|\n");
-
-                for import in namespace_imports {
-                    if let BicepImport::Namespace { namespace, version } = import {
-                        let version_str = version.as_deref().unwrap_or("N/A");
-                        markdown.push_str(&format!(
-                            "| {} | {} |\n",
-                            escape_markdown(namespace),
-                            escape_markdown(version_str)
-                        ));
-                    }
-                }
-                markdown.push('\n');
-            }
-
-            if !module_imports.is_empty() {
-                markdown.push_str("### Module Imports\n\n");
-                markdown.push_str("| Source | Symbols |\n");
-                markdown.push_str("|--------|---------|\n");
-
-                for import in module_imports {
-                    if let BicepImport::Module {
-                        source,
-                        symbols,
-                        wildcard_alias,
-                    } = import
-                    {
-                        let symbols_str = if let Some(symbols) = symbols {
-                            symbols
-                                .iter()
-                                .map(|sym| {
-                                    if let Some(alias) = &sym.alias {
-                                        format!("`{}` as `{}`", sym.name, alias)
-                                    } else {
-                                        format!("`{}`", sym.name)
-                                    }
-                                })
-                                .collect::<Vec<_>>()
-                                .join(", ")
-                        } else {
-                            String::new()
-                        };
-                        let wildcard_str = if let Some(alias) = wildcard_alias {
-                            format!("`*` as `{alias}`")
-                        } else {
-                            String::new()
-                        };
-                        markdown.push_str(&format!(
-                            "| {} | {}{} | \n",
-                            escape_markdown(&source.to_string()),
-                            escape_markdown(&symbols_str),
-                            escape_markdown(&wildcard_str)
-                        ));
-                    }
-                }
-                markdown.push('\n');
-            }
-        } else if !exclude_empty {
-            markdown.push_str("No imports defined.\n\n");
-        }
-    }
-
-    // Types section
-    if !document.types.is_empty() || !exclude_empty {
-        generate_types_section(&mut markdown, document, use_emoji, exclude_empty);
-    }
-
-    // Functions section
-    if !document.functions.is_empty() || !exclude_empty {
-        generate_functions_section(&mut markdown, document, use_emoji, exclude_empty);
-    }
-
-    // Parameters section
-    if !document.parameters.is_empty() || !exclude_empty {
-        generate_parameters_section(&mut markdown, document, use_emoji, exclude_empty);
-    }
-
-    // Variables section
-    if !document.variables.is_empty() || !exclude_empty {
-        generate_variables_section(&mut markdown, document, use_emoji, exclude_empty);
-    }
-
-    // Resources section
-    if !document.resources.is_empty() || !exclude_empty {
-        generate_resources_section(&mut markdown, document, use_emoji, exclude_empty);
-    }
-
-    // Modules section
-    if !document.modules.is_empty() || !exclude_empty {
-        generate_modules_section(&mut markdown, document, use_emoji, exclude_empty);
-    }
-
-    // Outputs section
-    if !document.outputs.is_empty() || !exclude_empty {
-        generate_outputs_section(&mut markdown, document, use_emoji, exclude_empty);
-    }
+    // Generate sections using existing helper functions
+    generate_imports_section(&mut markdown, document, exclude_empty);
+    generate_types_section(&mut markdown, document, use_emoji, exclude_empty);
+    generate_parameters_section(&mut markdown, document, use_emoji, exclude_empty);
+    generate_variables_section(&mut markdown, document, use_emoji, exclude_empty);
+    generate_functions_section(&mut markdown, document, use_emoji, exclude_empty);
+    generate_resources_section(&mut markdown, document, use_emoji, exclude_empty);
+    generate_modules_section(&mut markdown, document, use_emoji, exclude_empty);
+    generate_outputs_section(&mut markdown, document, use_emoji, exclude_empty);
 
     Ok(markdown)
 }
@@ -240,6 +137,68 @@ pub fn test_parse_and_export<P: AsRef<Path>, Q: AsRef<Path>>(
     parse_and_export(file_path, output_path, exclude_empty)
 }
 
+/// Generate the imports section of the Markdown
+fn generate_imports_section(markdown: &mut String, document: &BicepDocument, exclude_empty: bool) {
+    if !document.imports.is_empty() || !exclude_empty {
+        markdown.push_str(&format!("## {}\n\n", t!("export.imports")));
+
+        if document.imports.is_empty() {
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_imports_defined")));
+        } else {
+            // Separate namespace and module imports
+            let namespace_imports: Vec<_> = document
+                .imports
+                .iter()
+                .filter(|imp| matches!(imp, BicepImport::Namespace { .. }))
+                .collect();
+            let module_imports: Vec<_> = document
+                .imports
+                .iter()
+                .filter(|imp| matches!(imp, BicepImport::Module { .. }))
+                .collect();
+
+            if !namespace_imports.is_empty() {
+                markdown.push_str(&format!("### {}\n\n", t!("export.namespace_imports")));
+                markdown.push_str(&format!(
+                    "| {} | {} |\n",
+                    t!("export.namespace_header"),
+                    t!("export.version_header")
+                ));
+                markdown.push_str("|-----------|----------|\n");
+
+                for import in namespace_imports {
+                    if let BicepImport::Namespace { namespace, version } = import {
+                        let version_str = version.as_deref().unwrap_or("Latest");
+                        markdown.push_str(&format!(
+                            "| {} | {} |\n",
+                            escape_markdown(namespace),
+                            escape_markdown(version_str)
+                        ));
+                    }
+                }
+                markdown.push('\n');
+            }
+
+            if !module_imports.is_empty() {
+                markdown.push_str(&format!("### {}\n\n", t!("export.module_imports")));
+                markdown.push_str(&format!("| Import | {} |\n", t!("export.source_header")));
+                markdown.push_str("|--------|--------|\n");
+
+                for import in module_imports {
+                    if let BicepImport::Module { source, .. } = import {
+                        markdown.push_str(&format!(
+                            "| {} | {} |\n",
+                            escape_markdown(&format!("{:?}", import)), // This will show the import details
+                            escape_markdown(&source.to_string())
+                        ));
+                    }
+                }
+                markdown.push('\n');
+            }
+        }
+    }
+}
+
 /// Generate the Types section of the markdown
 fn generate_types_section(
     markdown: &mut String,
@@ -247,17 +206,18 @@ fn generate_types_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Types\n\n");
-
     if document.types.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No custom types defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.types")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_types_defined")));
         }
         return;
     }
 
+    markdown.push_str(&format!("## {}\n\n", t!("export.types")));
+
     for (name, custom_type) in &document.types {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &custom_type.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -279,7 +239,7 @@ fn generate_types_section(
                 markdown.push_str("\n**Object Definition**\n\n");
 
                 for (prop_name, prop_param) in properties {
-                    markdown.push_str(&format!("#### `{prop_name}`\n\n"));
+                    markdown.push_str(&format!("#### `{prop_name}`\n\n").to_string());
 
                     if let Some(description) = &prop_param.description {
                         markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -371,17 +331,18 @@ fn generate_functions_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Functions\n\n");
-
     if document.functions.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No functions defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.functions")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_functions_defined")));
         }
         return;
     }
 
+    markdown.push_str(&format!("## {}\n\n", t!("export.functions")));
+
     for (name, function) in &document.functions {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &function.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -422,17 +383,18 @@ fn generate_parameters_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Parameters\n\n");
-
     if document.parameters.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No parameters defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.parameters")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_parameters_defined")));
         }
         return;
     }
 
+    markdown.push_str(&format!("## {}\n\n", t!("export.parameters")));
+
     for (name, parameter) in &document.parameters {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &parameter.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -533,7 +495,7 @@ fn generate_nested_object_properties(
     let header_prefix = "#".repeat(header_level);
 
     for (prop_name, prop_param) in properties {
-        markdown.push_str(&format!("{header_prefix} `{prop_name}`\n\n"));
+        markdown.push_str(&format!("{header_prefix} `{prop_name}`\n\n").to_string());
 
         if let Some(description) = &prop_param.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -617,17 +579,18 @@ fn generate_variables_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Variables\n\n");
-
     if document.variables.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No variables defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.variables")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_variables_defined")));
         }
         return;
     }
 
+    markdown.push_str(&format!("## {}\n\n", t!("export.variables")));
+
     for (name, variable) in &document.variables {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &variable.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -652,17 +615,18 @@ fn generate_resources_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Resources\n\n");
-
     if document.resources.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No resources defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.resources")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_resources_defined")));
         }
         return;
     }
 
+    markdown.push_str(&format!("## {}\n\n", t!("export.resources")));
+
     for (name, resource) in &document.resources {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &resource.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -677,7 +641,7 @@ fn generate_resources_section(
 
         if let Some(scope) = &resource.scope {
             let scope_str = scope.to_string();
-            items.push(("Scope", format!("`{scope_str}`")));
+            items.push(("Scope", format!("`{scope_str}`").to_string()));
         }
 
         if resource.existing {
@@ -692,7 +656,7 @@ fn generate_resources_section(
             if !depends_on.is_empty() {
                 let deps = depends_on
                     .iter()
-                    .map(|v| format!("`{v}`"))
+                    .map(|v| format!("`{v}`").to_string())
                     .collect::<Vec<_>>()
                     .join("  \n");
                 items.push(("Depends On", deps));
@@ -700,7 +664,7 @@ fn generate_resources_section(
         }
 
         if let Some(batch_size) = resource.batch_size {
-            items.push(("Batch Size", format!("`{batch_size}`")));
+            items.push(("Batch Size", format!("`{batch_size}`").to_string()));
         }
 
         if let Some(condition) = &resource.condition {
@@ -726,17 +690,18 @@ fn generate_modules_section(
     _use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Modules\n\n");
-
     if document.modules.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No modules defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.modules")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_modules_defined")));
         }
         return;
     }
 
+    markdown.push_str(&format!("## {}\n\n", t!("export.modules")));
+
     for (name, module) in &document.modules {
-        markdown.push_str(&format!("### {name}\n\n"));
+        markdown.push_str(&format!("### {name}\n\n").to_string());
 
         if let Some(description) = &module.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -756,7 +721,7 @@ fn generate_modules_section(
         }
 
         if let Some(batch_size) = module.batch_size {
-            items.push(("Batch Size", format!("`{batch_size}`")));
+            items.push(("Batch Size", format!("`{batch_size}`").to_string()));
         }
 
         if let Some(condition) = &module.condition {
@@ -782,17 +747,18 @@ fn generate_outputs_section(
     use_emoji: bool,
     exclude_empty: bool,
 ) {
-    markdown.push_str("## Outputs\n\n");
-
     if document.outputs.is_empty() {
         if !exclude_empty {
-            markdown.push_str("*No outputs defined*\n\n");
+            markdown.push_str(&format!("## {}\n\n", t!("export.outputs")));
+            markdown.push_str(&format!("*{}*\n\n", t!("export.no_outputs_defined")));
         }
         return;
     }
 
+    markdown.push_str(&format!("## {}\n\n", t!("export.outputs")));
+
     for (name, output) in &document.outputs {
-        markdown.push_str(&format!("### `{name}`\n\n"));
+        markdown.push_str(&format!("### `{name}`\n\n").to_string());
 
         if let Some(description) = &output.description {
             markdown.push_str(&format!("{}\n\n", escape_markdown(description)));
@@ -862,18 +828,18 @@ fn generate_outputs_section(
 
 /// Format a constraint value with backticks for display in markdown
 fn format_constraint_value(value: &str) -> String {
-    format!("`{value}`")
+    format!("`{value}`").to_string()
 }
 
 /// Format a value as acode block for display in Markdown
 fn format_code_block(value: &str) -> String {
-    format!("```bicep\n{value}\n```\n")
+    format!("```bicep\n{value}\n```\n").to_string()
 }
 
 /// Generate key-value property display
 fn generate_key_value_display(markdown: &mut String, items: &[(&str, String)]) {
     for (key, value) in items {
-        markdown.push_str(&format!("**{key}:** {value}  \n"));
+        markdown.push_str(&format!("**{key}:** {value}  \n").to_string());
     }
 }
 
@@ -899,9 +865,14 @@ fn generate_function_arguments_display(markdown: &mut String, arguments: &[Bicep
 mod tests {
     use super::*;
     use crate::parsing::{BicepDocument, BicepParameter, BicepType, BicepValue};
+    use serial_test::serial;
 
     #[test]
+    #[serial]
     fn test_export_to_string_basic() {
+        // Initialize localization for testing
+        crate::localization::init_localization(crate::localization::Language::English);
+
         let document = BicepDocument {
             name: Some("Test Template".to_string()),
             description: Some("A test template for unit testing".to_string()),
@@ -918,14 +889,18 @@ mod tests {
         assert!(markdown.contains("resourceGroup"));
 
         // When exclude_empty is false, empty sections should be present
-        assert!(markdown.contains("## Parameters"));
-        assert!(markdown.contains("*No parameters defined*"));
-        assert!(markdown.contains("## Resources"));
-        assert!(markdown.contains("*No resources defined*"));
+        assert!(markdown.contains(&format!("## {}", crate::t!("export.parameters"))));
+        assert!(markdown.contains(&crate::t!("export.no_parameters_defined").to_string()));
+        assert!(markdown.contains(&format!("## {}", crate::t!("export.resources"))));
+        assert!(markdown.contains(&crate::t!("export.no_resources_defined").to_string()));
     }
 
     #[test]
+    #[serial]
     fn test_export_to_string_with_parameters() {
+        // Initialize localization for testing
+        crate::localization::init_localization(crate::localization::Language::English);
+
         let parameter = BicepParameter {
             parameter_type: BicepType::String,
             description: Some("Test parameter".to_string()),
@@ -945,14 +920,18 @@ mod tests {
         assert!(result.is_ok());
 
         let markdown = result.unwrap();
-        assert!(markdown.contains("## Parameters"));
+        assert!(markdown.contains(&format!("## {}", crate::t!("export.parameters"))));
         assert!(markdown.contains("### `testParam`"));
         assert!(markdown.contains("Test parameter"));
         assert!(markdown.contains("default"));
     }
 
     #[test]
+    #[serial]
     fn test_export_to_string_with_exclude_empty() {
+        // Initialize localization for testing
+        crate::localization::init_localization(crate::localization::Language::English);
+
         // Create a document with some empty collections and one non-empty collection
         let mut document = BicepDocument {
             name: Some("Test Template".to_string()),
@@ -975,18 +954,18 @@ mod tests {
 
         // Should contain the document name and the parameter section
         assert!(result.contains("# Test Template"));
-        assert!(result.contains("## Parameters"));
+        assert!(result.contains(&format!("## {}", crate::t!("export.parameters"))));
         assert!(result.contains("### `testParam`"));
 
         // Should NOT contain empty sections
-        assert!(!result.contains("## Resources"));
-        assert!(!result.contains("*No resources defined*"));
-        assert!(!result.contains("## Variables"));
-        assert!(!result.contains("*No variables defined*"));
-        assert!(!result.contains("## Modules"));
-        assert!(!result.contains("*No modules defined*"));
-        assert!(!result.contains("## Outputs"));
-        assert!(!result.contains("*No outputs defined*"));
+        assert!(!result.contains(&format!("## {}", crate::t!("export.resources"))));
+        assert!(!result.contains(&crate::t!("export.no_resources_defined").to_string()));
+        assert!(!result.contains(&format!("## {}", crate::t!("export.variables"))));
+        assert!(!result.contains(&crate::t!("export.no_variables_defined").to_string()));
+        assert!(!result.contains(&format!("## {}", crate::t!("export.modules"))));
+        assert!(!result.contains(&crate::t!("export.no_modules_defined").to_string()));
+        assert!(!result.contains(&format!("## {}", crate::t!("export.outputs"))));
+        assert!(!result.contains(&crate::t!("export.no_outputs_defined").to_string()));
     }
 
     #[test]

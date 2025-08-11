@@ -2,10 +2,17 @@ use std::{error::Error, path::Path};
 
 use tree_sitter::{Parser, Tree};
 
+// Initialize rust-i18n
+rust_i18n::i18n!("locales");
+
 pub mod exports;
+pub mod localization;
 pub mod parsing;
 
 pub use parsing::{BicepDocument, BicepParserError, BicepType, BicepValue};
+
+// Re-export the t! macro to make it available throughout the crate
+pub use rust_i18n::t;
 
 /// Parse a bicep file content and return the tree-sitter Tree
 ///
@@ -162,6 +169,25 @@ pub fn export_bicep_document_to_markdown_string(
     exports::markdown::export_to_string(document, use_emoji, exclude_empty)
 }
 
+/// Export a parsed Bicep document as Markdown string with localization support
+///
+/// # Arguments
+///
+/// * `document` - The BicepDocument to export
+/// * `use_emoji` - Whether to use emoji symbols (✅/❌) for Yes/No values
+/// * `exclude_empty` - Whether to exclude empty sections from the output
+///
+/// # Returns
+///
+/// A Result containing the Markdown string or an error
+pub fn export_bicep_document_to_markdown_string_localized(
+    document: &BicepDocument,
+    use_emoji: bool,
+    exclude_empty: bool,
+) -> Result<String, Box<dyn Error>> {
+    exports::markdown::export_to_string(document, use_emoji, exclude_empty)
+}
+
 /// Export a parsed Bicep document as AsciiDoc to a file
 ///
 /// # Arguments
@@ -278,4 +304,34 @@ pub fn parse_and_export_to_markdown<P: AsRef<Path>, Q: AsRef<Path>>(
     exclude_empty: bool,
 ) -> Result<(), Box<dyn Error>> {
     exports::markdown::parse_and_export(file_path, output_path, exclude_empty)
+}
+
+/// Test example to demonstrate the localization system
+#[cfg(test)]
+mod localization_demo {
+    use crate::{
+        localization::{init_localization, Language},
+        t,
+    };
+
+    #[test]
+    fn demonstrate_translations() {
+        // Test key translations across languages
+        init_localization(Language::English);
+        assert_eq!(t!("common.yes"), "Yes");
+        assert_eq!(t!("export.types"), "Types");
+        assert_eq!(t!("export.target_scope"), "Target Scope");
+
+        init_localization(Language::Spanish);
+        assert_eq!(t!("common.yes"), "Sí");
+        assert_eq!(t!("export.types"), "Tipos");
+        assert_eq!(t!("export.target_scope"), "Ámbito de Destino");
+
+        init_localization(Language::French);
+        assert_eq!(t!("common.yes"), "Oui");
+        assert_eq!(t!("export.types"), "Types");
+        assert_eq!(t!("export.target_scope"), "Portée Cible");
+
+        println!("✅ All translations working correctly!");
+    }
 }

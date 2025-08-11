@@ -1,0 +1,65 @@
+cli:
+  app_description: Azure Bicep文件文档生成器
+  app_about: 解析Azure Bicep文件并以多种格式导出文档
+  verbose_help: '设置输出的详细级别 (v: debug, vv: trace)'
+  quiet_help: 不显示任何日志输出
+  log_format_help: 设置日志输出的格式
+  log_file_help: 写入日志的文件路径（而不是stdout/stderr）
+  language_help: 设置CLI消息和生成文档的语言
+  markdown_command_desc: 以Markdown格式记录Bicep文件
+  asciidoc_command_desc: 以AsciiDoc格式记录Bicep文件
+  yaml_command_desc: 以YAML格式记录Bicep文件
+  json_command_desc: 以JSON格式记录Bicep文件
+  input_help: 要解析的Bicep文件路径
+  output_help: 输出文件路径。默认为带有适当扩展名的输入文件名。
+  emoji_help: 在文档输出中启用表情符号使用
+  exclude_empty_help: 跳过文档中空白部分的导出
+  check_help: 检查生成的文档是否与现有文件匹配，并以适当的代码退出
+  pretty_help: 格式化JSON，带有缩进以提高可读性
+export:
+  bicep_template: Bicep模板
+  target_scope: 目标范围
+  additional_metadata: 附加元数据
+  imports: 导入
+  types: 类型
+  functions: 函数
+  parameters: 参数
+  variables: 变量
+  resources: 资源
+  modules: 模块
+  outputs: 输出
+  namespace_header: 命名空间
+  version_header: 版本
+  source_header: 源
+  symbols_header: 符号
+  name_header: 名称
+  type_header: 类型
+  required_header: 必需
+  default_header: 默认
+  description_header: 描述
+  no_imports_defined: 未定义导入。
+  no_types_defined: 未定义自定义类型
+  no_functions_defined: 未定义函数
+  no_parameters_defined: 未定义参数
+  no_variables_defined: 未定义变量
+  no_resources_defined: 未定义资源
+  no_modules_defined: 未定义模块
+  no_outputs_defined: 未定义输出
+  minimum_value: 最小值
+  maximum_value: 最大值
+  minimum_length: 最小长度
+  maximum_length: 最大长度
+  allowed_values: 允许的值
+  discriminator: 判别器
+  sealed: 密封
+  namespace_imports: 命名空间导入
+  module_imports: 模块导入
+  object_definition: 对象定义
+common:
+  'yes': 是
+  'no': 否
+error:
+  file_not_found: 文件未找到
+  parse_error: 解析错误
+  export_error: 导出错误
+  invalid_language: 无效语言
