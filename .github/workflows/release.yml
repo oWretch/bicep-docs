@@ -149,7 +149,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download updated Cargo.toml
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           name: Cargo.toml
           path: .
@@ -286,7 +286,7 @@ jobs:
         uses: dtolnay/rust-toolchain@4305c38b25d97ef35a8ad1f985ccf2d2242004f2
 
       - name: Download binaries
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           pattern: bicep-docs-*
           path: dist
@@ -299,7 +299,7 @@ jobs:
         run: npm ci
 
       - name: Download Docker digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           path: ${{ runner.temp }}/digests
           pattern: digests-*
