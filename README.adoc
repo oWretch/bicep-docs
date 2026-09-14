@@ -5,6 +5,8 @@
 
 A documentation generator for Azure Bicep files, similar to `terraform-docs`.
 
+NOTE: With the release of the (experimental) link:https://github.com/Azure/bicep/blob/main/docs/experimental/docs-commands.md[documentation feature] in Bicep v0.47.16 the need for this tool has been reduced. For this reason I have archived the repository.
+
 == Overview
 
 `bicep-docs` is a documentation generator for Azure Bicep files, similar to `terraform-docs`.
